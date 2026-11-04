@@ -1,4 +1,8 @@
 @import 'tailwindcss';
+
+@import 'tw-animate-css';
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
 /* Source, not dist: lint and dev run without a build. */
 @import '../../packages/app-theme/src/theme.css';
 
