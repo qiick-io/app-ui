@@ -1,0 +1,20 @@
+{
+    "$schema": "https://ui.shadcn.com/schema/registry.json",
+    "name": "qiick",
+    "homepage": "https://github.com/qiick-io/app-ui",
+    "items": [
+        {
+            "name": "utils",
+            "type": "registry:lib",
+            "title": "cn",
+            "description": "cn() with a tailwind-merge config that knows the control-size spacing keys, plus the Inertia toUrl() helper.",
+            "dependencies": ["clsx", "tailwind-merge", "@inertiajs/react"],
+            "files": [
+                {
+                    "path": "src/lib/utils.ts",
+                    "type": "registry:lib"
+                }
+            ]
+        }
+    ]
+}

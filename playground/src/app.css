@@ -1,0 +1,4 @@
+@import 'tailwindcss';
+@import '@qiick/app-theme/theme.css';
+
+@source '../../registry/src';

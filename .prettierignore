@@ -1,0 +1,6 @@
+# shadcn primitives keep upstream formatting, as in the apps
+registry/src/components/ui/*
+public/r/
+dist/
+package-lock.json
+CHANGELOG.md
