@@ -39,7 +39,7 @@ The workflow reads the tag from `components.json` and runs [`scripts/check-drift
 
 ```json
 {
-    "resources/js/components/ui/button.tsx": "Excubia keeps the pill radius until #12"
+    "resources/js/components/ui/button.tsx": "Pill radius, part of the product brand"
 }
 ```
 
