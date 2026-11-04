@@ -1,8 +1,20 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/header-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/header-light.svg">
+    <img alt="qiick app UI: Shared design system for the qiick apps" src=".github/assets/header-light.svg" width="100%">
+  </picture>
+</p>
+
 # qiick app UI
 
 Shared admin UI for the open-source, installable [qiick](https://qiick.io) apps: [Externa](https://github.com/qiick-io/externa-core), [Excubia](https://github.com/qiick-io/excubia-app), and the apps that follow.
 
 > **Status:** early development. Nothing is published yet.
+
+## For agents and contributors
+
+Before any UI change in a qiick app, read [`AGENTS.md`](AGENTS.md) (the hard rules) and [`docs/`](docs/README.md) (one page per pattern, pointing at the exact externa-core files). Apps copy [`docs/app-agents-section.md`](docs/app-agents-section.md) into their own `AGENTS.md` / `CLAUDE.md`. Releases: [`RELEASING.md`](RELEASING.md).
 
 ## What it is
 
