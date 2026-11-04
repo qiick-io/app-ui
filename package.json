@@ -16,7 +16,7 @@
         "dev": "npm run dev --workspace playground",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "lint": "eslint . --max-warnings=0",
+        "lint": "eslint . --max-warnings=0 && node scripts/check-ui-tokens.mjs",
         "registry:check": "node scripts/check-registry.mjs",
         "types:check": "tsc --noEmit"
     },

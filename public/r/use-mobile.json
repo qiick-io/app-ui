@@ -1,0 +1,14 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "use-mobile",
+  "title": "useIsMobile",
+  "description": "Media-query hook used by the sidebar.",
+  "files": [
+    {
+      "path": "src/hooks/use-mobile.tsx",
+      "content": "import { useSyncExternalStore } from 'react';\n\nconst MOBILE_BREAKPOINT = 768;\n\nconst mql =\n    typeof window === 'undefined'\n        ? undefined\n        : window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);\n\nfunction mediaQueryListener(callback: (event: MediaQueryListEvent) => void) {\n    if (!mql) {\n        return () => {};\n    }\n\n    mql.addEventListener('change', callback);\n\n    return () => {\n        mql.removeEventListener('change', callback);\n    };\n}\n\nfunction isSmallerThanBreakpoint(): boolean {\n    return mql?.matches ?? false;\n}\n\nfunction getServerSnapshot(): boolean {\n    return false;\n}\n\n/**\n * Subscribes to the mobile viewport breakpoint (`max-width: 767px`).\n *\n * @returns `true` when the viewport is below the mobile breakpoint\n */\nexport function useIsMobile(): boolean {\n    return useSyncExternalStore(\n        mediaQueryListener,\n        isSmallerThanBreakpoint,\n        getServerSnapshot,\n    );\n}\n",
+      "type": "registry:hook"
+    }
+  ],
+  "type": "registry:hook"
+}

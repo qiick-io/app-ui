@@ -1,0 +1,22 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "page-empty-state",
+  "title": "Page empty state",
+  "description": "Empty state: icon, title, one sentence, one CTA, optional docs link.",
+  "dependencies": [
+    "lucide-react"
+  ],
+  "registryDependencies": [
+    "@qiick/button",
+    "@qiick/empty",
+    "@qiick/utils"
+  ],
+  "files": [
+    {
+      "path": "src/components/admin/page-empty-state.tsx",
+      "content": "import { ArrowUpRight } from 'lucide-react';\nimport type { LucideIcon } from 'lucide-react';\nimport type { ReactNode } from 'react';\nimport { Button } from '@/components/ui/button';\nimport {\n    Empty,\n    EmptyContent,\n    EmptyDescription,\n    EmptyHeader,\n    EmptyMedia,\n    EmptyTitle,\n} from '@/components/ui/empty';\nimport { cn } from '@/lib/utils';\n\ntype PageEmptyStateProps = {\n    icon: LucideIcon;\n    /** Plain copy, or wrapped in `EmptyStatus` when the empty result follows a search or filter change. */\n    title: ReactNode;\n    description: string;\n    action?: ReactNode;\n    docsHref?: string;\n    docsLabel?: string;\n    className?: string;\n    compact?: boolean;\n};\n\n/**\n * Shared admin empty state: Lucide icon (primary tint), title, one-sentence\n * description, one primary CTA, and an optional docs link.\n */\nexport function PageEmptyState({\n    icon: Icon,\n    title,\n    description,\n    action,\n    docsHref,\n    docsLabel,\n    className,\n    compact = false,\n}: PageEmptyStateProps) {\n    return (\n        <Empty\n            data-testid=\"page-empty-state\"\n            className={cn(\n                'w-full border border-dashed border-sidebar-border/70 dark:border-sidebar-border',\n                compact && 'gap-4 p-6 md:p-6',\n                className,\n            )}\n        >\n            <EmptyHeader>\n                <EmptyMedia\n                    variant=\"icon\"\n                    className=\"bg-primary/10 text-primary\"\n                >\n                    <Icon />\n                </EmptyMedia>\n                <EmptyTitle className={cn(compact && 'text-base')}>\n                    {title}\n                </EmptyTitle>\n                <EmptyDescription>{description}</EmptyDescription>\n            </EmptyHeader>\n            {(action || (docsHref && docsLabel)) && (\n                <EmptyContent className={cn(compact && 'gap-2')}>\n                    {action}\n                    {docsHref && docsLabel ? (\n                        <Button\n                            variant=\"link\"\n                            asChild\n                            className=\"text-muted-foreground\"\n                        >\n                            <a href={docsHref} target=\"_blank\" rel=\"noreferrer\">\n                                {docsLabel}\n                                <ArrowUpRight className=\"size-3.5\" />\n                            </a>\n                        </Button>\n                    ) : null}\n                </EmptyContent>\n            )}\n        </Empty>\n    );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

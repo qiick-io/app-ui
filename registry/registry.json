@@ -8,11 +8,631 @@
             "type": "registry:lib",
             "title": "cn",
             "description": "cn() with a tailwind-merge config that knows the control-size spacing keys, plus the Inertia toUrl() helper.",
-            "dependencies": ["clsx", "tailwind-merge", "@inertiajs/react"],
+            "dependencies": ["@inertiajs/react", "clsx", "tailwind-merge"],
             "files": [
                 {
                     "path": "src/lib/utils.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/utils.ts"
+                }
+            ]
+        },
+        {
+            "name": "alert-dialog",
+            "type": "registry:ui",
+            "title": "Alert dialog",
+            "description": "Confirmation dialog: Esc and Cancel never confirm.",
+            "dependencies": ["@radix-ui/react-alert-dialog"],
+            "registryDependencies": ["@qiick/button", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/alert-dialog.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "badge",
+            "type": "registry:ui",
+            "title": "Badge",
+            "description": "Status badge.",
+            "dependencies": [
+                "@radix-ui/react-slot",
+                "class-variance-authority"
+            ],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/badge.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "breadcrumb",
+            "type": "registry:ui",
+            "title": "Breadcrumb",
+            "description": "Breadcrumb primitives.",
+            "dependencies": ["@radix-ui/react-slot", "lucide-react"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/breadcrumb.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "bubble",
+            "type": "registry:ui",
+            "title": "Bubble",
+            "description": "Chat bubble with muted, ghost, destructive, \u2026 variants.",
+            "dependencies": ["class-variance-authority", "radix-ui"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/bubble.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "button",
+            "type": "registry:ui",
+            "title": "Button",
+            "description": "Button on the control-size scale (sm 24 / default 32 / lg 40), primary hover token.",
+            "dependencies": [
+                "@radix-ui/react-slot",
+                "class-variance-authority"
+            ],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/button.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "checkbox",
+            "type": "registry:ui",
+            "title": "Checkbox",
+            "description": "Radix checkbox.",
+            "dependencies": ["@radix-ui/react-checkbox", "lucide-react"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/checkbox.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "dialog",
+            "type": "registry:ui",
+            "title": "Dialog",
+            "description": "Modal dialog with translated close button.",
+            "dependencies": [
+                "@radix-ui/react-dialog",
+                "lucide-react",
+                "react-i18next"
+            ],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/dialog.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "dropdown-menu",
+            "type": "registry:ui",
+            "title": "Dropdown menu",
+            "description": "Radix dropdown menu.",
+            "dependencies": ["@radix-ui/react-dropdown-menu", "lucide-react"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/dropdown-menu.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "empty",
+            "type": "registry:ui",
+            "title": "Empty",
+            "description": "Empty-state primitives.",
+            "dependencies": ["class-variance-authority"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/empty.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "field",
+            "type": "registry:ui",
+            "title": "Field",
+            "description": "Form field layout: label, control, description, error.",
+            "dependencies": ["class-variance-authority", "lucide-react"],
+            "registryDependencies": [
+                "@qiick/label",
+                "@qiick/separator",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ui/field.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "input",
+            "type": "registry:ui",
+            "title": "Input",
+            "description": "Text input, default control height.",
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/input.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "input-group",
+            "type": "registry:ui",
+            "title": "Input group",
+            "description": "Input or textarea with inline addons and buttons.",
+            "dependencies": ["class-variance-authority"],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/input",
+                "@qiick/textarea",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ui/input-group.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "label",
+            "type": "registry:ui",
+            "title": "Label",
+            "description": "Form label.",
+            "dependencies": ["@radix-ui/react-label"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/label.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "message",
+            "type": "registry:ui",
+            "title": "Message",
+            "description": "Chat message row: avatar, content, footer, aligned start or end.",
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/message.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "native-select",
+            "type": "registry:ui",
+            "title": "Native select",
+            "description": "Native <select> styled like the Select trigger.",
+            "dependencies": ["lucide-react"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/native-select.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "pagination",
+            "type": "registry:ui",
+            "title": "Pagination",
+            "description": "Pagination primitives.",
+            "dependencies": ["class-variance-authority", "lucide-react"],
+            "registryDependencies": ["@qiick/button", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/pagination.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "radio-group",
+            "type": "registry:ui",
+            "title": "Radio group",
+            "description": "Radix radio group.",
+            "dependencies": ["@radix-ui/react-radio-group", "lucide-react"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/radio-group.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "select",
+            "type": "registry:ui",
+            "title": "Select",
+            "description": "Radix Select; trigger and items on the control scale.",
+            "dependencies": ["@radix-ui/react-select", "lucide-react"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/select.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "separator",
+            "type": "registry:ui",
+            "title": "Separator",
+            "description": "Horizontal or vertical rule.",
+            "dependencies": ["@radix-ui/react-separator"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/separator.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "sheet",
+            "type": "registry:ui",
+            "title": "Sheet",
+            "description": "Side panel built on the dialog primitive.",
+            "dependencies": [
+                "@radix-ui/react-dialog",
+                "lucide-react",
+                "react-i18next"
+            ],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/sheet.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "sidebar",
+            "type": "registry:ui",
+            "title": "Sidebar",
+            "description": "Collapsible app sidebar with the straight full-height active bar (externa-core #463).",
+            "dependencies": [
+                "@radix-ui/react-slot",
+                "class-variance-authority",
+                "lucide-react",
+                "react-i18next"
+            ],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/input",
+                "@qiick/separator",
+                "@qiick/sheet",
+                "@qiick/skeleton",
+                "@qiick/tooltip",
+                "@qiick/use-mobile",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ui/sidebar.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "skeleton",
+            "type": "registry:ui",
+            "title": "Skeleton",
+            "description": "Loading placeholder.",
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/skeleton.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "switch",
+            "type": "registry:ui",
+            "title": "Switch",
+            "description": "Radix switch.",
+            "dependencies": ["@radix-ui/react-switch"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/switch.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "table",
+            "type": "registry:ui",
+            "title": "Table",
+            "description": "Table primitives used by the flat list panels.",
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/table.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "textarea",
+            "type": "registry:ui",
+            "title": "Textarea",
+            "description": "Multi-line text input.",
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/textarea.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "toggle",
+            "type": "registry:ui",
+            "title": "Toggle",
+            "description": "Two-state button on the control scale.",
+            "dependencies": [
+                "@radix-ui/react-toggle",
+                "class-variance-authority"
+            ],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/toggle.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "toggle-group",
+            "type": "registry:ui",
+            "title": "Toggle group",
+            "description": "Segmented control (use variant=\"outline\" with type=\"single\").",
+            "dependencies": [
+                "@radix-ui/react-toggle-group",
+                "class-variance-authority"
+            ],
+            "registryDependencies": ["@qiick/toggle", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/toggle-group.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "tooltip",
+            "type": "registry:ui",
+            "title": "Tooltip",
+            "description": "Radix tooltip.",
+            "dependencies": ["@radix-ui/react-tooltip"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/tooltip.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "use-mobile",
+            "type": "registry:hook",
+            "title": "useIsMobile",
+            "description": "Media-query hook used by the sidebar.",
+            "files": [
+                {
+                    "path": "src/hooks/use-mobile.tsx",
+                    "type": "registry:hook"
+                }
+            ]
+        },
+        {
+            "name": "header-icon-button",
+            "type": "registry:component",
+            "title": "Header icon button",
+            "description": "Icon-only button with a tooltip label, for page headers and toolbars.",
+            "registryDependencies": ["@qiick/button", "@qiick/tooltip"],
+            "files": [
+                {
+                    "path": "src/components/admin/header-icon-button.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "page-header",
+            "type": "registry:component",
+            "title": "Page header",
+            "description": "Page description, subheader and filter row, plus FilterSearch.",
+            "dependencies": ["lucide-react"],
+            "registryDependencies": ["@qiick/input", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/layout/page-header.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "page-layout",
+            "type": "registry:component",
+            "title": "Page layout",
+            "description": "Admin page scaffold (description, filter row, body, footer), the flat TablePanel and the list pagination footer with rows per page.",
+            "dependencies": ["@inertiajs/react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/page-header",
+                "@qiick/pagination",
+                "@qiick/select",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/layout/page-layout.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/lib/list-per-page.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/list-per-page.ts"
+                }
+            ]
+        },
+        {
+            "name": "data-table-toolbar",
+            "type": "registry:component",
+            "title": "Data table toolbar",
+            "description": "Search and bulk-selection toolbar for data tables.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/input",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/admin/data-table-toolbar.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "page-empty-state",
+            "type": "registry:component",
+            "title": "Page empty state",
+            "description": "Empty state: icon, title, one sentence, one CTA, optional docs link.",
+            "dependencies": ["lucide-react"],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/empty",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/admin/page-empty-state.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "settings-form-actions",
+            "type": "registry:component",
+            "title": "Settings form actions",
+            "description": "Sticky Save bar for settings forms.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": ["@qiick/button"],
+            "files": [
+                {
+                    "path": "src/components/settings-form-actions.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "confirm-destructive-dialog",
+            "type": "registry:component",
+            "title": "Confirm destructive dialog",
+            "description": "Cancel / Delete confirmation, optionally gated by typing a name.",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": [
+                "@qiick/alert-dialog",
+                "@qiick/input",
+                "@qiick/label"
+            ],
+            "files": [
+                {
+                    "path": "src/components/confirm-destructive-dialog.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "app-shell",
+            "type": "registry:component",
+            "title": "App shell",
+            "description": "Two-tone shell: sidebar provider, framed inset content panel, header with sidebar trigger, breadcrumbs and actions.",
+            "dependencies": ["@inertiajs/react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/breadcrumb",
+                "@qiick/sidebar",
+                "@qiick/tooltip",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/app-shell.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/app-content.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/app-sidebar-header.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/breadcrumbs.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/admin/truncated-text.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "chat-layout",
+            "type": "registry:component",
+            "title": "Chat layout",
+            "description": "Chat page body as on externa-core /ai and /chat: list column, thread, composer.",
+            "dependencies": ["lucide-react"],
+            "registryDependencies": ["@qiick/button", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/layout/chat-layout.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/lib/composer-chrome.ts",
                     "type": "registry:lib"
+                },
+                {
+                    "path": "src/hooks/use-autosize-textarea.ts",
+                    "type": "registry:hook"
                 }
             ]
         }
