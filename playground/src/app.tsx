@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 import type { ComponentType, ReactNode } from 'react';
-import bluePreset from '../../packages/app-theme/src/presets/blue.css?inline';
-import themeSource from '../../packages/app-theme/src/theme.css?raw';
 import registry from '../../registry/registry.json';
+import bluePreset from '../../registry/src/css/qiick-theme-blue.css?inline';
+import themeSource from '../../registry/src/css/qiick-theme.css?raw';
 import { AssistantScreen } from './screens/assistant';
 import { ChatScreen } from './screens/chat';
 import type { ScreenName } from './screens/demo-shell';
 import { SettingsScreen } from './screens/settings';
 import { UsersScreen } from './screens/users';
-import { ThemeTokens } from './theme-tokens';
 
 const PRESETS = { teal: '', blue: bluePreset } as const;
 
@@ -117,7 +116,7 @@ function HighContrastClass({ isHighContrast }: { isHighContrast: boolean }) {
 }
 
 /**
- * The theme tokens and every registry item, rendered side by side in light and
+ * Every registry item, rendered side by side in light and
  * dark mode, with a brand preset and a high-contrast switch.
  * Demos live in `demos/{item name}.tsx` (`npm run registry:check` fails when one is missing).
  */
@@ -184,12 +183,6 @@ function Catalogue() {
                     </label>
                 </div>
             </header>
-            <section id="theme" className="flex flex-col gap-3">
-                <h2 className="font-mono text-sm font-semibold">theme</h2>
-                <LightAndDark>
-                    <ThemeTokens />
-                </LightAndDark>
-            </section>
             {registry.items.map((item) => {
                 const Demo = demoModules[`./demos/${item.name}.tsx`]?.default;
 

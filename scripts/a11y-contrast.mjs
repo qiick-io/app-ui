@@ -2,10 +2,10 @@
 /**
  * WCAG 2.2 AA contrast gate for the theme tokens (#2, from externa-core #255).
  *
- * Reads palette + semantic tokens from packages/app-theme/src/theme.css and
+ * Reads palette + semantic tokens from registry/src/css/qiick-theme.css and
  * checks every foreground/background pair below in light, dark,
  * high-contrast and high-contrast dark, for the default brand (teal) and for
- * every preset in packages/app-theme/src/presets. A custom `--brand-primary`
+ * every preset (registry/src/css/qiick-theme-*.css). A custom `--brand-primary`
  * set by an app is the app's to check.
  *
  * Thresholds: text ≥4.5:1, UI/border/focus ≥3:1.
@@ -18,8 +18,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const themeDir = path.join(root, 'packages/app-theme/src');
-const cssPath = path.join(themeDir, 'theme.css');
+const themeDir = path.join(root, 'registry/src/css');
+const cssPath = path.join(themeDir, 'qiick-theme.css');
 const css = fs.readFileSync(cssPath, 'utf8');
 
 /** @type {Record<string, string>} */
@@ -91,16 +91,13 @@ const highContrastDarkTokens = parseTokenBlock(
 const brands = [
     { name: 'teal (default)', light: {}, dark: {} },
     ...fs
-        .readdirSync(path.join(themeDir, 'presets'))
-        .filter((file) => file.endsWith('.css'))
+        .readdirSync(themeDir)
+        .filter((file) => /^qiick-theme-.+\.css$/.test(file))
         .map((file) => {
-            const source = fs.readFileSync(
-                path.join(themeDir, 'presets', file),
-                'utf8',
-            );
+            const source = fs.readFileSync(path.join(themeDir, file), 'utf8');
 
             return {
-                name: file.replace(/\.css$/, ''),
+                name: file.replace(/^qiick-theme-|\.css$/g, ''),
                 light: parseTokenBlock(extractBlock(':root', source)),
                 dark: parseTokenBlock(extractBlock('.dark', source)),
             };

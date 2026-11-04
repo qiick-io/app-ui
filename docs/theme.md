@@ -1,6 +1,6 @@
 # Theme
 
-**Registry:** `@qiick/theme` (the tokens) and one brand preset item; see [`packages/app-theme/README.md`](../packages/app-theme/README.md) for every token.
+**Registry:** `@qiick/theme` (the tokens) and a brand preset item such as `@qiick/theme-blue`; every token is listed in [theme-tokens.md](theme-tokens.md).
 
 **Copy from externa-core:** `resources/css/app.css`, `config/theme-presets.php`, `app/Services/Settings/ThemePresetService.php`, `resources/js/lib/theme-css.ts`; tests `tests/Unit/AppCssThemeDefaultsTest.php`, `scripts/a11y-contrast.mjs`.
 

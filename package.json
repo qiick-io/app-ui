@@ -3,7 +3,6 @@
     "private": true,
     "type": "module",
     "workspaces": [
-        "packages/app-theme",
         "registry",
         "playground"
     ],

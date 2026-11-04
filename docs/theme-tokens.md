@@ -1,19 +1,26 @@
-# @qiick/app-theme
+# Theme tokens
 
-Design tokens shared by the qiick apps, for Tailwind CSS v4. Extracted from externa-core 1.4.0 `resources/css/app.css` and `config/theme-presets.php`.
+Design tokens shared by the qiick apps, for Tailwind CSS v4, shipped as the `@qiick/theme` registry item (source: `registry/src/css/qiick-theme.css`). It is not an npm package: like the components, the file is copied into the app, versioned by the app-ui tag and covered by the drift check. Extracted from externa-core 1.4.0 `resources/css/app.css` and `config/theme-presets.php`.
 
 ## Install
 
-Import the theme once, right after Tailwind, in the app's CSS entry. Add a brand preset after it if the product is not teal:
+```bash
+npx shadcn add @qiick/theme        # resources/css/qiick-theme.css
+npx shadcn add @qiick/theme-blue   # resources/css/qiick-theme-blue.css (Excubia)
+```
+
+Import the theme once, right after Tailwind, in `resources/css/app.css`, and the brand preset after it if the product is not teal:
 
 ```css
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import '@fontsource-variable/geist';
 @import '@fontsource-variable/geist-mono';
-@import '@qiick/app-theme/theme.css';
-@import '@qiick/app-theme/presets/blue.css'; /* Excubia */
+@import './qiick-theme.css';
+@import './qiick-theme-blue.css'; /* Excubia */
 ```
+
+Everything app-specific (its `@source` paths, its own components' CSS) stays in `app.css`.
 
 The theme names Geist as `--font-sans` / `--font-mono` but does not load it: the app imports the font (and `tw-animate-css`, used by the dialog and dropdown animations).
 
@@ -37,14 +44,14 @@ Dark mode is the `.dark` class on an ancestor (`@custom-variant dark (&:is(.dark
 
 The shared base holds the neutral surfaces (backgrounds, the two-tone shell, cards, borders, text). A product changes only its brand colours, in one of two ways:
 
-1. **A preset** (recommended): `presets/blue.css` sets `--primary`, `--ring`, `--chart-1`, `--chart-2` and the sidebar accents for light and dark. Teal is the default and needs no file. Presets are copied from externa-core `config/theme-presets.php`.
+1. **A preset** (recommended): `@qiick/theme-blue` (`qiick-theme-blue.css`) sets `--primary`, `--ring`, `--chart-1`, `--chart-2` and the sidebar accents for light and dark. Teal is the default and needs no file. Presets are copied from externa-core `config/theme-presets.php`.
 2. **A single brand colour**: set `--brand-primary` (and optionally `--brand-primary-dark`, `--brand-primary-foreground`, `--brand-primary-dark-foreground`) on `:root`. `--primary` and `--sidebar-primary` follow it.
 
 Focus ring rule (externa-core #453): `--ring` and `--sidebar-ring` stay teal unless the brand colour reaches 3:1 on the page background (`#FFFFFF` light, `#0E171E` dark). If it does, set both rings to the brand colour too; otherwise leave them. The presets already do this.
 
 The AI accent (`--ai-*`) is violet and never follows the brand. A brand whose hue is near violet should switch the AI tokens to teal (externa-core `ai_override_light` / `ai_override_dark`).
 
-Run `npm run a11y:contrast` after adding a preset: the check covers every preset file.
+A new preset is a `registry/src/css/qiick-theme-<name>.css` file plus a `theme-<name>` registry item; `npm run a11y:contrast` checks every preset file.
 
 ## Tokens
 
