@@ -25,6 +25,30 @@ Add the registry to the app's `components.json`, pinned to a release tag (#4):
 
 Then install items with `npx shadcn add @qiick/<name>`. To upgrade, change the tag and run `shadcn add` again.
 
+## Drift check
+
+Each app's CI checks that its copies of the registry files still match the pinned tag:
+
+```yaml
+jobs:
+    app-ui-drift:
+        uses: qiick-io/app-ui/.github/workflows/drift-check.yml@vX.Y.Z
+```
+
+The workflow reads the tag from `components.json` and runs [`scripts/check-drift.mjs`](scripts/check-drift.mjs) from that tag. An item counts as installed when any of its files is in the app; every file of an installed item must match the registry, or be listed with a reason in `app-ui.overrides.json` at the app root:
+
+```json
+{
+    "resources/js/components/ui/button.tsx": "Pill radius, part of the product brand"
+}
+```
+
+A difference without an entry fails and prints the diff and the registry version; an entry whose file matches again also fails, so overrides do not outlive their reason. Locally, from the app root:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/qiick-io/app-ui/vX.Y.Z/scripts/check-drift.mjs -o /tmp/check-drift.mjs && node /tmp/check-drift.mjs
+```
+
 ## Repository layout
 
 | Path                 | What                                                                       |
