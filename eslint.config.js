@@ -109,6 +109,8 @@ export default [
             import: importPlugin,
         },
         settings: {
+            // registry/ and playground/ are separate workspaces: keep `@/` internal across them.
+            'import/internal-regex': '^@/',
             'import/resolver': {
                 typescript: {
                     alwaysTryTypes: true,

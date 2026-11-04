@@ -1,0 +1,21 @@
+{
+    "a11y": {
+        "breadcrumb": "Breadcrumb",
+        "close": "Close",
+        "saving": "Saving",
+        "toggleSidebar": "Toggle sidebar"
+    },
+    "common": {
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "pageRange": "{{from}}–{{to}} of {{total}}",
+        "perPageOption": "{{count}} / page",
+        "rowsPerPage": "Rows per page",
+        "save": "Save",
+        "saved": "Saved",
+        "selectedCount": "{{count}} selected"
+    },
+    "confirmDestructive": {
+        "typeToConfirm": "Type \"{{name}}\" to confirm"
+    }
+}

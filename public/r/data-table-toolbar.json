@@ -1,0 +1,23 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "data-table-toolbar",
+  "title": "Data table toolbar",
+  "description": "Search and bulk-selection toolbar for data tables.",
+  "dependencies": [
+    "lucide-react",
+    "react-i18next"
+  ],
+  "registryDependencies": [
+    "@qiick/button",
+    "@qiick/input",
+    "@qiick/utils"
+  ],
+  "files": [
+    {
+      "path": "src/components/admin/data-table-toolbar.tsx",
+      "content": "import { Search, X } from 'lucide-react';\nimport type { ReactNode } from 'react';\nimport { useTranslation } from 'react-i18next';\nimport { Button } from '@/components/ui/button';\nimport { Input } from '@/components/ui/input';\nimport { cn } from '@/lib/utils';\n\nexport type DataTableToolbarProps = {\n    search: string;\n    onSearchChange: (value: string) => void;\n    searchPlaceholder?: string;\n    searchMaxLength?: number;\n    selectedCount?: number;\n    onClearSelection?: () => void;\n    bulkActions?: ReactNode;\n    trailing?: ReactNode;\n    className?: string;\n};\n\n/**\n * Search and filter toolbar for admin data tables.\n * @param {*} props - Component props.\n * @returns {JSX.Element}\n */\nexport function DataTableToolbar({\n    search,\n    onSearchChange,\n    searchPlaceholder = 'Search…',\n    searchMaxLength = 255,\n    selectedCount = 0,\n    onClearSelection,\n    bulkActions,\n    trailing,\n    className,\n}: DataTableToolbarProps) {\n    const { t } = useTranslation();\n    const hasSelection = selectedCount > 0;\n\n    return (\n        <div\n            className={cn(\n                'flex min-w-0 flex-nowrap items-center justify-between gap-2',\n                className,\n            )}\n        >\n            {hasSelection ? (\n                <>\n                    <Button\n                        type=\"button\"\n                        variant=\"ghost\"\n                        className=\"shrink-0\"\n                        onClick={onClearSelection}\n                    >\n                        <X className=\"size-4\" aria-hidden=\"true\" />\n                        {t('common.selectedCount', { count: selectedCount })}\n                    </Button>\n                    {bulkActions ? (\n                        <div className=\"flex min-w-0 flex-nowrap items-center gap-2 overflow-x-auto\">\n                            {bulkActions}\n                        </div>\n                    ) : null}\n                </>\n            ) : (\n                <div className=\"relative min-w-[8rem] flex-1 sm:max-w-xs\">\n                    <Search className=\"pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground\" />\n                    <Input\n                        value={search}\n                        onChange={(e) => onSearchChange(e.target.value)}\n                        placeholder={searchPlaceholder}\n                        aria-label={searchPlaceholder}\n                        maxLength={searchMaxLength}\n                        className=\"pl-8\"\n                    />\n                </div>\n            )}\n            {!hasSelection && trailing && (\n                <div className=\"flex shrink-0 flex-nowrap items-center gap-2\">\n                    {trailing}\n                </div>\n            )}\n        </div>\n    );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

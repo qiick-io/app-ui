@@ -1,0 +1,21 @@
+{
+    "a11y": {
+        "breadcrumb": "Brotkrümelnavigation",
+        "close": "Schließen",
+        "saving": "Wird gespeichert",
+        "toggleSidebar": "Seitenleiste umschalten"
+    },
+    "common": {
+        "cancel": "Abbrechen",
+        "delete": "Löschen",
+        "pageRange": "{{from}}–{{to}} von {{total}}",
+        "perPageOption": "{{count}} / Seite",
+        "rowsPerPage": "Zeilen pro Seite",
+        "save": "Speichern",
+        "saved": "Gespeichert",
+        "selectedCount": "{{count}} ausgewählt"
+    },
+    "confirmDestructive": {
+        "typeToConfirm": "Tippe „{{name}}“ zur Bestätigung"
+    }
+}

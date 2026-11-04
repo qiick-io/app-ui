@@ -1,0 +1,21 @@
+{
+    "a11y": {
+        "breadcrumb": "Percorso di navigazione",
+        "close": "Chiudi",
+        "saving": "Salvataggio",
+        "toggleSidebar": "Attiva/disattiva barra laterale"
+    },
+    "common": {
+        "cancel": "Annulla",
+        "delete": "Elimina",
+        "pageRange": "{{from}}–{{to}} di {{total}}",
+        "perPageOption": "{{count}} / pagina",
+        "rowsPerPage": "Righe per pagina",
+        "save": "Salva",
+        "saved": "Salvato",
+        "selectedCount": "{{count}} selezionati"
+    },
+    "confirmDestructive": {
+        "typeToConfirm": "Digita \"{{name}}\" per confermare"
+    }
+}
