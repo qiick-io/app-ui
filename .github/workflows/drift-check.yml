@@ -1,0 +1,55 @@
+# Reusable drift check for apps that install the @qiick registry (#5).
+#
+# In the app:
+#
+#   jobs:
+#     app-ui-drift:
+#       uses: qiick-io/app-ui/.github/workflows/drift-check.yml@vX.Y.Z
+#
+# The check runs scripts/check-drift.mjs from the registry tag pinned in the
+# app's components.json, against that same tag.
+name: app-ui drift
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: App root (where components.json lives)
+        type: string
+        default: .
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Read the pinned registry tag
+        id: pin
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          tag=$(node -e "const url = require('./components.json').registries?.['@qiick'] ?? ''; process.stdout.write(url.match(/qiick-io\/app-ui\/([^/]+)\/public\/r\//)?.[1] ?? '')")
+          if [ -z "$tag" ]; then
+            echo "::error::components.json needs \"registries\": { \"@qiick\": \"https://raw.githubusercontent.com/qiick-io/app-ui/<tag>/public/r/{name}.json\" }"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: qiick-io/app-ui
+          ref: ${{ steps.pin.outputs.tag }}
+          path: .app-ui
+          sparse-checkout: scripts
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+
+      - name: Compare the app with the registry
+        working-directory: ${{ inputs.working-directory }}
+        run: node "$GITHUB_WORKSPACE/.app-ui/scripts/check-drift.mjs"

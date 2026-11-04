@@ -45,7 +45,7 @@ jobs:
       - run: npm ci
       - run: npm run types:check
 
-  contrast:
+  scripts:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -55,6 +55,8 @@ jobs:
           node-version-file: .nvmrc
       - name: WCAG 2.2 AA contrast of every token pair
         run: npm run a11y:contrast
+      - name: Script tests (drift check)
+        run: npm test
 
   build:
     runs-on: ubuntu-latest
