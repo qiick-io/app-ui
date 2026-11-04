@@ -1,4 +1,5 @@
 @import 'tailwindcss';
-@import '@qiick/app-theme/theme.css';
+/* Source, not dist: lint and dev run without a build. */
+@import '../../packages/app-theme/src/theme.css';
 
 @source '../../registry/src';
