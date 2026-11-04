@@ -10,14 +10,16 @@
     },
     "type": "module",
     "files": [
-        "dist"
+        "dist",
+        "README.md"
     ],
     "exports": {
-        "./theme.css": "./dist/theme.css"
+        "./theme.css": "./dist/theme.css",
+        "./presets/*": "./dist/presets/*"
     },
     "style": "./dist/theme.css",
     "scripts": {
-        "build": "node --input-type=module -e \"import fs from 'node:fs'; fs.mkdirSync('dist', { recursive: true }); fs.copyFileSync('src/theme.css', 'dist/theme.css');\""
+        "build": "node --input-type=module -e \"import fs from 'node:fs'; fs.rmSync('dist', { recursive: true, force: true }); fs.cpSync('src', 'dist', { recursive: true });\""
     },
     "peerDependencies": {
         "tailwindcss": "^4.3.3"

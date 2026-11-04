@@ -11,6 +11,7 @@
         "node": ">=24"
     },
     "scripts": {
+        "a11y:contrast": "node scripts/a11y-contrast.mjs",
         "build": "npm run build --workspaces",
         "dev": "npm run dev --workspace playground",
         "format": "prettier --write .",
