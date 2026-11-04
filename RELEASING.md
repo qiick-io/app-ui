@@ -42,6 +42,6 @@ Never merge `develop` → `main`, create a tag or publish a GitHub release unles
 ## Release checklist (for the release PR)
 
 1. `CHANGELOG.md`: move `[Unreleased]` into `[X.Y.Z] - YYYY-MM-DD`, with the upgrade notes.
-2. Bump `version` in `packages/app-theme/package.json` and `registry/package.json`.
+2. Bump `version` in `registry/package.json`.
 3. `npm run build`, commit `public/r`; CI green.
 4. Open the `develop` → `main` PR and stop. Luca merges, tags and publishes.

@@ -25,7 +25,7 @@ Goal: no agent invents a layout, a component, a colour or a component position i
 
 ## Theme
 
-The tokens come from the `@qiick/theme` registry item (`packages/app-theme/src/theme.css`): one shared base (surfaces, the two-tone shell, text, borders) plus brand-only presets (Teal = Externa, the default; Blue = Excubia). An app picks a preset; it does not edit surface tokens. See [`docs/theme.md`](docs/theme.md).
+The tokens come from the `@qiick/theme` registry item (`registry/src/css/qiick-theme.css`): one shared base (surfaces, the two-tone shell, text, borders) plus brand-only presets (Teal = Externa, the default; Blue = Excubia). An app picks a preset; it does not edit surface tokens. See [`docs/theme.md`](docs/theme.md).
 
 ## Working in this repo
 

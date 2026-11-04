@@ -25,7 +25,7 @@ const CONTROL_SIZES = [
 
 /**
  * Colour pairs, the focus ring, chart colours and the control-size scale of
- * @qiick/app-theme, read straight from the CSS variables.
+ * the qiick theme, read straight from the CSS variables.
  */
 export function ThemeTokens() {
     return (

@@ -7,7 +7,7 @@ shadcn registry with the shared admin UI of the qiick apps, extracted from exter
 The items target apps on the Laravel React starter kit (Inertia + React 19 + Tailwind v4), like Externa and Excubia:
 
 - `components.json` with the starter kit aliases (`@/components`, `@/components/ui`, `@/lib`, `@/hooks`) and the `@qiick` registry (see the root README).
-- [`@qiick/app-theme`](../packages/app-theme/README.md) imported in the app CSS, plus `tw-animate-css`.
+- The `@qiick/theme` item (plus a preset such as `@qiick/theme-blue`) imported in the app CSS, plus `tw-animate-css` (see [`docs/theme-tokens.md`](../docs/theme-tokens.md)).
 - The `sidebarOpen` shared Inertia prop (starter kit default), for `app-shell`.
 - `react-i18next` set up, with the keys in [`locales/`](locales) merged into the app's locale files (en, it, de). Every visible or accessible string in the items goes through these keys.
 - `<TooltipProvider delayDuration={0}>` around the app (starter kit `app.tsx`), for `tooltip`, `sidebar` and everything built on them.

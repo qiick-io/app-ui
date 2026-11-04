@@ -1,12 +1,16 @@
 # Changelog
 
-All notable changes to **qiick app UI** (`@qiick/app-theme` and the `@qiick` shadcn registry) are documented in this file.
+All notable changes to **qiick app UI** (the `@qiick` shadcn registry, theme included) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 One version covers the theme package and the registry: a release tag `vX.Y.Z` pins both.
 
 ## [Unreleased]
+
+### Changed
+
+- The theme ships as registry items, not an npm package: `@qiick/theme` (`resources/css/qiick-theme.css`) and `@qiick/theme-blue` (`resources/css/qiick-theme-blue.css`). One version covers tokens and components, and the drift check covers the theme. `packages/app-theme` is removed; the token reference is `docs/theme-tokens.md`.
 
 ### Added
 

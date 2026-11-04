@@ -18,6 +18,33 @@
             ]
         },
         {
+            "name": "theme",
+            "type": "registry:item",
+            "title": "Theme",
+            "description": "Design tokens of the qiick apps (shared base, teal brand): colours for light, dark and high contrast, AI accent, control-size scale, focus ring, base and reduced-motion rules.",
+            "files": [
+                {
+                    "path": "src/css/qiick-theme.css",
+                    "type": "registry:file",
+                    "target": "resources/css/qiick-theme.css"
+                }
+            ]
+        },
+        {
+            "name": "theme-blue",
+            "type": "registry:item",
+            "title": "Theme: Blue preset",
+            "description": "Blue brand preset (Excubia): brand-only tokens over the shared base. Import after qiick-theme.css.",
+            "registryDependencies": ["@qiick/theme"],
+            "files": [
+                {
+                    "path": "src/css/qiick-theme-blue.css",
+                    "type": "registry:file",
+                    "target": "resources/css/qiick-theme-blue.css"
+                }
+            ]
+        },
+        {
             "name": "alert-dialog",
             "type": "registry:ui",
             "title": "Alert dialog",

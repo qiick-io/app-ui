@@ -4,7 +4,8 @@
  * `config/theme-presets.php` (`presets.blue`).
  *
  * A preset only sets brand colours (primary, ring, sidebar accents, the first
- * chart colours) over the shared base in theme.css. Import it after the theme:
+ * chart colours) over the shared base in qiick-theme.css (`@qiick/theme`).
+ * Installed with `npx shadcn add @qiick/theme-blue`; import it after the theme:
  * it lands in the same `base` layer, so it wins by source order and unlayered
  * app rules still override it.
  */

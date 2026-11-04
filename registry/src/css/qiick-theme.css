@@ -1,17 +1,19 @@
 /*
- * @qiick/app-theme — design tokens shared by the qiick apps.
+ * qiick app theme (`@qiick/theme`) — design tokens shared by the qiick apps.
  *
- * Extracted from externa-core `resources/css/app.css` (1.4.0). Import it once,
- * right after Tailwind, in the app's CSS entry:
+ * Extracted from externa-core `resources/css/app.css` (1.4.0). Installed with
+ * `npx shadcn add @qiick/theme`; import it once, right after Tailwind, in the
+ * app's CSS entry:
  *
  *     @import 'tailwindcss';
- *     @import '@qiick/app-theme/theme.css';
- *     @import '@qiick/app-theme/presets/blue.css'; // optional brand preset
+ *     @import './qiick-theme.css';
+ *     @import './qiick-theme-blue.css'; // optional brand preset (@qiick/theme-blue)
  *
  * The colour tokens (`:root`, `.dark`, high contrast) and the base rules live
  * in Tailwind's `base` cascade layer, so any unlayered app rule overrides them
  * without `!important`. `@theme` stays top level (Tailwind requires it). The
- * product accent is `--brand-primary` (teal when unset). See README.md.
+ * product accent is `--brand-primary` (teal when unset). Every token:
+ * https://github.com/qiick-io/app-ui/blob/develop/docs/theme-tokens.md
  */
 
 @custom-variant dark (&:is(.dark *));
