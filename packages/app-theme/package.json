@@ -1,0 +1,25 @@
+{
+    "name": "@qiick/app-theme",
+    "version": "0.0.0",
+    "description": "Design tokens shared by the qiick apps (Tailwind CSS v4).",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/qiick-io/app-ui.git",
+        "directory": "packages/app-theme"
+    },
+    "type": "module",
+    "files": [
+        "dist"
+    ],
+    "exports": {
+        "./theme.css": "./dist/theme.css"
+    },
+    "style": "./dist/theme.css",
+    "scripts": {
+        "build": "node --input-type=module -e \"import fs from 'node:fs'; fs.mkdirSync('dist', { recursive: true }); fs.copyFileSync('src/theme.css', 'dist/theme.css');\""
+    },
+    "peerDependencies": {
+        "tailwindcss": "^4.3.3"
+    }
+}

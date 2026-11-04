@@ -1,0 +1,20 @@
+{
+    "name": "@qiick/app-ui-registry",
+    "version": "0.0.0",
+    "private": true,
+    "description": "shadcn registry sources for the qiick apps. Built into ../public/r.",
+    "type": "module",
+    "scripts": {
+        "build": "shadcn build --output ../public/r"
+    },
+    "dependencies": {
+        "@inertiajs/react": "^2.3.28",
+        "clsx": "^2.1.1",
+        "react": "^19.3.0",
+        "tailwind-merge": "^3.7.0"
+    },
+    "devDependencies": {
+        "@types/react": "^19.3.0",
+        "shadcn": "^4.23.0"
+    }
+}
