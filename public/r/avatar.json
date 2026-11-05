@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "avatar",
+  "title": "Avatar",
+  "description": "Avatar with image and initials; `userId` gives each user a stable pastel swatch (theme `avatar-*` tokens).",
+  "dependencies": [
+    "@radix-ui/react-avatar"
+  ],
+  "registryDependencies": [
+    "@qiick/utils"
+  ],
+  "files": [
+    {
+      "path": "src/components/ui/avatar.tsx",
+      "content": "import * as AvatarPrimitive from \"@radix-ui/react-avatar\"\nimport * as React from \"react\"\n\nimport { cn } from \"@/lib/utils\"\n\n/**\n * Per-user pastel swatches (`--avatar-1` … `--avatar-10` in the theme), as\n * literal classes so Tailwind generates them.\n */\nconst AVATAR_TONES = [\n  \"bg-avatar-1\",\n  \"bg-avatar-2\",\n  \"bg-avatar-3\",\n  \"bg-avatar-4\",\n  \"bg-avatar-5\",\n  \"bg-avatar-6\",\n  \"bg-avatar-7\",\n  \"bg-avatar-8\",\n  \"bg-avatar-9\",\n  \"bg-avatar-10\",\n]\n\nfunction seedFromId(id: number | string): number | null {\n  if (typeof id === \"number\") {\n    return Number.isNaN(id) ? null : id\n  }\n\n  const trimmed = id.trim()\n\n  if (trimmed === \"\") {\n    return null\n  }\n\n  const asNumber = Number(trimmed)\n\n  if (Number.isFinite(asNumber)) {\n    return asNumber\n  }\n\n  let hash = 0\n\n  for (let i = 0; i < trimmed.length; i++) {\n    hash = (Math.imul(31, hash) + trimmed.charCodeAt(i)) | 0\n  }\n\n  return hash\n}\n\n/**\n * Stable swatch class for a user (or group) id: numeric ids use abs(id) % 10,\n * other strings are hashed first. Undefined when there is no id.\n */\nfunction avatarToneForId(id?: number | string | null): string | undefined {\n  if (id === undefined || id === null) {\n    return undefined\n  }\n\n  const seed = seedFromId(id)\n\n  return seed === null\n    ? AVATAR_TONES[0]\n    : AVATAR_TONES[Math.abs(seed) % AVATAR_TONES.length]\n}\n\nconst AvatarToneContext = React.createContext<string | undefined>(undefined)\n\nfunction Avatar({\n  className,\n  userId,\n  ...props\n}: React.ComponentProps<typeof AvatarPrimitive.Root> & {\n  /** Colours the fallback with the user's stable swatch. */\n  userId?: number | string | null\n}) {\n  return (\n    <AvatarToneContext.Provider value={avatarToneForId(userId)}>\n      <AvatarPrimitive.Root\n        data-slot=\"avatar\"\n        className={cn(\n          \"relative flex size-8 shrink-0 overflow-hidden rounded-full\",\n          className\n        )}\n        {...props}\n      />\n    </AvatarToneContext.Provider>\n  )\n}\n\nfunction AvatarImage({\n  className,\n  ...props\n}: React.ComponentProps<typeof AvatarPrimitive.Image>) {\n  return (\n    <AvatarPrimitive.Image\n      data-slot=\"avatar-image\"\n      className={cn(\"aspect-square size-full\", className)}\n      {...props}\n    />\n  )\n}\n\nfunction AvatarFallback({\n  className,\n  ...props\n}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {\n  const tone = React.useContext(AvatarToneContext)\n\n  return (\n    <AvatarPrimitive.Fallback\n      data-slot=\"avatar-fallback\"\n      className={cn(\n        \"flex size-full items-center justify-center rounded-full\",\n        tone ? `${tone} text-avatar-foreground` : \"bg-muted\",\n        className\n      )}\n      {...props}\n    />\n  )\n}\n\nexport { Avatar, AvatarImage, AvatarFallback, avatarToneForId }\n",
+      "type": "registry:ui"
+    }
+  ],
+  "type": "registry:ui"
+}

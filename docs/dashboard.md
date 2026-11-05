@@ -1,6 +1,6 @@
 # Dashboard
 
-**Registry:** `page-layout`, `toggle-group`, `table`, `page-empty-state`. `Card` is the shadcn `card` primitive (externa-core `components/ui/card.tsx`).
+**Registry:** `card`, `page-layout`, `toggle-group`, `table`, `page-empty-state`.
 
 **Copy from externa-core:** `pages/dashboard.tsx`.
 

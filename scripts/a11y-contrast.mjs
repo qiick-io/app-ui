@@ -488,6 +488,12 @@ const colourPairs = [
         bg: '--sidebar',
         need: 3.0,
     },
+    ...Array.from({ length: 10 }, (_, index) => ({
+        name: `avatar-foreground / avatar-${index + 1} (initials)`,
+        fg: '--avatar-foreground',
+        bg: `--avatar-${index + 1}`,
+        need: 4.5,
+    })),
 ];
 
 /** @type {Record<string, Record<string, string>>} */

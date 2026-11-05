@@ -2,12 +2,20 @@
     "a11y": {
         "breadcrumb": "Breadcrumb",
         "close": "Close",
+        "moreActions": "More actions",
         "saving": "Saving",
         "toggleSidebar": "Toggle sidebar"
+    },
+    "ai": {
+        "fabDescription": "Quick assistant drawer. Open the full page for history.",
+        "fabTitle": "New chat",
+        "openFullPage": "Open full page"
     },
     "common": {
         "cancel": "Cancel",
         "delete": "Delete",
+        "offline": "Offline",
+        "online": "Online",
         "pageRange": "{{from}}–{{to}} of {{total}}",
         "perPageOption": "{{count}} / page",
         "rowsPerPage": "Rows per page",
@@ -17,5 +25,39 @@
     },
     "confirmDestructive": {
         "typeToConfirm": "Type \"{{name}}\" to confirm"
+    },
+    "files": {
+        "card": {
+            "select": "Select {{name}}"
+        },
+        "loadMore": "Load more",
+        "loading": "Loading…",
+        "tags": {
+            "moreTags": "{{count}} more tags"
+        }
+    },
+    "realtime": {
+        "connected": "Realtime connected",
+        "connecting": "Connecting…",
+        "disabled": "Realtime off",
+        "offline": "Realtime offline"
+    },
+    "settings": {
+        "appearance": {
+            "dark": "Dark",
+            "light": "Light",
+            "system": "System"
+        }
+    },
+    "userMenu": {
+        "accessibility": "Accessibility",
+        "accessibilityOff": "Off",
+        "accessibilityOnCount": "{{count}} on",
+        "appearance": "Appearance",
+        "highContrast": "High contrast",
+        "language": "Language",
+        "logOut": "Log out",
+        "reduceMotion": "Reduce motion",
+        "settings": "Settings"
     }
 }

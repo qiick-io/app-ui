@@ -662,6 +662,170 @@
                     "type": "registry:hook"
                 }
             ]
+        },
+        {
+            "name": "card",
+            "type": "registry:ui",
+            "title": "Card",
+            "description": "Card surface with header, title, description, content and footer (dashboard cards).",
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/card.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "context-menu",
+            "type": "registry:ui",
+            "title": "Context menu",
+            "description": "Right-click menu, with the destructive item variant.",
+            "dependencies": ["@radix-ui/react-context-menu", "lucide-react"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/context-menu.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "avatar",
+            "type": "registry:ui",
+            "title": "Avatar",
+            "description": "Avatar with image and initials; `userId` gives each user a stable pastel swatch (theme `avatar-*` tokens).",
+            "dependencies": ["@radix-ui/react-avatar"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/avatar.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "drawer",
+            "type": "registry:ui",
+            "title": "Drawer",
+            "description": "Side drawer (vaul) with a scrolling body between a fixed header and footer.",
+            "dependencies": ["vaul"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/drawer.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "actions-overflow",
+            "type": "registry:component",
+            "title": "Actions overflow",
+            "description": "Toolbar actions that spill into a ⋯ menu only when space runs out (ResizeObserver), with a pinned slot that never spills.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/dropdown-menu",
+                "@qiick/header-icon-button",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/admin/actions-overflow.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "user-avatar",
+            "type": "registry:component",
+            "title": "User avatar",
+            "description": "UserAvatar with per-user colour initials and the online / offline presence dot, plus the realtime ConnectionDot.",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": ["@qiick/avatar", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/admin/user-avatar.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/realtime/connection-dot.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "nav-user",
+            "type": "registry:component",
+            "title": "Sidebar user menu",
+            "description": "Sidebar user menu: avatar with the connection dot, name, chevron; dropdown with settings, language, appearance, accessibility and logout.",
+            "dependencies": [
+                "@inertiajs/react",
+                "lucide-react",
+                "react-i18next"
+            ],
+            "registryDependencies": [
+                "@qiick/dropdown-menu",
+                "@qiick/sidebar",
+                "@qiick/use-mobile",
+                "@qiick/user-avatar"
+            ],
+            "files": [
+                {
+                    "path": "src/components/nav-user.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/user-menu-content.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/user-info.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "files-grid",
+            "type": "registry:component",
+            "title": "Files grid",
+            "description": "Files grid with file / folder cards: selection checkbox, context menu, tags, cover previews, infinite scroll with a Load more fallback.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/checkbox",
+                "@qiick/context-menu",
+                "@qiick/tooltip",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/admin/files/file-grid.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/admin/files/file-card.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "assistant-panel",
+            "type": "registry:component",
+            "title": "Assistant panel",
+            "description": "Assistant side panel: right drawer with thread and composer, toggled by ⌘J / Ctrl+J and the sidebar Assistant item.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/drawer",
+                "@qiick/header-icon-button"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ai/assistant-panel.tsx",
+                    "type": "registry:component"
+                }
+            ]
         }
     ]
 }

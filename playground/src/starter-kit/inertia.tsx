@@ -8,19 +8,34 @@ export function usePage() {
     return { props: { sidebarOpen: true } };
 }
 
+/* eslint-disable @typescript-eslint/no-unused-vars -- Inertia-only props are dropped, not passed to the DOM. */
 export function Link({
     href,
     children,
+    prefetch,
+    method,
+    as,
     ...props
-}: AnchorHTMLAttributes<HTMLAnchorElement> & {
-    href: string;
+}: Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
+    href: string | { url: string };
+    prefetch?: boolean;
+    method?: string;
+    as?: string;
 }) {
     return (
-        <a href={href} onClick={(event) => event.preventDefault()} {...props}>
+        <a
+            {...props}
+            href={typeof href === 'string' ? href : href.url}
+            onClick={(event) => {
+                event.preventDefault();
+                props.onClick?.(event);
+            }}
+        >
             {children}
         </a>
     );
 }
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 export const router = {
     visit: (url: string) => console.info('router.visit', url),

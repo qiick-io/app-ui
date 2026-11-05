@@ -2,12 +2,20 @@
     "a11y": {
         "breadcrumb": "Brotkrümelnavigation",
         "close": "Schließen",
+        "moreActions": "Weitere Aktionen",
         "saving": "Wird gespeichert",
         "toggleSidebar": "Seitenleiste umschalten"
+    },
+    "ai": {
+        "fabDescription": "Schnelle Assistenten-Schublade. Öffnen Sie die Vollseite für den Verlauf.",
+        "fabTitle": "Neuer Chat",
+        "openFullPage": "Ganze Seite öffnen"
     },
     "common": {
         "cancel": "Abbrechen",
         "delete": "Löschen",
+        "offline": "Offline",
+        "online": "Online",
         "pageRange": "{{from}}–{{to}} von {{total}}",
         "perPageOption": "{{count}} / Seite",
         "rowsPerPage": "Zeilen pro Seite",
@@ -17,5 +25,39 @@
     },
     "confirmDestructive": {
         "typeToConfirm": "Tippe „{{name}}“ zur Bestätigung"
+    },
+    "files": {
+        "card": {
+            "select": "{{name}} auswählen"
+        },
+        "loadMore": "Mehr laden",
+        "loading": "Laden…",
+        "tags": {
+            "moreTags": "{{count}} weitere Tags"
+        }
+    },
+    "realtime": {
+        "connected": "Realtime verbunden",
+        "connecting": "Verbinde…",
+        "disabled": "Realtime aus",
+        "offline": "Realtime offline"
+    },
+    "settings": {
+        "appearance": {
+            "dark": "Dunkel",
+            "light": "Hell",
+            "system": "System"
+        }
+    },
+    "userMenu": {
+        "accessibility": "Barrierefreiheit",
+        "accessibilityOff": "Aus",
+        "accessibilityOnCount": "{{count}} an",
+        "appearance": "Darstellung",
+        "highContrast": "Hoher Kontrast",
+        "language": "Sprache",
+        "logOut": "Abmelden",
+        "reduceMotion": "Bewegung reduzieren",
+        "settings": "Einstellungen"
     }
 }
