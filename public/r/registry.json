@@ -461,6 +461,20 @@
             ]
         },
         {
+            "name": "tabs",
+            "type": "registry:ui",
+            "title": "Tabs",
+            "description": "Tabs; variant=\"line\" for the views of one record under the header.",
+            "dependencies": ["class-variance-authority", "radix-ui"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/tabs.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
             "name": "tooltip",
             "type": "registry:ui",
             "title": "Tooltip",
