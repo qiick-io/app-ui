@@ -48,15 +48,20 @@ function withActionDuration(data?: ExternalToast): ExternalToast | undefined {
 const SUCCESS_MESSAGE_OPTIONS: ExternalToast = {
     position: 'top-center',
     richColors: false,
-    duration: 3000,
 };
 
+/** How long a success message stays, unless it has an action. */
+const SUCCESS_MESSAGE_DURATION = 3000;
+
 function success(message: ToastMessage, data?: ExternalToast): string | number {
+    const hasAction = data?.action !== undefined;
+
     return sonnerToast.success(
         message,
         withActionDuration({
             ...SUCCESS_MESSAGE_OPTIONS,
-            closeButton: data?.action !== undefined,
+            closeButton: hasAction,
+            ...(hasAction ? {} : { duration: SUCCESS_MESSAGE_DURATION }),
             ...data,
         }),
     );
