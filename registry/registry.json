@@ -858,6 +858,39 @@
                     "type": "registry:component"
                 }
             ]
+        },
+        {
+            "name": "sonner",
+            "type": "registry:ui",
+            "title": "Sonner (toasts)",
+            "description": "The shadcn sonner Toaster for the two toast channels: notifications top-right below the header with status colours, icon and close button; success messages placed top-centre by toast.success().",
+            "dependencies": ["lucide-react", "sonner"],
+            "files": [
+                {
+                    "path": "src/components/ui/sonner.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "toast",
+            "type": "registry:lib",
+            "title": "toast",
+            "description": "toast() for the whole app: success as a small top-centre message, error / warning / info as notifications; errors are also announced assertively to screen readers.",
+            "dependencies": ["sonner"],
+            "registryDependencies": ["@qiick/sonner"],
+            "files": [
+                {
+                    "path": "src/lib/toast.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/toast.ts"
+                },
+                {
+                    "path": "src/lib/live-announcer.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/live-announcer.ts"
+                }
+            ]
         }
     ]
 }
