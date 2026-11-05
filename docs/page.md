@@ -25,6 +25,25 @@ AppLayout breadcrumbs headerActions
 - Page actions go in `AppLayout`'s `headerActions`, in the header, **right-aligned**. The primary action (e.g. "New user", "New chat") is the **rightmost**, default variant, with a lucide icon before the label.
 - Icon-only actions use `HeaderIconButton` (tooltip = accessible label), `variant="outline"` in filter rows, `ghost` in the header.
 - Do not add a second page title or header inside the panel: the breadcrumb is the title.
+- A page without actions leaves the header's right side empty. Never fill it with views or filters.
+
+## Tabs or segmented control?
+
+Ask one question: **does the choice change the content of the page, or only which rows it shows?**
+
+- It changes the content (other sections, other components): these are **views**, shown as tabs under the header, each with its own URL. See [Views](#views-tabs-under-the-header).
+- It shows the same list or chart with other data: this is a **filter**, shown as a segmented control in the filter row. See [Segmented filters](#segmented-filters).
+
+Tabs cost one row of height. That is accepted for views, so nobody has to choose a layout. A page with a single view has no tabs.
+
+| Page                                           | Choice                           | Control                   |
+| ---------------------------------------------- | -------------------------------- | ------------------------- |
+| Excubia project: Overview, Findings, Runtime … | Views                            | Tabs under the header     |
+| Dashboard: Overview / Health (externa-core)    | Views                            | Tabs under the header     |
+| Users: active / trash                          | Filter (same list)               | Segmented, `filtersRight` |
+| Chat: Collections / Users (externa-core)       | Filter (same chat list)          | Segmented, `filtersRight` |
+| Dashboard period: 7 / 14 / 30 days             | Filter (same cards, other range) | Segmented, `filtersRight` |
+| Exceptions: open / resolved / ignored / all    | Filter (same table)              | Segmented, `filtersRight` |
 
 ## Views: tabs under the header
 
