@@ -1,10 +1,10 @@
 # Dashboard
 
-**Registry:** `card`, `stat-card`, `page-layout`, `toggle-group`, `table`, `page-empty-state`.
+**Registry:** `card`, `stat-card`, `page-layout`, `tabs`, `toggle-group`, `table`, `page-empty-state`.
 
 **Copy from externa-core:** `pages/dashboard.tsx`. Key numbers come from the shadcn [`dashboard-01` block](https://ui.shadcn.com/blocks) (`section-cards.tsx`).
 
-- `PageLayout scrollContent`; views switch with the segmented `ToggleGroup` in the header (Overview / Health), see [page.md](page.md).
+- `PageLayout scrollContent`. Views (Overview / Health) are line tabs under the header, each with its own URL; the period and scope filters are a segmented `ToggleGroup` in the filter row. See [page.md](page.md).
 - Cards are **flat** and sit in a grid: `grid grid-cols-1 gap-4 xl:grid-cols-12`, cards spanning columns (`xl:col-span-4`, `xl:col-span-5`, …).
 - Each card: `CardHeader className="pb-3"` with `CardTitle` and a **one-line** `CardDescription`, then `CardContent`. No extra icons or coloured headers.
 - Tables inside cards: `max-h-64 overflow-auto`, names `truncate font-medium` with a `font-mono text-xs text-muted-foreground` secondary line, numbers `text-right tabular-nums`.
