@@ -50,7 +50,7 @@ Tabs cost one row of height. That is accepted for views, so nobody has to choose
 Views are navigation, not actions: they never go in `headerActions`. A page with views (the Overview, Findings, Runtime … of one record, or the Overview / Health of a dashboard) uses line tabs **under the header**, above the `PageLayout`. The header keeps only the page actions.
 
 - `Tabs value={view} activationMode="manual"` with `className="overflow-x-auto border-b px-4"`, so the tabs scroll on narrow screens instead of being cut off. Inside, `TabsList variant="line"` with an `aria-label` that names the views.
-- One `TabsTrigger asChild` per view, wrapping the router `Link`, with a lucide icon then the label.
+- One `TabsTrigger asChild aria-controls={undefined}` per view, wrapping the router `Link`, with a lucide icon then the label. The page has no `TabsContent` (each view is its own page), so Radix's `aria-controls` would point at a missing id: axe reports it as critical (`aria-valid-attr-value`).
 - **Each view has its own URL** (`/projects/{slug}` for the first view, `/projects/{slug}/{view}` for the others), so back, links and bookmarks work. The server passes the view to the page; the page keeps no view state. Old `?view=` links redirect to the new URLs.
 - Links from other pages (dashboard, lists) go straight to the right view's URL.
 - A list row of a record opens the record (the row and its name link to the first view). Editing becomes a row action (`HeaderIconButton` with a pencil), next to the other row actions.
