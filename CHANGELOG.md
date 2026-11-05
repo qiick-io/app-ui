@@ -36,3 +36,8 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 - Vite playground that renders every registry item in light and dark mode (#1).
 - CI: lint, Prettier, typecheck, build, stale `public/r` check and Conventional Commits; Dependabot (#1).
 - `utils` registry item: `cn()` aware of the control-size spacing keys (#1).
+
+### Fixed
+
+- `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
+- Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.

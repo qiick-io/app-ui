@@ -15,9 +15,11 @@
  *
  *       { "resources/js/components/ui/button.tsx": "Why it differs" }
  *
+ * - A file of an installed item the app leaves out on purpose is listed the
+ *   same way; its reason says why it is missing.
  * - Fails on any unexplained difference (printing a diff), on a missing file of
- *   an installed item, and on an override that is not needed (file matches) or
- *   not a registry file.
+ *   an installed item without an override, and on an override that is not
+ *   needed (file matches) or not a registry file.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -172,7 +174,14 @@ for (const { name } of index.items) {
         const absolutePath = path.join(appRoot, appPath);
 
         if (!fs.existsSync(absolutePath)) {
-            errors.push(`${appPath} (${name}) is missing.`);
+            // An app may leave out a file of an installed item on purpose (e.g. the
+            // source app keeps that code elsewhere); the override gives the reason.
+            if (appPath in overrides) {
+                usedOverrides.add(appPath);
+            } else {
+                errors.push(`${appPath} (${name}) is missing.`);
+            }
+
             continue;
         }
 

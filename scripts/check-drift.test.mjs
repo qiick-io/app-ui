@@ -99,3 +99,32 @@ test('fails on an override that is no longer needed', () => {
     assert.equal(result.status, 1);
     assert.match(result.stderr, /matches the registry again/);
 });
+
+test('fails on a missing file of an installed item, passes once it is overridden', () => {
+    const { app, write } = makeApp();
+    const pageLayout = JSON.parse(
+        fs.readFileSync(path.join(root, 'public/r/page-layout.json'), 'utf8'),
+    );
+
+    write(
+        'resources/js/components/layout/page-layout.tsx',
+        pageLayout.files[0].content,
+    );
+
+    const failed = run(app);
+
+    assert.equal(failed.status, 1);
+    assert.match(failed.stderr, /list-per-page\.ts \(page-layout\) is missing/);
+
+    write(
+        'app-ui.overrides.json',
+        JSON.stringify({
+            'resources/js/lib/list-per-page.ts': 'Kept in another module',
+        }),
+    );
+
+    const passed = run(app);
+
+    assert.equal(passed.status, 0, passed.stderr);
+    assert.match(passed.stdout, /1 overridden/);
+});
