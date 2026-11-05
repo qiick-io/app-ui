@@ -6,6 +6,7 @@ import themeSource from '../../registry/src/css/qiick-theme.css?raw';
 import { AssistantScreen } from './screens/assistant';
 import { ChatScreen } from './screens/chat';
 import type { ScreenName } from './screens/demo-shell';
+import { FilesScreen } from './screens/files';
 import { SettingsScreen } from './screens/settings';
 import { UsersScreen } from './screens/users';
 
@@ -29,6 +30,7 @@ const SCREENS: Record<ScreenName, ComponentType> = {
     settings: SettingsScreen,
     assistant: AssistantScreen,
     chat: ChatScreen,
+    files: FilesScreen,
 };
 
 const demoModules = import.meta.glob<{ default: ComponentType }>(

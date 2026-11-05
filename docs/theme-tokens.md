@@ -100,6 +100,10 @@ Each `--x` also has a `--color-x` mapping, so `bg-x` / `text-x` utilities exist.
 
 `--ai`, `--ai-hover`, `--ai-foreground`, `--ai-bg`, `--ai-text`, `--ai-border`: violet-600/700, white, violet-50/800/500 in light; violet-300/200, ink-950, violet-900/200/400 in dark. Utilities: `bg-ai`, `text-ai-text`, `border-ai-border`, …
 
+### Avatar swatches (externa-core `lib/avatar-color.ts`)
+
+`--avatar-1` … `--avatar-10`: ten pastels for avatars without a picture, picked per user id by the `avatar` item (`userId`); `--avatar-foreground` (`#1f2937`) for the initials, ≥6:1 on every swatch. The same in every mode. Utilities: `bg-avatar-3`, `text-avatar-foreground`.
+
 ### Control size (externa-core #462, #472)
 
 One height per size for every control (button, icon button, input, input group, native select, select trigger and items, toggle and toggle group), on the antd scale. Exposed as spacing keys: `h-control`, `size-control-sm`, `min-w-control-lg`, …

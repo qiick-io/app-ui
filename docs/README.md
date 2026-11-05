@@ -1,6 +1,6 @@
 # qiick app UI patterns
 
-One page per pattern. Each names the registry item (when it exists) and the exact externa-core `develop` files to copy (paths under `resources/js/` unless noted). The playground renders the full screens: `npm run dev`, then `#/users`, `#/settings`, `#/assistant`, `#/chat` (add `/dark`).
+One page per pattern. Each names the registry item (when it exists) and the exact externa-core `develop` files to copy (paths under `resources/js/` unless noted). The playground renders the full screens: `npm run dev`, then `#/users`, `#/settings`, `#/assistant`, `#/chat`, `#/files` (add `/dark`).
 
 | Pattern                                                        | Page                                             |
 | -------------------------------------------------------------- | ------------------------------------------------ |

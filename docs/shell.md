@@ -2,19 +2,16 @@
 
 The frame around every authenticated page: a two-tone sidebar on the left, a framed content panel with a header on the right.
 
-**Registry:** `app-shell` (`AppShell`, `AppContent`, `AppSidebarHeader`, `Breadcrumbs`), `sidebar`, `tooltip`.
+**Registry:** `app-shell` (`AppShell`, `AppContent`, `AppSidebarHeader`, `Breadcrumbs`), `sidebar`, `nav-user` (`NavUser`, `UserMenuContent`, `UserInfo`), `user-avatar` (`UserAvatar`, `ConnectionDot`), `avatar`, `assistant-panel`, `tooltip`.
 
 **Copy from externa-core:**
 
-| What                                | File                                                                                                                                              |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Layout composition                  | `layouts/app/app-sidebar-layout.tsx`                                                                                                              |
-| Shell, inset panel, header          | `components/app-shell.tsx`, `components/app-content.tsx`, `components/app-sidebar-header.tsx`                                                     |
-| Sidebar content                     | `components/app-sidebar.tsx`                                                                                                                      |
-| Nav groups, footer links, user menu | `components/nav-main.tsx`, `components/nav-footer.tsx`, `components/nav-user.tsx`, `components/user-menu-content.tsx`, `components/user-info.tsx` |
-| Sidebar primitive (active bar)      | `components/ui/sidebar.tsx`                                                                                                                       |
-| Realtime dot on the avatar          | `components/realtime/connection-dot.tsx`                                                                                                          |
-| Presence dot                        | `components/admin/user-avatar.tsx`                                                                                                                |
+| What                       | File                                                                                          |
+| -------------------------- | --------------------------------------------------------------------------------------------- |
+| Layout composition         | `layouts/app/app-sidebar-layout.tsx`                                                          |
+| Shell, inset panel, header | `components/app-shell.tsx`, `components/app-content.tsx`, `components/app-sidebar-header.tsx` |
+| Sidebar content            | `components/app-sidebar.tsx`                                                                  |
+| Nav groups, footer links   | `components/nav-main.tsx`, `components/nav-footer.tsx`                                        |
 
 ## Rules
 
@@ -23,5 +20,32 @@ The frame around every authenticated page: a two-tone sidebar on the left, a fra
 - Active item: straight full-height bar on the left (`before:border-l-[3px] border-l-sidebar-primary`, square left corners) plus `bg-sidebar-accent` (externa-core #463). Do not use rounded pills or dots.
 - The Assistant item has the `sidebar-ai-nav` class (1px primary outline, shimmer on hover) and the `⌘J` hint. Clicking it opens `/ai`; ⌘J / Ctrl+J opens the side panel (see [chat-and-assistant.md](chat-and-assistant.md)).
 - Header: `h-16` (`h-12` when collapsed), sidebar trigger + breadcrumbs on the left, page actions on the right. Its bottom border runs edge to edge across the panel; it never floats.
-- User menu: avatar with the realtime connection dot, name, chevron; dropdown items share one left edge (icon column aligned).
-- Presence on avatars: `bg-success` when online, `bg-muted-foreground/30` when offline.
+- User menu (`nav-user`): avatar with the realtime connection dot, name, chevron; dropdown items share one left edge (icon column aligned). The app passes the user, its connection state (externa-core: `useEchoConnection()`), and `UserMenuContent` with its routes and hooks:
+
+    ```tsx
+    <NavUser user={user} connectionState={connectionState}>
+        <UserMenuContent
+            user={user}
+            settingsHref={edit()}
+            logoutHref={logout()}
+            onNavigate={cleanup}
+            onLogout={() => router.flushAll()}
+            locale={{
+                current: locale,
+                options: availableLocales,
+                onChange: changeLocale,
+            }}
+            appearance={{ value: appearance, onChange: updateAppearance }}
+            accessibility={{
+                highContrast,
+                reduceMotion,
+                onToggleHighContrast,
+                onToggleReduceMotion,
+            }}
+        />
+    </NavUser>
+    ```
+
+- Realtime dot (`ConnectionDot`): `bg-success` connected, pulsing `bg-warning` connecting, `bg-muted-foreground/40` off, `bg-destructive` offline.
+- Presence on avatars (`UserAvatar isOnline`): `bg-success` when online, `bg-muted-foreground/30` when offline.
+- Avatars without a picture use the user's stable swatch (`avatar` with `userId`, theme tokens `--avatar-1` … `--avatar-10`).

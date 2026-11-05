@@ -1,6 +1,5 @@
 import {
     BookOpen,
-    ChevronsUpDown,
     Database,
     Folder,
     FolderGit2,
@@ -13,11 +12,14 @@ import {
     UsersRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
+import { AssistantPanel } from '@/components/ai/assistant-panel';
 import { AppContent } from '@/components/app-content';
 import { AppShell } from '@/components/app-shell';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import type { BreadcrumbItemType } from '@/components/breadcrumbs';
+import { ChatComposer } from '@/components/layout/chat-layout';
 import {
     Sidebar,
     SidebarContent,
@@ -29,8 +31,9 @@ import {
     SidebarMenuItem,
     SidebarHeader,
 } from '@/components/ui/sidebar';
+import { DemoUserMenu } from './demo-user-menu';
 
-export type ScreenName = 'users' | 'settings' | 'assistant' | 'chat';
+export type ScreenName = 'users' | 'settings' | 'assistant' | 'chat' | 'files';
 
 type NavEntry = {
     title: string;
@@ -40,7 +43,7 @@ type NavEntry = {
 
 const PLATFORM: NavEntry[] = [
     { title: 'Dashboard', icon: LayoutGrid },
-    { title: 'Files', icon: Folder },
+    { title: 'Files', icon: Folder, screen: 'files' },
     { title: 'Collections', icon: Database },
     { title: 'Chat', icon: MessageCircle, screen: 'chat' },
     { title: 'Activity Log', icon: ScrollText },
@@ -160,24 +163,7 @@ export function DemoShell({
                                 ))}
                             </SidebarMenu>
                         </SidebarGroup>
-                        <SidebarMenu>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    size="lg"
-                                    className="text-sidebar-accent-foreground"
-                                >
-                                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
-                                        EM
-                                    </span>
-                                    <span className="grid flex-1 text-left text-sm leading-tight">
-                                        <span className="truncate font-medium">
-                                            Elena Marchetti
-                                        </span>
-                                    </span>
-                                    <ChevronsUpDown className="ml-auto size-4" />
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        </SidebarMenu>
+                        <DemoUserMenu />
                     </SidebarFooter>
                 </nav>
             </Sidebar>
@@ -195,6 +181,37 @@ export function DemoShell({
                     {children}
                 </div>
             </AppContent>
+            <DemoAssistantPanel enabled={active !== 'assistant'} />
         </AppShell>
+    );
+}
+
+/** ⌘J / Ctrl+J opens it on every screen but the Assistant page. */
+function DemoAssistantPanel({ enabled }: { enabled: boolean }) {
+    const [open, setOpen] = useState(false);
+    const [draft, setDraft] = useState('');
+
+    return (
+        <AssistantPanel
+            open={open}
+            onOpenChange={setOpen}
+            enabled={enabled}
+            onOpenWithPrompt={setDraft}
+            onOpenFullPage={() => (window.location.hash = '#/assistant')}
+            composer={
+                <ChatComposer
+                    value={draft}
+                    onChange={setDraft}
+                    onSubmit={() => setDraft('')}
+                    label="Message"
+                    sendLabel="Send"
+                    placeholder="Ask anything…"
+                />
+            }
+        >
+            <p className="text-sm text-muted-foreground">
+                Ask about your project.
+            </p>
+        </AssistantPanel>
     );
 }
