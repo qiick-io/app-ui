@@ -16,7 +16,7 @@ export type NavUserData = {
 
 /**
  * Avatar plus display name (and optional email) for the signed-in user. With
- * `connectionState`, the realtime connection dot sits on the avatar.
+ * `connectionState`, the realtime connection badge sits bottom-right.
  */
 export function UserInfo({
     user,
@@ -29,24 +29,25 @@ export function UserInfo({
 }) {
     return (
         <>
-            <span className="relative shrink-0">
-                <Avatar className="h-8 w-8 overflow-hidden rounded-full">
-                    {user.avatar ? (
-                        <AvatarImage src={user.avatar} alt={user.name} />
-                    ) : null}
-                    <AvatarFallback
-                        className={cn(
-                            avatarToneClass(user.id),
-                            'rounded-lg text-xs font-medium',
-                        )}
-                    >
-                        {getInitials(user.name, user.email)}
-                    </AvatarFallback>
-                </Avatar>
-                {connectionState ? (
-                    <ConnectionDot state={connectionState} />
+            <Avatar>
+                {user.avatar ? (
+                    <AvatarImage src={user.avatar} alt={user.name} />
                 ) : null}
-            </span>
+                <AvatarFallback
+                    className={cn(
+                        avatarToneClass(user.id),
+                        'text-xs font-medium',
+                    )}
+                >
+                    {getInitials(user.name, user.email)}
+                </AvatarFallback>
+                {connectionState ? (
+                    <ConnectionDot
+                        state={connectionState}
+                        className="ring-sidebar"
+                    />
+                ) : null}
+            </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
                 {showEmail && (
