@@ -726,8 +726,8 @@
             "name": "avatar",
             "type": "registry:ui",
             "title": "Avatar",
-            "description": "Avatar with image and initials; `userId` gives each user a stable pastel swatch (theme `avatar-*` tokens).",
-            "dependencies": ["@radix-ui/react-avatar"],
+            "description": "The shadcn avatar (sizes, AvatarBadge, AvatarGroup, AvatarGroupCount); `userId` gives each user a stable pastel swatch (theme `avatar-*` tokens).",
+            "dependencies": ["radix-ui"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -889,6 +889,204 @@
                     "path": "src/lib/live-announcer.ts",
                     "type": "registry:file",
                     "target": "resources/js/lib/live-announcer.ts"
+                }
+            ]
+        },
+        {
+            "name": "item",
+            "type": "registry:ui",
+            "title": "Item",
+            "description": "Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions: list rows with media, text and actions.",
+            "dependencies": ["class-variance-authority", "radix-ui"],
+            "registryDependencies": ["@qiick/separator", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/item.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "command",
+            "type": "registry:ui",
+            "title": "Command",
+            "description": "Command (cmdk): searchable lists with keyboard navigation; Popover + Command is the picker pattern.",
+            "dependencies": ["cmdk", "lucide-react"],
+            "registryDependencies": ["@qiick/dialog", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/command.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "message-scroller",
+            "type": "registry:ui",
+            "title": "Message scroller",
+            "description": "Scroll container of a conversation: sticks to the bottom while streaming, keeps the anchor when older messages load.",
+            "dependencies": ["@shadcn/react", "lucide-react", "shadcn"],
+            "registryDependencies": ["@qiick/button", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/message-scroller.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "attachment",
+            "type": "registry:ui",
+            "title": "Attachment",
+            "description": "File and image attachments in chat messages and composers.",
+            "dependencies": ["class-variance-authority", "radix-ui"],
+            "registryDependencies": ["@qiick/button", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/attachment.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "marker",
+            "type": "registry:ui",
+            "title": "Marker",
+            "description": "Status line in a conversation (typing, tool running, day separator), announced with role=status.",
+            "dependencies": ["class-variance-authority", "radix-ui"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/marker.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "chart",
+            "type": "registry:ui",
+            "title": "Chart",
+            "description": "ChartContainer, ChartTooltip and ChartLegend around recharts, coloured from a ChartConfig.",
+            "dependencies": ["recharts", "lucide-react"],
+            "registryDependencies": ["@qiick/card", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/chart.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "button-group",
+            "type": "registry:ui",
+            "title": "Button group",
+            "description": "ButtonGroup, ButtonGroupSeparator, ButtonGroupText: split buttons and toolbars.",
+            "dependencies": ["class-variance-authority", "radix-ui"],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/separator",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ui/button-group.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "kbd",
+            "type": "registry:ui",
+            "title": "Kbd",
+            "description": "Kbd and KbdGroup for keyboard shortcuts.",
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/kbd.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "scroll-area",
+            "type": "registry:ui",
+            "title": "Scroll area",
+            "description": "Scroll container with styled scrollbars.",
+            "dependencies": ["radix-ui"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/scroll-area.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "accordion",
+            "type": "registry:ui",
+            "title": "Accordion",
+            "description": "Accordion with single or multiple open items.",
+            "dependencies": ["radix-ui", "lucide-react"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/accordion.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "hover-card",
+            "type": "registry:ui",
+            "title": "Hover card",
+            "description": "Preview card on hover or focus.",
+            "dependencies": ["radix-ui"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/hover-card.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "aspect-ratio",
+            "type": "registry:ui",
+            "title": "Aspect ratio",
+            "description": "Fixed aspect ratio box for media.",
+            "dependencies": ["radix-ui"],
+            "files": [
+                {
+                    "path": "src/components/ui/aspect-ratio.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "carousel",
+            "type": "registry:ui",
+            "title": "Carousel",
+            "description": "Carousel on Embla, with keyboard and previous / next buttons.",
+            "dependencies": ["embla-carousel-react", "lucide-react"],
+            "registryDependencies": ["@qiick/button", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/carousel.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "popover",
+            "type": "registry:ui",
+            "title": "Popover",
+            "description": "The shadcn popover (with PopoverHeader, PopoverTitle, PopoverDescription); Popover + Command is the picker pattern.",
+            "dependencies": ["radix-ui"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/popover.tsx",
+                    "type": "registry:ui"
                 }
             ]
         }
