@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { avatarToneClass } from '@/lib/avatar-tone';
 import { cn } from '@/lib/utils';
 
 /**
@@ -49,9 +50,14 @@ export function UserAvatar({
 
     return (
         <span className={cn('relative shrink-0', className)}>
-            <Avatar userId={userId} className="size-7">
+            <Avatar className="size-7">
                 {imageUrl ? <AvatarImage src={imageUrl} alt={name} /> : null}
-                <AvatarFallback className="text-xs font-medium">
+                <AvatarFallback
+                    className={cn(
+                        avatarToneClass(userId),
+                        'text-xs font-medium',
+                    )}
+                >
                     {getInitials(name, email)}
                 </AvatarFallback>
             </Avatar>

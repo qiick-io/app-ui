@@ -2,6 +2,8 @@ import { UserAvatar } from '@/components/admin/user-avatar';
 import { ConnectionDot } from '@/components/realtime/connection-dot';
 import type { ConnectionState } from '@/components/realtime/connection-dot';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { avatarToneClass } from '@/lib/avatar-tone';
+import { cn } from '@/lib/utils';
 
 const STATES: ConnectionState[] = [
     'connected',
@@ -35,8 +37,13 @@ export default function UserAvatarDemo() {
                 {STATES.map((state) => (
                     <span key={state} className="flex items-center gap-2">
                         <span className="relative shrink-0">
-                            <Avatar userId={4}>
-                                <AvatarFallback className="text-xs font-medium">
+                            <Avatar>
+                                <AvatarFallback
+                                    className={cn(
+                                        avatarToneClass(4),
+                                        'text-xs font-medium',
+                                    )}
+                                >
                                     EM
                                 </AvatarFallback>
                             </Avatar>

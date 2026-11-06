@@ -726,7 +726,7 @@
             "name": "avatar",
             "type": "registry:ui",
             "title": "Avatar",
-            "description": "The shadcn avatar (sizes, AvatarBadge, AvatarGroup, AvatarGroupCount); `userId` gives each user a stable pastel swatch (theme `avatar-*` tokens).",
+            "description": "The shadcn avatar, unchanged (sizes, AvatarBadge, AvatarGroup, AvatarGroupCount). Per-user colour comes from `avatarToneClass()` (avatar-tone item) passed to AvatarFallback.",
             "dependencies": ["radix-ui"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
@@ -775,7 +775,11 @@
             "title": "User avatar",
             "description": "UserAvatar with per-user colour initials and the online / offline presence dot, plus the realtime ConnectionDot.",
             "dependencies": ["react-i18next"],
-            "registryDependencies": ["@qiick/avatar", "@qiick/utils"],
+            "registryDependencies": [
+                "@qiick/avatar",
+                "@qiick/avatar-tone",
+                "@qiick/utils"
+            ],
             "files": [
                 {
                     "path": "src/components/admin/user-avatar.tsx",
@@ -1104,6 +1108,19 @@
                     "path": "src/css/shadcn-tailwind.css",
                     "type": "registry:file",
                     "target": "resources/css/shadcn-tailwind.css"
+                }
+            ]
+        },
+        {
+            "name": "avatar-tone",
+            "type": "registry:lib",
+            "title": "Avatar tone",
+            "description": "avatarToneClass(id): the theme's avatar-1 … avatar-10 swatch classes for a user id, passed to AvatarFallback (and a sender name) where users must be told apart.",
+            "files": [
+                {
+                    "path": "src/lib/avatar-tone.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/avatar-tone.ts"
                 }
             ]
         }
