@@ -5,3 +5,4 @@ dist/
 package-lock.json
 CHANGELOG.md
 .github/assets/
+registry/src/css/shadcn-tailwind.css

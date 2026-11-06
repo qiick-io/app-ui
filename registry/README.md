@@ -7,7 +7,7 @@ shadcn registry with the shared admin UI of the qiick apps, extracted from exter
 The items target apps on the Laravel React starter kit (Inertia + React 19 + Tailwind v4), like Externa and Excubia:
 
 - `components.json` with the starter kit aliases (`@/components`, `@/components/ui`, `@/lib`, `@/hooks`) and the `@qiick` registry (see the root README).
-- The `@qiick/theme` item (plus a preset such as `@qiick/theme-blue`) imported in the app CSS, plus `tw-animate-css` and `shadcn/tailwind.css` (`@import "shadcn/tailwind.css";`, from the `shadcn` package, as `shadcn init` sets up: the `scroll-fade` and `shimmer` utilities used by `message-scroller`). See [`docs/theme-tokens.md`](../docs/theme-tokens.md).
+- The `@qiick/theme` item (plus a preset such as `@qiick/theme-blue`) imported in the app CSS, plus `tw-animate-css` and the `@qiick/shadcn-utilities` item (`resources/css/shadcn-tailwind.css`, a copy of `shadcn/tailwind.css`: the `scroll-fade` and `shimmer` utilities used by `message-scroller`), imported after `tailwindcss`. The copy keeps the `shadcn` CLI package and its dev-only audit findings out of the apps. See [`docs/theme-tokens.md`](../docs/theme-tokens.md).
 - The `sidebarOpen` shared Inertia prop (starter kit default), for `app-shell`.
 - `react-i18next` set up, with the keys in [`locales/`](locales) merged into the app's locale files (en, it, de). Every visible or accessible string in the items goes through these keys.
 - `<TooltipProvider delayDuration={0}>` around the app (starter kit `app.tsx`), for `tooltip`, `sidebar` and everything built on them.
