@@ -925,8 +925,12 @@
             "type": "registry:ui",
             "title": "Message scroller",
             "description": "Scroll container of a conversation: sticks to the bottom while streaming, keeps the anchor when older messages load.",
-            "dependencies": ["@shadcn/react", "lucide-react", "shadcn"],
-            "registryDependencies": ["@qiick/button", "@qiick/utils"],
+            "dependencies": ["@shadcn/react", "lucide-react"],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/shadcn-utilities",
+                "@qiick/utils"
+            ],
             "files": [
                 {
                     "path": "src/components/ui/message-scroller.tsx",
@@ -1087,6 +1091,19 @@
                 {
                     "path": "src/components/ui/popover.tsx",
                     "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "shadcn-utilities",
+            "type": "registry:item",
+            "title": "shadcn utilities",
+            "description": "shadcn/tailwind.css (shadcn 4.23.0): data-* variants, scroll-fade, shimmer, no-scrollbar and the accordion keyframes. Import it after tailwindcss in the app CSS.",
+            "files": [
+                {
+                    "path": "src/css/shadcn-tailwind.css",
+                    "type": "registry:file",
+                    "target": "resources/css/shadcn-tailwind.css"
                 }
             ]
         }

@@ -5,11 +5,11 @@
   "description": "Scroll container of a conversation: sticks to the bottom while streaming, keeps the anchor when older messages load.",
   "dependencies": [
     "@shadcn/react",
-    "lucide-react",
-    "shadcn"
+    "lucide-react"
   ],
   "registryDependencies": [
     "@qiick/button",
+    "@qiick/shadcn-utilities",
     "@qiick/utils"
   ],
   "files": [
