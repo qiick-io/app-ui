@@ -1,0 +1,23 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "user-hover-card",
+  "title": "User hover card",
+  "description": "A user card on hover or focus (HoverCard): avatar, name, role badge, online / offline. Presence comes in as a prop.",
+  "dependencies": [
+    "react-i18next"
+  ],
+  "registryDependencies": [
+    "@qiick/user-avatar",
+    "@qiick/badge",
+    "@qiick/hover-card",
+    "@qiick/utils"
+  ],
+  "files": [
+    {
+      "path": "src/components/user-hover-card.tsx",
+      "content": "import type { ReactNode } from 'react';\nimport { useTranslation } from 'react-i18next';\nimport { UserAvatar } from '@/components/admin/user-avatar';\nimport { Badge } from '@/components/ui/badge';\nimport {\n    HoverCard,\n    HoverCardContent,\n    HoverCardTrigger,\n} from '@/components/ui/hover-card';\nimport { cn } from '@/lib/utils';\n\n/** The user a card describes; `name` is the display name. */\nexport type UserHoverCardUser = {\n    id: number | string;\n    name: string;\n    email?: string;\n    avatar?: string | null;\n    /** Role label shown as a badge (already translated). */\n    role?: string | null;\n};\n\ntype UserHoverCardProps = {\n    user: UserHoverCardUser;\n    /** Presence: shows Online / Offline. Omit when the app has no presence. */\n    isOnline?: boolean;\n    /** The trigger: an author name, a mention, an avatar. */\n    children: ReactNode;\n};\n\n/**\n * A user's card on hover or focus, on shadcn `HoverCard`: avatar, name, role\n * and whether they are online. Wraps author names and mentions (externa-core\n * chat). The app passes presence (`isOnline`), read from its realtime channel.\n */\nexport function UserHoverCard({\n    user,\n    isOnline,\n    children,\n}: UserHoverCardProps) {\n    const { t } = useTranslation();\n\n    return (\n        <HoverCard openDelay={300} closeDelay={100}>\n            <HoverCardTrigger asChild>{children}</HoverCardTrigger>\n            <HoverCardContent\n                align=\"start\"\n                className=\"w-64\"\n                data-test=\"user-hover-card\"\n            >\n                <div className=\"flex items-center gap-3\">\n                    <UserAvatar\n                        userId={user.id}\n                        name={user.name}\n                        email={user.email}\n                        imageUrl={user.avatar}\n                        size=\"lg\"\n                    />\n                    <div className=\"flex min-w-0 flex-col gap-1\">\n                        <span className=\"truncate text-sm font-medium\">\n                            {user.name}\n                        </span>\n                        <div className=\"flex flex-wrap items-center gap-1.5\">\n                            {user.role ? (\n                                <Badge variant=\"secondary\">{user.role}</Badge>\n                            ) : null}\n                            {isOnline === undefined ? null : (\n                                <span\n                                    className=\"flex items-center gap-1 text-xs text-muted-foreground\"\n                                    data-test=\"user-hover-card-presence\"\n                                >\n                                    <span\n                                        aria-hidden\n                                        className={cn(\n                                            'size-2 rounded-full',\n                                            isOnline\n                                                ? 'bg-success'\n                                                : 'bg-muted-foreground',\n                                        )}\n                                    />\n                                    {isOnline\n                                        ? t('common.online')\n                                        : t('common.offline')}\n                                </span>\n                            )}\n                        </div>\n                    </div>\n                </div>\n            </HoverCardContent>\n        </HoverCard>\n    );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}
