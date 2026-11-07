@@ -4,6 +4,8 @@ const VARIANTS = [
     'default',
     'secondary',
     'outline',
+    'ghost',
+    'link',
     'muted',
     'success',
     'warning',
