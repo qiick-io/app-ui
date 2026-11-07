@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "spinner",
+  "title": "Spinner",
+  "description": "shadcn spinner (Loader2 with role=status) with a translated label.",
+  "dependencies": [
+    "lucide-react",
+    "react-i18next"
+  ],
+  "registryDependencies": [
+    "@qiick/utils"
+  ],
+  "files": [
+    {
+      "path": "src/components/ui/spinner.tsx",
+      "content": "import { Loader2Icon } from \"lucide-react\"\nimport { useTranslation } from \"react-i18next\"\n\nimport { cn } from \"@/lib/utils\"\n\nfunction Spinner({ className, ...props }: React.ComponentProps<\"svg\">) {\n  const { t } = useTranslation()\n\n  return (\n    <Loader2Icon\n      role=\"status\"\n      aria-label={t(\"a11y.loading\")}\n      className={cn(\"size-4 animate-spin\", className)}\n      {...props}\n    />\n  )\n}\n\nexport { Spinner }\n",
+      "type": "registry:ui"
+    }
+  ],
+  "type": "registry:ui"
+}

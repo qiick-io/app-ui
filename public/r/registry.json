@@ -90,7 +90,7 @@
             "name": "bubble",
             "type": "registry:ui",
             "title": "Bubble",
-            "description": "Chat bubble with muted, ghost, destructive, \u2026 variants.",
+            "description": "Chat bubble with muted, ghost, destructive, … variants.",
             "dependencies": ["class-variance-authority", "radix-ui"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
@@ -373,6 +373,20 @@
             ]
         },
         {
+            "name": "spinner",
+            "type": "registry:ui",
+            "title": "Spinner",
+            "description": "shadcn spinner (Loader2 with role=status) with a translated label.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/spinner.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
             "name": "input-otp",
             "type": "registry:ui",
             "title": "Input OTP",
@@ -579,6 +593,82 @@
             ]
         },
         {
+            "name": "data-table",
+            "type": "registry:component",
+            "title": "Data table",
+            "description": "Server-driven TanStack DataTable (sort, filter and paging done by the server), DataTableColumnHeader (sort dropdown), DataTableFacetedFilter (Popover + Command facet), selection and expand columns; pagination footer from page-layout.",
+            "dependencies": [
+                "@tanstack/react-table",
+                "lucide-react",
+                "react-i18next"
+            ],
+            "registryDependencies": [
+                "@qiick/page-layout",
+                "@qiick/table",
+                "@qiick/button",
+                "@qiick/checkbox",
+                "@qiick/empty",
+                "@qiick/dropdown-menu",
+                "@qiick/badge",
+                "@qiick/command",
+                "@qiick/popover",
+                "@qiick/separator",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/admin/data-table.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/admin/data-table-column-header.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/admin/data-table-faceted-filter.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "paginated-multi-select",
+            "type": "registry:component",
+            "title": "Paginated multi-select",
+            "description": "Server-searched picker on Popover + Command: debounced search, next page on scroll, Badge chips, user rows with avatar; multiple={false} is the single-select picker.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/avatar",
+                "@qiick/avatar-tone",
+                "@qiick/badge",
+                "@qiick/button",
+                "@qiick/command",
+                "@qiick/popover",
+                "@qiick/spinner",
+                "@qiick/user-avatar",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/admin/paginated-multi-select.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "removable-badge",
+            "type": "registry:component",
+            "title": "Removable badge",
+            "description": "Removable tag chip: a secondary Badge with a ghost Button size=\"icon-xs\" and its own remove label.",
+            "dependencies": ["lucide-react"],
+            "registryDependencies": ["@qiick/badge", "@qiick/button"],
+            "files": [
+                {
+                    "path": "src/components/removable-badge.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
             "name": "page-empty-state",
             "type": "registry:component",
             "title": "Page empty state",
@@ -762,7 +852,7 @@
             "name": "actions-overflow",
             "type": "registry:component",
             "title": "Actions overflow",
-            "description": "Toolbar actions that spill into a \u22ef menu only when space runs out (ResizeObserver), with a pinned slot that never spills.",
+            "description": "Toolbar actions that spill into a ⋯ menu only when space runs out (ResizeObserver), with a pinned slot that never spills.",
             "dependencies": ["lucide-react", "react-i18next"],
             "registryDependencies": [
                 "@qiick/button",
@@ -795,6 +885,25 @@
                 },
                 {
                     "path": "src/components/realtime/connection-dot.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "user-hover-card",
+            "type": "registry:component",
+            "title": "User hover card",
+            "description": "A user card on hover or focus (HoverCard): avatar, name, role badge, online / offline. Presence comes in as a prop.",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": [
+                "@qiick/user-avatar",
+                "@qiick/badge",
+                "@qiick/hover-card",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/user-hover-card.tsx",
                     "type": "registry:component"
                 }
             ]
@@ -858,7 +967,7 @@
             "name": "assistant-panel",
             "type": "registry:component",
             "title": "Assistant panel",
-            "description": "Assistant side panel: right drawer with thread and composer, toggled by \u2318J / Ctrl+J and the sidebar Assistant item.",
+            "description": "Assistant side panel: right drawer with thread and composer, toggled by ⌘J / Ctrl+J and the sidebar Assistant item.",
             "dependencies": ["lucide-react", "react-i18next"],
             "registryDependencies": [
                 "@qiick/drawer",

@@ -2,8 +2,10 @@
     "a11y": {
         "breadcrumb": "Breadcrumb",
         "close": "Close",
+        "loading": "Loading",
         "moreActions": "More actions",
         "saving": "Saving",
+        "search": "Search",
         "toggleSidebar": "Toggle sidebar"
     },
     "ai": {
@@ -13,7 +15,9 @@
     },
     "common": {
         "cancel": "Cancel",
+        "clearFilters": "Clear filters",
         "delete": "Delete",
+        "noResults": "No results.",
         "offline": "Offline",
         "online": "Online",
         "pageRange": "{{from}}–{{to}} of {{total}}",
@@ -21,7 +25,9 @@
         "rowsPerPage": "Rows per page",
         "save": "Save",
         "saved": "Saved",
-        "selectedCount": "{{count}} selected"
+        "selectedCount": "{{count}} selected",
+        "sortAscending": "Sort ascending",
+        "sortDescending": "Sort descending"
     },
     "confirmDestructive": {
         "typeToConfirm": "Type \"{{name}}\" to confirm"
@@ -35,6 +41,13 @@
         "tags": {
             "moreTags": "{{count}} more tags"
         }
+    },
+    "picker": {
+        "clearSelection": "Clear selection",
+        "loading": "Loading…",
+        "noResults": "No results.",
+        "placeholder": "Select…",
+        "search": "Search…"
     },
     "realtime": {
         "connected": "Realtime connected",

@@ -1,14 +1,20 @@
+import type { ColumnDef } from '@tanstack/react-table';
+import type { RowSelectionState } from '@tanstack/react-table';
 import { ArrowDownAZ, Pencil, Trash2, UserPlus, Users } from 'lucide-react';
 import { useState } from 'react';
-import { DataTableToolbar } from '@/components/admin/data-table-toolbar';
 import {
-    PageLayout,
-    TablePanel,
-    TablePaginationFooter,
-} from '@/components/layout/page-layout';
+    DataTable,
+    dataTableSelectColumn,
+} from '@/components/admin/data-table';
+import type { DataTableSort } from '@/components/admin/data-table';
+import { DataTableColumnHeader } from '@/components/admin/data-table-column-header';
+import { DataTableToolbar } from '@/components/admin/data-table-toolbar';
+import { HeaderIconButton } from '@/components/admin/header-icon-button';
+import { UserAvatar } from '@/components/admin/user-avatar';
+import { PageLayout } from '@/components/layout/page-layout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { ButtonGroup } from '@/components/ui/button-group';
 import {
     Select,
     SelectContent,
@@ -16,14 +22,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { DemoShell } from './demo-shell';
 
@@ -80,7 +78,15 @@ const ROLES = [
     'reviewer',
 ];
 
-const USERS = FIRST_NAMES.map((first, index) => ({
+type DemoUser = {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+    isActive: boolean;
+};
+
+const USERS: DemoUser[] = FIRST_NAMES.map((first, index) => ({
     id: index + 1,
     name: `${first} ${LAST_NAMES[index]}`,
     email: `${first.toLowerCase()}.${LAST_NAMES[index].toLowerCase().replace("'", '')}@example.com`,
@@ -103,17 +109,100 @@ const PAGINATION = {
     ],
 };
 
-/** externa-core `/users` (pages/admin/users/index.tsx). */
+const COLUMNS: ColumnDef<DemoUser>[] = [
+    dataTableSelectColumn<DemoUser>({
+        selectAllLabel: 'Select all',
+        getRowLabel: (user) => `Select ${user.name}`,
+    }),
+    {
+        accessorKey: 'name',
+        enableSorting: true,
+        meta: { cellClassName: 'font-medium' },
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Name" />
+        ),
+        cell: ({ row }) => (
+            <span className="inline-flex items-center gap-2">
+                <UserAvatar
+                    userId={row.original.id}
+                    name={row.original.name}
+                    isOnline={row.original.id % 3 === 0}
+                />
+                {row.original.name}
+            </span>
+        ),
+    },
+    {
+        accessorKey: 'email',
+        enableSorting: true,
+        meta: { cellClassName: 'text-muted-foreground' },
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Email" />
+        ),
+    },
+    {
+        id: 'roles',
+        header: 'Roles',
+        cell: ({ row }) => (
+            <Badge variant="secondary">{row.original.role}</Badge>
+        ),
+    },
+    {
+        id: 'status',
+        header: 'Status',
+        cell: ({ row }) => (
+            <Badge variant={row.original.isActive ? 'success' : 'muted'}>
+                {row.original.isActive ? 'Active' : 'Inactive'}
+            </Badge>
+        ),
+    },
+    {
+        id: 'actions',
+        header: 'Actions',
+        meta: {
+            headerClassName: 'w-[1%] text-right',
+            cellClassName: 'text-right',
+            isRowClickIgnored: true,
+        },
+        // Row actions: outline icon buttons in a ButtonGroup, delete last in the destructive colour.
+        cell: ({ row }) => (
+            <ButtonGroup aria-label="Actions" className="ml-auto">
+                <HeaderIconButton
+                    variant="outline"
+                    size="icon-sm"
+                    label={`Edit ${row.original.name}`}
+                >
+                    <Pencil className="size-3.5" />
+                </HeaderIconButton>
+                <HeaderIconButton
+                    variant="outline"
+                    size="icon-sm"
+                    className="text-destructive hover:text-destructive"
+                    label={`Delete ${row.original.name}`}
+                >
+                    <Trash2 className="size-3.5" />
+                </HeaderIconButton>
+            </ButtonGroup>
+        ),
+    },
+];
+
+/** externa-core `/users` (pages/admin/users/index.tsx): the server-driven DataTable. */
 export function UsersScreen() {
     const [search, setSearch] = useState('');
-    const [selected, setSelected] = useState<number[]>([]);
+    const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+    const [sort, setSort] = useState<DataTableSort>({
+        id: 'name',
+        direction: 'asc',
+    });
+    const selectedCount = Object.keys(rowSelection).length;
+    // The server sorts in the apps; the playground sorts its fixed page.
+    const rows = [...USERS].sort((first, second) => {
+        const key = sort.id as 'name' | 'email';
+        const order = first[key].localeCompare(second[key]);
 
-    const toggle = (id: number, isChecked: boolean) =>
-        setSelected((current) =>
-            isChecked
-                ? [...current, id]
-                : current.filter((selectedId) => selectedId !== id),
-        );
+        return sort.direction === 'asc' ? order : -order;
+    });
 
     return (
         <DemoShell
@@ -132,8 +221,8 @@ export function UsersScreen() {
                         search={search}
                         onSearchChange={setSearch}
                         searchPlaceholder="Search users…"
-                        selectedCount={selected.length}
-                        onClearSelection={() => setSelected([])}
+                        selectedCount={selectedCount}
+                        onClearSelection={() => setRowSelection({})}
                         bulkActions={
                             <Button type="button" variant="destructive-outline">
                                 Delete
@@ -142,9 +231,14 @@ export function UsersScreen() {
                     />
                 }
                 filtersRight={
-                    selected.length > 0 ? null : (
+                    selectedCount > 0 ? null : (
                         <div className="flex items-center gap-1.5">
-                            <Select defaultValue="created_at">
+                            <Select
+                                value={sort.id}
+                                onValueChange={(id) =>
+                                    setSort((current) => ({ ...current, id }))
+                                }
+                            >
                                 <SelectTrigger
                                     aria-label="Sort by"
                                     className="w-[7.5rem]"
@@ -152,9 +246,7 @@ export function UsersScreen() {
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent align="end">
-                                    <SelectItem value="created_at">
-                                        Created
-                                    </SelectItem>
+                                    <SelectItem value="name">Name</SelectItem>
                                     <SelectItem value="email">Email</SelectItem>
                                 </SelectContent>
                             </Select>
@@ -162,7 +254,16 @@ export function UsersScreen() {
                                 type="button"
                                 variant="outline"
                                 size="icon"
-                                aria-label="Sort descending"
+                                aria-label="Reverse sort"
+                                onClick={() =>
+                                    setSort((current) => ({
+                                        ...current,
+                                        direction:
+                                            current.direction === 'asc'
+                                                ? 'desc'
+                                                : 'asc',
+                                    }))
+                                }
                             >
                                 <ArrowDownAZ className="size-4" />
                             </Button>
@@ -174,14 +275,12 @@ export function UsersScreen() {
                                 <ToggleGroupItem
                                     value="active"
                                     aria-label="Active users"
-                                    className="px-2.5"
                                 >
                                     <Users className="size-4" />
                                 </ToggleGroupItem>
                                 <ToggleGroupItem
                                     value="trashed"
                                     aria-label="Trash"
-                                    className="px-2.5"
                                 >
                                     <Trash2 className="size-4" />
                                 </ToggleGroupItem>
@@ -190,100 +289,17 @@ export function UsersScreen() {
                     )
                 }
             >
-                <TablePanel
-                    footer={<TablePaginationFooter pagination={PAGINATION} />}
-                >
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-10">
-                                    <Checkbox
-                                        aria-label="Select all"
-                                        checked={
-                                            selected.length === USERS.length
-                                        }
-                                        onCheckedChange={(checked) =>
-                                            setSelected(
-                                                checked === true
-                                                    ? USERS.map(
-                                                          (user) => user.id,
-                                                      )
-                                                    : [],
-                                            )
-                                        }
-                                    />
-                                </TableHead>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Roles</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">
-                                    Actions
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {USERS.map((user) => (
-                                <TableRow key={user.id}>
-                                    <TableCell>
-                                        <Checkbox
-                                            aria-label={`Select ${user.name}`}
-                                            checked={selected.includes(user.id)}
-                                            onCheckedChange={(checked) =>
-                                                toggle(
-                                                    user.id,
-                                                    checked === true,
-                                                )
-                                            }
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <span className="flex items-center gap-2 font-medium">
-                                            <span className="flex size-6 items-center justify-center rounded-full bg-muted text-xs">
-                                                {user.name
-                                                    .split(' ')
-                                                    .map((part) => part[0])
-                                                    .join('')}
-                                            </span>
-                                            {user.name}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell className="text-muted-foreground">
-                                        {user.email}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="secondary">
-                                            {user.role}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge
-                                            variant={
-                                                user.isActive
-                                                    ? 'success'
-                                                    : 'muted'
-                                            }
-                                        >
-                                            {user.isActive
-                                                ? 'Active'
-                                                : 'Inactive'}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon-sm"
-                                            aria-label={`Edit ${user.name}`}
-                                        >
-                                            <Pencil />
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TablePanel>
+                <DataTable
+                    columns={COLUMNS}
+                    data={rows}
+                    getRowId={(user) => String(user.id)}
+                    sort={sort}
+                    onSortChange={setSort}
+                    rowSelection={rowSelection}
+                    onRowSelectionChange={setRowSelection}
+                    pagination={PAGINATION}
+                    onRowClick={() => undefined}
+                />
             </PageLayout>
         </DemoShell>
     );

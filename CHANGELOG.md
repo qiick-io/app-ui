@@ -19,6 +19,7 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Added
 
+- Wave 2 patterns from externa-core: `data-table` (server-driven TanStack `DataTable`, `DataTableColumnHeader`, `DataTableFacetedFilter`, select / expand columns; adds `@tanstack/react-table`), `paginated-multi-select` (server-searched Popover + Command picker, single-select with `multiple={false}`), `removable-badge` (tag chip with a labelled remove button), `user-hover-card` (user card on hover, presence as a prop) and `spinner`. Locale keys `common.noResults`, `common.sortAscending`, `common.sortDescending`, `common.clearFilters`, `a11y.search`, `a11y.loading`, `picker.*`. The playground `#/users` screen is on `DataTable` with `ButtonGroup` row actions; `docs/list-page.md` describes both.
 - `input-otp` and `slider` items (shadcn new-york-v4), with playground demos.
 - `tabs` item: the shadcn new-york v4 tabs with the `line` variant, for page views (`docs/page.md`). Taken from Excubia, which tried it first.
 - `stat-card` item (`StatCard`, `trendOf`): key numbers from the shadcn `dashboard-01` block (section cards), documented in `docs/dashboard.md` (#15).
