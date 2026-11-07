@@ -1240,6 +1240,287 @@
                     "target": "resources/js/lib/avatar-tone.ts"
                 }
             ]
+        },
+        {
+            "name": "collapsible",
+            "type": "registry:ui",
+            "title": "Collapsible",
+            "description": "shadcn collapsible; CollapsibleContent animates open and closed (tw-animate-css collapsible keyframes).",
+            "dependencies": ["radix-ui"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/collapsible.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "progress",
+            "type": "registry:ui",
+            "title": "Progress",
+            "description": "shadcn progress bar.",
+            "dependencies": ["radix-ui"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/progress.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "clipboard",
+            "type": "registry:lib",
+            "title": "Clipboard",
+            "description": "copyTextToClipboard() with an execCommand fallback (focus outside the document, insecure context) and readTextFromClipboard().",
+            "files": [
+                {
+                    "path": "src/lib/clipboard.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/clipboard.ts"
+                }
+            ]
+        },
+        {
+            "name": "ai-message-parts",
+            "type": "registry:lib",
+            "title": "AI message parts",
+            "description": "The parts model of an AI answer (reasoning, text, tool, provider tool, sources, usage) and the reducers that build it from the laravel/ai stream events or the stored steps.",
+            "files": [
+                {
+                    "path": "src/lib/ai-message-parts.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/ai-message-parts.ts"
+                }
+            ]
+        },
+        {
+            "name": "shimmer",
+            "type": "registry:component",
+            "title": "Shimmer",
+            "description": "AI Elements Shimmer: text that shimmers while something runs (needs shadcn-utilities).",
+            "registryDependencies": ["@qiick/shadcn-utilities", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ai-elements/shimmer.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "reasoning",
+            "type": "registry:component",
+            "title": "Reasoning",
+            "description": "AI Elements Reasoning: the model thinking, open while it streams, collapsed with \"Thought for N seconds\" after.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/collapsible",
+                "@qiick/shimmer",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ai-elements/reasoning.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/ai-elements/use-open-state.ts",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "chain-of-thought",
+            "type": "registry:component",
+            "title": "Chain of thought",
+            "description": "AI Elements ChainOfThought: several tool steps in a row as one collapsible list.",
+            "dependencies": ["lucide-react"],
+            "registryDependencies": [
+                "@qiick/badge",
+                "@qiick/collapsible",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ai-elements/chain-of-thought.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/ai-elements/use-open-state.ts",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "code-block",
+            "type": "registry:component",
+            "title": "Code block",
+            "description": "AI Elements CodeBlock: shiki-highlighted code (light and dark) with a copy button through copyTextToClipboard.",
+            "dependencies": ["lucide-react", "shiki"],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/clipboard",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ai-elements/code-block.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "tool",
+            "type": "registry:component",
+            "title": "Tool",
+            "description": "AI Elements Tool: one tool call with its state badge, parameters and result or error.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/badge",
+                "@qiick/code-block",
+                "@qiick/collapsible",
+                "@qiick/shimmer",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ai-elements/tool.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "sources",
+            "type": "registry:component",
+            "title": "Sources",
+            "description": "AI Elements Sources: the answer citations, collapsed behind \"Used N sources\".",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": ["@qiick/collapsible", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ai-elements/sources.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "context",
+            "type": "registry:component",
+            "title": "Context",
+            "description": "AI Elements Context: token usage of a turn against the model context window, with the input / output / reasoning / cache breakdown in a hover card.",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": [
+                "@qiick/ai-message-parts",
+                "@qiick/button",
+                "@qiick/hover-card",
+                "@qiick/progress",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ai-elements/context.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "ai-answer-parts",
+            "type": "registry:component",
+            "title": "AI answer parts",
+            "description": "AiAnswerParts renders the parts of an answer in order (Reasoning, Tool or ChainOfThought, text through the app renderer); AiAnswerSources and AiAnswerUsage add Sources and Context.",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": [
+                "@qiick/ai-message-parts",
+                "@qiick/chain-of-thought",
+                "@qiick/context",
+                "@qiick/reasoning",
+                "@qiick/shimmer",
+                "@qiick/sources",
+                "@qiick/tool"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ai/ai-answer-parts.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "chat-message-reactions",
+            "type": "registry:component",
+            "title": "Chat message reactions",
+            "description": "Reactions under a chat bubble on BubbleReactions: one Button xs per emoji with its count, pressed when the viewer reacted, a Tooltip naming who.",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": [
+                "@qiick/bubble",
+                "@qiick/button",
+                "@qiick/tooltip"
+            ],
+            "files": [
+                {
+                    "path": "src/components/chat/chat-message-reactions.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "chat-attachment-file",
+            "type": "registry:component",
+            "title": "Chat attachment file",
+            "description": "ChatAttachmentFile (a sent file on Attachment: opens on click, Download plus app menu entries) and ChatPendingFile (uploading, error, remove).",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/attachment",
+                "@qiick/dropdown-menu",
+                "@qiick/spinner"
+            ],
+            "files": [
+                {
+                    "path": "src/components/chat/chat-attachment-file.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "chat-reply-quote",
+            "type": "registry:component",
+            "title": "Chat reply quote",
+            "description": "The quoted message of a reply on Item (muted, left rule): jumps to the original in a bubble, carries the cancel action above the composer.",
+            "registryDependencies": ["@qiick/item", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/chat/chat-reply-quote.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "chat-pinned-bar",
+            "type": "registry:component",
+            "title": "Chat pinned bar",
+            "description": "Pinned messages above a thread, one muted Item with a pin each, jumping to the message.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": ["@qiick/item"],
+            "files": [
+                {
+                    "path": "src/components/chat/chat-pinned-bar.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "chat-mention",
+            "type": "registry:component",
+            "title": "Chat mention",
+            "description": "An @mention in a message: a primary-tinted secondary Badge opening the user hover card.",
+            "registryDependencies": ["@qiick/badge", "@qiick/user-hover-card"],
+            "files": [
+                {
+                    "path": "src/components/chat/chat-mention.tsx",
+                    "type": "registry:component"
+                }
+            ]
         }
     ]
 }

@@ -11,7 +11,47 @@
     "ai": {
         "fabDescription": "Schnelle Assistenten-Schublade. Öffnen Sie die Vollseite für den Verlauf.",
         "fabTitle": "Neuer Chat",
-        "openFullPage": "Ganze Seite öffnen"
+        "openFullPage": "Ganze Seite öffnen",
+        "reasoning": {
+            "thinking": "Denkt nach…",
+            "thoughtFewSeconds": "Ein paar Sekunden nachgedacht",
+            "thoughtFor_one": "{{count}} Sekunde nachgedacht",
+            "thoughtFor_other": "{{count}} Sekunden nachgedacht"
+        },
+        "sources": {
+            "used_one": "{{count}} Quelle verwendet",
+            "used_other": "{{count}} Quellen verwendet"
+        },
+        "tool": {
+            "error": "Fehler",
+            "parameters": "Parameter",
+            "result": "Ergebnis",
+            "state": {
+                "approval-requested": "Wartet auf Freigabe",
+                "approval-responded": "Beantwortet",
+                "input-available": "Läuft",
+                "input-streaming": "Ausstehend",
+                "output-available": "Abgeschlossen",
+                "output-denied": "Abgelehnt",
+                "output-error": "Fehler"
+            },
+            "steps_one": "{{count}} Werkzeugschritt",
+            "steps_other": "{{count}} Werkzeugschritte"
+        },
+        "usage": {
+            "cache": "Cache",
+            "input": "Eingabe",
+            "output": "Ausgabe",
+            "reasoning": "Denken",
+            "trigger": "Kontext genutzt: {{percent}}"
+        }
+    },
+    "chat": {
+        "download": "Herunterladen",
+        "more": "Mehr",
+        "pinned": "Angeheftete Nachrichten",
+        "reactionToggle": "Reaktion {{emoji}}: {{names}}",
+        "removePendingFile": "Datei entfernen"
     },
     "common": {
         "cancel": "Abbrechen",
