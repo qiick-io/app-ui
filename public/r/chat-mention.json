@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "chat-mention",
+  "title": "Chat mention",
+  "description": "An @mention in a message: a primary-tinted secondary Badge opening the user hover card.",
+  "registryDependencies": [
+    "@qiick/badge",
+    "@qiick/user-hover-card"
+  ],
+  "files": [
+    {
+      "path": "src/components/chat/chat-mention.tsx",
+      "content": "import { Badge } from '@/components/ui/badge';\nimport { UserHoverCard } from '@/components/user-hover-card';\nimport type { UserHoverCardUser } from '@/components/user-hover-card';\n\ntype ChatMentionProps = {\n    /** The mentioned user; without one (deleted, unknown) the mention is plain text. */\n    user?: UserHoverCardUser;\n    /** Text when the user is unknown (\"@user 12\"). Defaults to `@` + the user's name. */\n    fallbackLabel?: string;\n    /** Presence for the hover card. */\n    isOnline?: boolean;\n};\n\n/**\n * An `@mention` inside a chat message, as externa-core renders it: a\n * secondary `Badge` tinted with the primary colour, opening the user's\n * `UserHoverCard` on hover or focus. The app parses its own mention tokens\n * and renders one per mention.\n */\nexport function ChatMention({\n    user,\n    fallbackLabel,\n    isOnline,\n}: ChatMentionProps) {\n    const text = user ? `@${user.name}` : (fallbackLabel ?? '@?');\n\n    if (!user) {\n        return (\n            <Badge\n                variant=\"secondary\"\n                className=\"bg-primary/15 px-1 align-baseline text-sm text-foreground\"\n                data-test=\"chat-mention\"\n            >\n                {text}\n            </Badge>\n        );\n    }\n\n    return (\n        <UserHoverCard user={user} isOnline={isOnline}>\n            <Badge\n                variant=\"secondary\"\n                className=\"cursor-default bg-primary/15 px-1 align-baseline text-sm text-foreground\"\n                data-test=\"chat-mention\"\n                asChild\n            >\n                <button type=\"button\">{text}</button>\n            </Badge>\n        </UserHoverCard>\n    );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}
