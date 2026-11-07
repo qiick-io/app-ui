@@ -48,8 +48,8 @@
             "name": "alert-dialog",
             "type": "registry:ui",
             "title": "Alert dialog",
-            "description": "Confirmation dialog: Esc and Cancel never confirm.",
-            "dependencies": ["@radix-ui/react-alert-dialog"],
+            "description": "Confirmation dialog (shadcn new-york-v4): size default / sm, AlertDialogMedia, Action and Cancel take Button variant and size; Esc and Cancel never confirm.",
+            "dependencies": ["radix-ui"],
             "registryDependencies": ["@qiick/button", "@qiick/utils"],
             "files": [
                 {
@@ -62,11 +62,8 @@
             "name": "badge",
             "type": "registry:ui",
             "title": "Badge",
-            "description": "Status badge.",
-            "dependencies": [
-                "@radix-ui/react-slot",
-                "class-variance-authority"
-            ],
+            "description": "Badge (shadcn new-york-v4, incl. ghost / link) plus the qiick status variants muted, success, warning, info, ai; primary hover token.",
+            "dependencies": ["radix-ui", "class-variance-authority"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -80,7 +77,7 @@
             "type": "registry:ui",
             "title": "Breadcrumb",
             "description": "Breadcrumb primitives.",
-            "dependencies": ["@radix-ui/react-slot", "lucide-react"],
+            "dependencies": ["radix-ui", "lucide-react"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -108,10 +105,7 @@
             "type": "registry:ui",
             "title": "Button",
             "description": "Button on the control-size scale (sm 24 / default 32 / lg 40), primary hover token.",
-            "dependencies": [
-                "@radix-ui/react-slot",
-                "class-variance-authority"
-            ],
+            "dependencies": ["radix-ui", "class-variance-authority"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -125,7 +119,7 @@
             "type": "registry:ui",
             "title": "Checkbox",
             "description": "Radix checkbox.",
-            "dependencies": ["@radix-ui/react-checkbox", "lucide-react"],
+            "dependencies": ["radix-ui", "lucide-react"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -139,11 +133,7 @@
             "type": "registry:ui",
             "title": "Dialog",
             "description": "Modal dialog with translated close button.",
-            "dependencies": [
-                "@radix-ui/react-dialog",
-                "lucide-react",
-                "react-i18next"
-            ],
+            "dependencies": ["radix-ui", "lucide-react", "react-i18next"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -157,7 +147,7 @@
             "type": "registry:ui",
             "title": "Dropdown menu",
             "description": "Radix dropdown menu.",
-            "dependencies": ["@radix-ui/react-dropdown-menu", "lucide-react"],
+            "dependencies": ["radix-ui", "lucide-react"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -235,7 +225,7 @@
             "type": "registry:ui",
             "title": "Label",
             "description": "Form label.",
-            "dependencies": ["@radix-ui/react-label"],
+            "dependencies": ["radix-ui"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -290,7 +280,7 @@
             "type": "registry:ui",
             "title": "Radio group",
             "description": "Radix radio group.",
-            "dependencies": ["@radix-ui/react-radio-group", "lucide-react"],
+            "dependencies": ["radix-ui", "lucide-react"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -304,7 +294,7 @@
             "type": "registry:ui",
             "title": "Select",
             "description": "Radix Select; trigger and items on the control scale.",
-            "dependencies": ["@radix-ui/react-select", "lucide-react"],
+            "dependencies": ["radix-ui", "lucide-react"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -318,7 +308,7 @@
             "type": "registry:ui",
             "title": "Separator",
             "description": "Horizontal or vertical rule.",
-            "dependencies": ["@radix-ui/react-separator"],
+            "dependencies": ["radix-ui"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -331,12 +321,8 @@
             "name": "sheet",
             "type": "registry:ui",
             "title": "Sheet",
-            "description": "Side panel built on the dialog primitive.",
-            "dependencies": [
-                "@radix-ui/react-dialog",
-                "lucide-react",
-                "react-i18next"
-            ],
+            "description": "Side panel built on the dialog primitive (shadcn new-york-v4, showCloseButton) with a translated close button.",
+            "dependencies": ["radix-ui", "lucide-react", "react-i18next"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -351,7 +337,7 @@
             "title": "Sidebar",
             "description": "Collapsible app sidebar with the straight full-height active bar (externa-core #463).",
             "dependencies": [
-                "@radix-ui/react-slot",
+                "radix-ui",
                 "class-variance-authority",
                 "lucide-react",
                 "react-i18next"
@@ -387,11 +373,25 @@
             ]
         },
         {
+            "name": "input-otp",
+            "type": "registry:ui",
+            "title": "Input OTP",
+            "description": "One-time code input (shadcn new-york-v4): InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator.",
+            "dependencies": ["input-otp", "lucide-react"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/input-otp.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
             "name": "switch",
             "type": "registry:ui",
             "title": "Switch",
-            "description": "Radix switch.",
-            "dependencies": ["@radix-ui/react-switch"],
+            "description": "Switch (shadcn new-york-v4), size default / sm.",
+            "dependencies": ["radix-ui"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -401,10 +401,24 @@
             ]
         },
         {
+            "name": "slider",
+            "type": "registry:ui",
+            "title": "Slider",
+            "description": "Range slider (shadcn new-york-v4), one or more thumbs.",
+            "dependencies": ["radix-ui"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/slider.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
             "name": "table",
             "type": "registry:ui",
             "title": "Table",
-            "description": "Table primitives used by the flat list panels.",
+            "description": "Table primitives (shadcn new-york-v4) used by the flat list panels.",
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -431,10 +445,7 @@
             "type": "registry:ui",
             "title": "Toggle",
             "description": "Two-state button on the control scale.",
-            "dependencies": [
-                "@radix-ui/react-toggle",
-                "class-variance-authority"
-            ],
+            "dependencies": ["radix-ui", "class-variance-authority"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -447,11 +458,8 @@
             "name": "toggle-group",
             "type": "registry:ui",
             "title": "Toggle group",
-            "description": "Segmented control (use variant=\"outline\" with type=\"single\").",
-            "dependencies": [
-                "@radix-ui/react-toggle-group",
-                "class-variance-authority"
-            ],
+            "description": "Segmented control (use variant=\"outline\" with type=\"single\"); spacing > 0 separates the items.",
+            "dependencies": ["radix-ui", "class-variance-authority"],
             "registryDependencies": ["@qiick/toggle", "@qiick/utils"],
             "files": [
                 {
@@ -478,8 +486,8 @@
             "name": "tooltip",
             "type": "registry:ui",
             "title": "Tooltip",
-            "description": "Radix tooltip.",
-            "dependencies": ["@radix-ui/react-tooltip"],
+            "description": "Tooltip (shadcn new-york-v4): foreground background, background text.",
+            "dependencies": ["radix-ui"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -713,7 +721,7 @@
             "type": "registry:ui",
             "title": "Context menu",
             "description": "Right-click menu, with the destructive item variant.",
-            "dependencies": ["@radix-ui/react-context-menu", "lucide-react"],
+            "dependencies": ["radix-ui", "lucide-react"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -740,7 +748,7 @@
             "name": "drawer",
             "type": "registry:ui",
             "title": "Drawer",
-            "description": "Side drawer (vaul) with a scrolling body between a fixed header and footer.",
+            "description": "Side drawer (vaul) with a scrolling body between a fixed header and footer. qiick additions to shadcn: DrawerNested (vaul NestedRoot), DrawerContent showOverlay, focus moved into the drawer on open (never left on the trigger), right-side width max-w-md.",
             "dependencies": ["vaul"],
             "registryDependencies": ["@qiick/utils"],
             "files": [

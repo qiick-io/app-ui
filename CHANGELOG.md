@@ -10,12 +10,16 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Changed
 
+- `table`, `alert-dialog`, `switch`, `toggle-group`, `badge`, `sheet` and `tooltip` re-pulled from shadcn new-york-v4: table without `forwardRef` and with a `data-slot` on every part (header cells in normal case, foreground colour, cells `whitespace-nowrap`); alert dialog with `size` (`default` / `sm`), `AlertDialogMedia`, and `AlertDialogAction` / `AlertDialogCancel` taking Button `variant` and `size` (Action defaults to `default`: pass `variant="destructive"` for deletes); switch with `size` (`default` / `sm`); toggle group with `spacing` (items keep the qiick toggle sizes); badge with `ghost` and `link` (the qiick status variants stay); sheet with `showCloseButton`; tooltip in the upstream look (`bg-foreground` / `text-background`, was `bg-primary`). Apps must check `AlertDialogAction` call sites.
+- Every `ui/` item imports Radix from the single `radix-ui` package; the `@radix-ui/react-*` dependencies are gone from the items. Installing the items lets an app remove its `@radix-ui/*` packages.
+- `drawer` documents its qiick additions (`DrawerNested`, `showOverlay`, focus on open, right-side width).
 - Page views are line tabs under the header, each with its own URL, never a segmented control in `headerActions`: the header keeps only actions. A segmented control filters one view, in the filter row. A list row opens its record and editing becomes a row action (`docs/page.md`, `docs/dashboard.md`). Apps that switch views with a `ToggleGroup` in the header (externa-core Overview / Health) must move to tabs. `docs/page.md` gives the test (does the choice change the content, or only the rows?) and a table of the existing cases.
 - `card` follows the shadcn new-york v4 card: `CardAction` and a grid header (#15).
 - The theme ships as registry items, not an npm package: `@qiick/theme` (`resources/css/qiick-theme.css`) and `@qiick/theme-blue` (`resources/css/qiick-theme-blue.css`). One version covers tokens and components, and the drift check covers the theme. `packages/app-theme` is removed; the token reference is `docs/theme-tokens.md`.
 
 ### Added
 
+- `input-otp` and `slider` items (shadcn new-york-v4), with playground demos.
 - `tabs` item: the shadcn new-york v4 tabs with the `line` variant, for page views (`docs/page.md`). Taken from Excubia, which tried it first.
 - `stat-card` item (`StatCard`, `trendOf`): key numbers from the shadcn `dashboard-01` block (section cards), documented in `docs/dashboard.md` (#15).
 - Registry items `card`, `context-menu`, `avatar`, `drawer`, `actions-overflow`, `user-avatar` (with `ConnectionDot`), `nav-user` (sidebar user menu), `files-grid` and `assistant-panel`, extracted from externa-core and made generic (props and slots instead of Inertia routes, Wayfinder and Externa types); docs point to them instead of externa-core files. Apps that already have `ui/card.tsx`, `ui/avatar.tsx`, `nav-user.tsx`, `user-info.tsx` or `user-menu-content.tsx` from the starter kit must install the items (`npx shadcn add @qiick/<name> --overwrite`) and adapt the call sites, or list the files in `app-ui.overrides.json`.

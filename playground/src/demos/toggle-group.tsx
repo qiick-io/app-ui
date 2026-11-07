@@ -35,6 +35,10 @@ export default function ToggleGroupDemo() {
                     <span>Users</span>
                 </ToggleGroupItem>
             </ToggleGroup>
+            <ToggleGroup type="multiple" variant="outline" spacing={1}>
+                <ToggleGroupItem value="unread">Unread</ToggleGroupItem>
+                <ToggleGroupItem value="mentions">Mentions</ToggleGroupItem>
+            </ToggleGroup>
         </div>
     );
 }

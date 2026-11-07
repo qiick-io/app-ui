@@ -2,7 +2,7 @@
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "drawer",
   "title": "Drawer",
-  "description": "Side drawer (vaul) with a scrolling body between a fixed header and footer.",
+  "description": "Side drawer (vaul) with a scrolling body between a fixed header and footer. qiick additions to shadcn: DrawerNested (vaul NestedRoot), DrawerContent showOverlay, focus moved into the drawer on open (never left on the trigger), right-side width max-w-md.",
   "dependencies": [
     "vaul"
   ],
