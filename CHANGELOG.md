@@ -45,6 +45,7 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Fixed
 
+- `data-table` pins `@tanstack/react-table@^8.21.3`: unpinned, `shadcn add` installed v9, which drops `useReactTable` / `getCoreRowModel`. Sortable column headers (`DataTableColumnHeader`) are normal case, foreground and `text-sm` like the plain ones, as in shadcn's data table (they were muted, uppercase and `text-xs`).
 - `paginated-multi-select`: the trigger (`role="combobox"`) gets an accessible name, the new `aria-label` prop or else the placeholder. A combobox takes no name from its content; axe reported it as critical (`button-name`), found by Excubia's smoke test.
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
