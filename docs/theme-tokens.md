@@ -91,6 +91,7 @@ Each `--x` also has a `--color-x` mapping, so `bg-x` / `text-x` utilities exist.
 | ----------------------------------- | ------------------ | ------------------- | ---------------------------------------------- |
 | `--sidebar`                         | ink-50             | ink-900             | Sidebar and the frame around the content panel |
 | `--sidebar-foreground`              | ink-600            | ink-300             | Nav items                                      |
+| `--sidebar-muted-foreground`        | ink-500            | ink-400             | Group labels (solid, 4.6:1; not an opacity)    |
 | `--sidebar-primary` / `-foreground` | primary            | primary             | Active bar, Assistant item border              |
 | `--sidebar-accent` / `-foreground`  | teal-50 / teal-800 | teal-950 / teal-200 | Active and hovered item                        |
 | `--sidebar-border`                  | ink-200            | ink-800             | Shell borders                                  |
