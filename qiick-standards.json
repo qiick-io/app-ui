@@ -1,0 +1,8 @@
+{
+    "$comment": "qiick standards pack: see standards/README.md. This repo is the source, so its CI checks against its own standards/.",
+    "ref": "develop",
+    "uiPreset": "Teal",
+    "php": false,
+    "frontendRoots": ["registry/src", "playground/src"],
+    "eslint": true
+}
