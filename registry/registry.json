@@ -598,7 +598,7 @@
             "title": "Data table",
             "description": "Server-driven TanStack DataTable (sort, filter and paging done by the server), DataTableColumnHeader (sort dropdown), DataTableFacetedFilter (Popover + Command facet), selection and expand columns; pagination footer from page-layout.",
             "dependencies": [
-                "@tanstack/react-table",
+                "@tanstack/react-table@^8.21.3",
                 "lucide-react",
                 "react-i18next"
             ],
