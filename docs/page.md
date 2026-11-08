@@ -11,7 +11,7 @@ Every admin page renders inside the shell as `AppLayout` → `PageLayout`.
 ```
 AppLayout breadcrumbs headerActions
 └─ PageLayout description? subheader? filters? filtersRight? footer? scrollContent?
-   ├─ PageHeader: description, subheader, filter row (filters left, filtersRight right)
+   ├─ PageHeader: description, subheader, filter row (filters left, filtersRight right; below sm it wraps: search on its own row, then the rest)
    ├─ body (children)
    └─ footer (centred)
 ```
