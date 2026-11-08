@@ -22,6 +22,7 @@ Goal: no agent invents a layout, a component, a colour or a component position i
 5. **Control scale.** antd-like: `sm` 24px, default 32px, `lg` 40px. Use the default (32px) everywhere: headers, toolbars, forms, settings. `sm` is only for compact inline actions (table row icons, chips); `lg` for rare large CTAs.
 6. **Accessibility.** WCAG 2.2 AA in light, dark and high contrast: visible focus, keyboard reachability, labels on icon-only controls, contrast. Check every UI change in light and dark.
 7. **Positions are part of the pattern.** Where a control sits (primary action far right, filters left, pagination counter left / pages centre / rows per page right, …) is copied like the code. See `docs/`.
+8. **Presence.** One pattern everywhere: shadcn `AvatarBadge` inside the `Avatar`, bottom-right. Users: green online, solid grey offline (never transparent). The realtime connection badge on the signed-in user: green connected, amber connecting, grey disabled, red only when the connection is lost (an error, not "offline"). Lists of members (groups) show avatars without presence, then `AvatarGroupCount` "+N". The avatar is the radix-nova source: the new-york-v4 root has `overflow-hidden` and clips the badge.
 
 ## Theme
 
