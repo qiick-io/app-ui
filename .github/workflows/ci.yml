@@ -32,6 +32,10 @@ jobs:
         run: npm run lint
       - name: Prettier
         run: npm run format:check
+      - name: Dead code (knip)
+        run: npm run knip
+      - name: Hard-coded UI strings (ratchet)
+        run: npm run lint:i18n
 
   types:
     runs-on: ubuntu-latest
@@ -55,8 +59,11 @@ jobs:
           node-version-file: .nvmrc
       - name: WCAG 2.2 AA contrast of every token pair
         run: npm run a11y:contrast
-      - name: Script tests (drift check)
+      - name: Script tests (drift check, standards sync)
         run: npm test
+      # This repo follows its own standards pack: its synced copy must match standards/.
+      - name: Standards pack is synced
+        run: npm run standards:check
 
   build:
     runs-on: ubuntu-latest

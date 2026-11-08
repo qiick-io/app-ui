@@ -8,6 +8,11 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Added
+
+- `standards/`: the qiick standards pack, one public source of the code, testing, git, release and UI rules for every qiick repo. `scripts/sync-standards.mjs` writes it into a repo (`AGENTS.md` / `CLAUDE.md` / `.github/copilot-instructions.md` blocks, `.cursor/rules/`, `tests/Arch/NamingArchitectureTest.php`, a zero-dependency ESLint kebab-case file-name config); `drift-check.yml` gains `standards: true` (and `registry: false` for repos without the UI registry) to fail CI on a drifted copy. Affects every app: add `qiick-standards.json`, run the sync, fill `tests/Arch/naming-architecture.php`. `docs/app-agents-section.md` is superseded by the pack.
+- Automated checks in the pack: knip, `noUnusedLocals` / `noUnusedParameters`, strict Eloquent models, a Larastan baseline ratchet and a hard-coded JSX text ratchet (`scripts/qiick-ratchet.mjs`), plus the self-hosted app distribution contract and the reusable `app-distribution-smoke.yml` (create-project, non-interactive install, health, upgrade from the previous tag). This repo runs knip and the i18n ratchet (registry sources: 0 literals) in CI; `knip` and `eslint-plugin-i18next` are new dev dependencies.
+
 ### Changed
 
 - `table`, `alert-dialog`, `switch`, `toggle-group`, `badge`, `sheet` and `tooltip` re-pulled from shadcn new-york-v4: table without `forwardRef` and with a `data-slot` on every part (header cells in normal case, foreground colour, cells `whitespace-nowrap`); alert dialog with `size` (`default` / `sm`), `AlertDialogMedia`, and `AlertDialogAction` / `AlertDialogCancel` taking Button `variant` and `size` (Action defaults to `default`: pass `variant="destructive"` for deletes); switch with `size` (`default` / `sm`); toggle group with `spacing` (items keep the qiick toggle sizes); badge with `ghost` and `link` (the qiick status variants stay); sheet with `showCloseButton`; tooltip in the upstream look (`bg-foreground` / `text-background`, was `bg-primary`). Apps must check `AlertDialogAction` call sites.

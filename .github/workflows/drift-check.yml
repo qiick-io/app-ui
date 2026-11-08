@@ -1,13 +1,19 @@
-# Reusable drift check for apps that install the @qiick registry (#5).
+# Reusable drift check for qiick repos (#5).
 #
-# In the app:
+# In the repo:
 #
 #   jobs:
 #     app-ui-drift:
 #       uses: qiick-io/app-ui/.github/workflows/drift-check.yml@vX.Y.Z
+#       with:
+#         standards: true   # the qiick standards pack (standards/README.md)
+#         registry: false   # only for repos without the @qiick UI registry
 #
-# The check runs scripts/check-drift.mjs from the registry tag pinned in the
-# app's components.json, against that same tag.
+# - registry: runs scripts/check-drift.mjs from the registry tag pinned in the
+#   app's components.json, against that same tag.
+# - standards: runs scripts/sync-standards.mjs --check from the app-ui ref in
+#   the repo's qiick-standards.json: agent files, the Pest architecture test
+#   and kebab-case frontend names must match the pack.
 name: app-ui drift
 
 on:
@@ -17,12 +23,21 @@ on:
         description: App root (where components.json lives)
         type: string
         default: .
+      registry:
+        description: Check the @qiick registry components (needs components.json)
+        type: boolean
+        default: true
+      standards:
+        description: Check the qiick standards pack (needs qiick-standards.json)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 jobs:
   drift:
+    if: inputs.registry
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -53,3 +68,38 @@ jobs:
       - name: Compare the app with the registry
         working-directory: ${{ inputs.working-directory }}
         run: node "$GITHUB_WORKSPACE/.app-ui/scripts/check-drift.mjs"
+
+  standards:
+    if: inputs.standards
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Read the pinned standards ref
+        id: pin
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          ref=$(node -e "process.stdout.write(require('./qiick-standards.json').ref ?? '')")
+          if [ -z "$ref" ]; then
+            echo "::error::qiick-standards.json needs \"ref\": \"<app-ui tag or branch>\""
+            exit 1
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: qiick-io/app-ui
+          ref: ${{ steps.pin.outputs.ref }}
+          path: .app-ui
+          sparse-checkout: |
+            scripts
+            standards
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+
+      - name: Compare the repo with the standards pack
+        working-directory: ${{ inputs.working-directory }}
+        run: node "$GITHUB_WORKSPACE/.app-ui/scripts/sync-standards.mjs" --check
