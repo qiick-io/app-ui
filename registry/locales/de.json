@@ -2,18 +2,62 @@
     "a11y": {
         "breadcrumb": "Brotkrümelnavigation",
         "close": "Schließen",
+        "loading": "Wird geladen",
         "moreActions": "Weitere Aktionen",
         "saving": "Wird gespeichert",
+        "search": "Suchen",
         "toggleSidebar": "Seitenleiste umschalten"
     },
     "ai": {
         "fabDescription": "Schnelle Assistenten-Schublade. Öffnen Sie die Vollseite für den Verlauf.",
         "fabTitle": "Neuer Chat",
-        "openFullPage": "Ganze Seite öffnen"
+        "openFullPage": "Ganze Seite öffnen",
+        "reasoning": {
+            "thinking": "Denkt nach…",
+            "thoughtFewSeconds": "Ein paar Sekunden nachgedacht",
+            "thoughtFor_one": "{{count}} Sekunde nachgedacht",
+            "thoughtFor_other": "{{count}} Sekunden nachgedacht"
+        },
+        "sources": {
+            "used_one": "{{count}} Quelle verwendet",
+            "used_other": "{{count}} Quellen verwendet"
+        },
+        "tool": {
+            "error": "Fehler",
+            "parameters": "Parameter",
+            "result": "Ergebnis",
+            "state": {
+                "approval-requested": "Wartet auf Freigabe",
+                "approval-responded": "Beantwortet",
+                "input-available": "Läuft",
+                "input-streaming": "Ausstehend",
+                "output-available": "Abgeschlossen",
+                "output-denied": "Abgelehnt",
+                "output-error": "Fehler"
+            },
+            "steps_one": "{{count}} Werkzeugschritt",
+            "steps_other": "{{count}} Werkzeugschritte"
+        },
+        "usage": {
+            "cache": "Cache",
+            "input": "Eingabe",
+            "output": "Ausgabe",
+            "reasoning": "Denken",
+            "trigger": "Kontext genutzt: {{percent}}"
+        }
+    },
+    "chat": {
+        "download": "Herunterladen",
+        "more": "Mehr",
+        "pinned": "Angeheftete Nachrichten",
+        "reactionToggle": "Reaktion {{emoji}}: {{names}}",
+        "removePendingFile": "Datei entfernen"
     },
     "common": {
         "cancel": "Abbrechen",
+        "clearFilters": "Filter zurücksetzen",
         "delete": "Löschen",
+        "noResults": "Keine Ergebnisse.",
         "offline": "Offline",
         "online": "Online",
         "pageRange": "{{from}}–{{to}} von {{total}}",
@@ -21,7 +65,9 @@
         "rowsPerPage": "Zeilen pro Seite",
         "save": "Speichern",
         "saved": "Gespeichert",
-        "selectedCount": "{{count}} ausgewählt"
+        "selectedCount": "{{count}} ausgewählt",
+        "sortAscending": "Aufsteigend sortieren",
+        "sortDescending": "Absteigend sortieren"
     },
     "confirmDestructive": {
         "typeToConfirm": "Tippe „{{name}}“ zur Bestätigung"
@@ -35,6 +81,13 @@
         "tags": {
             "moreTags": "{{count}} weitere Tags"
         }
+    },
+    "picker": {
+        "clearSelection": "Auswahl aufheben",
+        "loading": "Wird geladen…",
+        "noResults": "Keine Ergebnisse.",
+        "placeholder": "Auswählen…",
+        "search": "Suchen…"
     },
     "realtime": {
         "connected": "Realtime verbunden",

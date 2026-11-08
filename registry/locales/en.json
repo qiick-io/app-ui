@@ -2,18 +2,62 @@
     "a11y": {
         "breadcrumb": "Breadcrumb",
         "close": "Close",
+        "loading": "Loading",
         "moreActions": "More actions",
         "saving": "Saving",
+        "search": "Search",
         "toggleSidebar": "Toggle sidebar"
     },
     "ai": {
         "fabDescription": "Quick assistant drawer. Open the full page for history.",
         "fabTitle": "New chat",
-        "openFullPage": "Open full page"
+        "openFullPage": "Open full page",
+        "reasoning": {
+            "thinking": "Thinking…",
+            "thoughtFewSeconds": "Thought for a few seconds",
+            "thoughtFor_one": "Thought for {{count}} second",
+            "thoughtFor_other": "Thought for {{count}} seconds"
+        },
+        "sources": {
+            "used_one": "Used {{count}} source",
+            "used_other": "Used {{count}} sources"
+        },
+        "tool": {
+            "error": "Error",
+            "parameters": "Parameters",
+            "result": "Result",
+            "state": {
+                "approval-requested": "Awaiting approval",
+                "approval-responded": "Responded",
+                "input-available": "Running",
+                "input-streaming": "Pending",
+                "output-available": "Completed",
+                "output-denied": "Denied",
+                "output-error": "Error"
+            },
+            "steps_one": "{{count}} tool step",
+            "steps_other": "{{count}} tool steps"
+        },
+        "usage": {
+            "cache": "Cache",
+            "input": "Input",
+            "output": "Output",
+            "reasoning": "Reasoning",
+            "trigger": "Context used: {{percent}}"
+        }
+    },
+    "chat": {
+        "download": "Download",
+        "more": "More",
+        "pinned": "Pinned messages",
+        "reactionToggle": "{{emoji}} reaction: {{names}}",
+        "removePendingFile": "Remove file"
     },
     "common": {
         "cancel": "Cancel",
+        "clearFilters": "Clear filters",
         "delete": "Delete",
+        "noResults": "No results.",
         "offline": "Offline",
         "online": "Online",
         "pageRange": "{{from}}–{{to}} of {{total}}",
@@ -21,7 +65,9 @@
         "rowsPerPage": "Rows per page",
         "save": "Save",
         "saved": "Saved",
-        "selectedCount": "{{count}} selected"
+        "selectedCount": "{{count}} selected",
+        "sortAscending": "Sort ascending",
+        "sortDescending": "Sort descending"
     },
     "confirmDestructive": {
         "typeToConfirm": "Type \"{{name}}\" to confirm"
@@ -35,6 +81,13 @@
         "tags": {
             "moreTags": "{{count}} more tags"
         }
+    },
+    "picker": {
+        "clearSelection": "Clear selection",
+        "loading": "Loading…",
+        "noResults": "No results.",
+        "placeholder": "Select…",
+        "search": "Search…"
     },
     "realtime": {
         "connected": "Realtime connected",

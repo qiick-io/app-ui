@@ -1,0 +1,17 @@
+# Releases: never without the maintainer
+
+`develop` is the integration branch. `main` holds releases only.
+
+Agents may, when asked for a release:
+
+- open a `develop` → `main` release pull request with a full body (changelog, included PRs), then **stop**.
+
+Agents must not, unless the maintainer explicitly says so in this conversation:
+
+- merge a release pull request or anything into `main` / `release/*`;
+- bump versions, create tags (`vX.Y.Z` or any other), run `gh release create` or publish a GitHub Release;
+- push to `main` / `master` / `release/*`;
+- publish packages (Packagist, npm) or images (Docker Hub, GHCR);
+- change repository visibility.
+
+How a release goes, for reference: release PR → the maintainer merges it → tag `vX.Y.Z` on the merge commit → GitHub Release titled exactly with the tag, listing the included PRs → `main` is merged back into `develop`.

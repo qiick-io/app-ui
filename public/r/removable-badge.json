@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "removable-badge",
+  "title": "Removable badge",
+  "description": "Removable tag chip: a secondary Badge with a ghost Button size=\"icon-xs\" and its own remove label.",
+  "dependencies": [
+    "lucide-react"
+  ],
+  "registryDependencies": [
+    "@qiick/badge",
+    "@qiick/button"
+  ],
+  "files": [
+    {
+      "path": "src/components/removable-badge.tsx",
+      "content": "import { X } from 'lucide-react';\nimport type { ReactNode } from 'react';\n\nimport { Badge } from '@/components/ui/badge';\nimport { Button } from '@/components/ui/button';\n\n/**\n * Removable tag chip: a secondary `Badge` with a ghost `Button size=\"icon-xs\"`\n * that removes it. The button needs its own `removeLabel` (e.g. \"Remove tag\n * Foo\") because the \"×\" icon alone has no accessible name. Without\n * `onRemove` the chip renders read-only, with no button.\n * @returns {JSX.Element}\n */\nexport function RemovableBadge({\n    children,\n    removeLabel,\n    onRemove,\n    disabled = false,\n}: {\n    children: ReactNode;\n    removeLabel: string;\n    onRemove?: () => void;\n    disabled?: boolean;\n}) {\n    return (\n        <Badge variant=\"secondary\" className={onRemove ? 'pr-0.5' : undefined}>\n            {children}\n            {onRemove ? (\n                <Button\n                    type=\"button\"\n                    variant=\"ghost\"\n                    size=\"icon-xs\"\n                    // Negative block margin keeps the 24px hit area without\n                    // making the chip taller than a plain Badge.\n                    className=\"-my-1 rounded-sm\"\n                    disabled={disabled}\n                    aria-label={removeLabel}\n                    onClick={onRemove}\n                >\n                    <X aria-hidden=\"true\" />\n                </Button>\n            ) : null}\n        </Badge>\n    );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

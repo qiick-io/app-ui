@@ -14,7 +14,11 @@ Shared admin UI for the open-source, installable [qiick](https://qiick.io) apps:
 
 ## For agents and contributors
 
-Before any UI change in a qiick app, read [`AGENTS.md`](AGENTS.md) (the hard rules) and [`docs/`](docs/README.md) (one page per pattern, pointing at the exact externa-core files). Apps copy [`docs/app-agents-section.md`](docs/app-agents-section.md) into their own `AGENTS.md` / `CLAUDE.md`. Releases: [`RELEASING.md`](RELEASING.md).
+Before any UI change in a qiick app, read [`AGENTS.md`](AGENTS.md) (the hard rules) and [`docs/`](docs/README.md) (one page per pattern, pointing at the exact externa-core files). Releases: [`RELEASING.md`](RELEASING.md).
+
+## Standards pack
+
+[`standards/`](standards/README.md) is the one public source of the rules every qiick repo follows: the code standard (names, role suffixes, the five Laravel layers, PHPDoc / JSDoc, contracts), testing, git and release rules, and these UI rules. `scripts/sync-standards.mjs` writes them into each repo's `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/rules/` and `tests/Arch/NamingArchitectureTest.php`, so agents read them at their first task; the drift check fails CI when a copy differs.
 
 ## What it is
 

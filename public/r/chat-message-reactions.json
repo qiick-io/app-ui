@@ -1,0 +1,22 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "chat-message-reactions",
+  "title": "Chat message reactions",
+  "description": "Reactions under a chat bubble on BubbleReactions: one Button xs per emoji with its count, pressed when the viewer reacted, a Tooltip naming who.",
+  "dependencies": [
+    "react-i18next"
+  ],
+  "registryDependencies": [
+    "@qiick/bubble",
+    "@qiick/button",
+    "@qiick/tooltip"
+  ],
+  "files": [
+    {
+      "path": "src/components/chat/chat-message-reactions.tsx",
+      "content": "import { useTranslation } from 'react-i18next';\nimport { BubbleReactions } from '@/components/ui/bubble';\nimport { Button } from '@/components/ui/button';\nimport {\n    Tooltip,\n    TooltipContent,\n    TooltipTrigger,\n} from '@/components/ui/tooltip';\n\n/** One emoji under a message: how many reacted, whether the viewer did, and who. */\nexport type ChatReaction = {\n    emoji: string;\n    count: number;\n    reacted: boolean;\n    users?: Array<{ name: string }>;\n};\n\ntype ChatMessageReactionsProps = {\n    reactions: ChatReaction[];\n    align: 'start' | 'end';\n    onToggle: (emoji: string) => void;\n};\n\n/**\n * Reactions under a chat bubble, on shadcn `BubbleReactions`: one `Button` xs\n * per emoji with its count, pressed when the viewer reacted, and a `Tooltip`\n * naming who reacted. Render it inside the `Bubble`.\n */\nexport function ChatMessageReactions({\n    reactions,\n    align,\n    onToggle,\n}: ChatMessageReactionsProps) {\n    const { t } = useTranslation();\n\n    if (reactions.length === 0) {\n        return null;\n    }\n\n    return (\n        <BubbleReactions align={align} data-test=\"chat-message-reactions\">\n            {reactions.map((reaction) => {\n                const names = (reaction.users ?? [])\n                    .map((user) => user.name)\n                    .join(', ');\n\n                return (\n                    <Tooltip key={reaction.emoji}>\n                        <TooltipTrigger asChild>\n                            <Button\n                                type=\"button\"\n                                variant={\n                                    reaction.reacted ? 'secondary' : 'ghost'\n                                }\n                                size=\"xs\"\n                                aria-pressed={reaction.reacted}\n                                aria-label={t('chat.reactionToggle', {\n                                    emoji: reaction.emoji,\n                                    names,\n                                })}\n                                className=\"rounded-full tabular-nums aria-pressed:bg-primary/15\"\n                                onClick={() => onToggle(reaction.emoji)}\n                            >\n                                <span aria-hidden>{reaction.emoji}</span>\n                                <span aria-hidden>{reaction.count}</span>\n                            </Button>\n                        </TooltipTrigger>\n                        {names !== '' ? (\n                            <TooltipContent>{names}</TooltipContent>\n                        ) : null}\n                    </Tooltip>\n                );\n            })}\n        </BubbleReactions>\n    );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

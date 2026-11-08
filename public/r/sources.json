@@ -1,0 +1,22 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "sources",
+  "title": "Sources",
+  "description": "AI Elements Sources: the answer citations, collapsed behind \"Used N sources\".",
+  "dependencies": [
+    "lucide-react",
+    "react-i18next"
+  ],
+  "registryDependencies": [
+    "@qiick/collapsible",
+    "@qiick/utils"
+  ],
+  "files": [
+    {
+      "path": "src/components/ai-elements/sources.tsx",
+      "content": "import { BookIcon, ChevronDownIcon } from 'lucide-react';\nimport type { ComponentProps } from 'react';\nimport { useTranslation } from 'react-i18next';\nimport {\n    Collapsible,\n    CollapsibleContent,\n    CollapsibleTrigger,\n} from '@/components/ui/collapsible';\nimport { cn } from '@/lib/utils';\n\n/*\n * AI Elements `sources` (registry.ai-sdk.dev). Change from the registry copy:\n * the trigger label goes through i18n (`ai.sources.used`).\n */\n\nexport type SourcesProps = ComponentProps<typeof Collapsible>;\n\nexport const Sources = ({ className, ...props }: SourcesProps) => (\n    <Collapsible\n        className={cn('not-prose text-xs text-primary', className)}\n        {...props}\n    />\n);\n\nexport type SourcesTriggerProps = ComponentProps<typeof CollapsibleTrigger> & {\n    count: number;\n};\n\nexport const SourcesTrigger = ({\n    className,\n    count,\n    children,\n    ...props\n}: SourcesTriggerProps) => {\n    const { t } = useTranslation();\n\n    return (\n        <CollapsibleTrigger\n            className={cn('group flex items-center gap-2', className)}\n            {...props}\n        >\n            {children ?? (\n                <>\n                    <p className=\"font-medium\">\n                        {t('ai.sources.used', { count })}\n                    </p>\n                    <ChevronDownIcon className=\"h-4 w-4 transition-transform group-data-[state=open]:rotate-180\" />\n                </>\n            )}\n        </CollapsibleTrigger>\n    );\n};\n\nexport type SourcesContentProps = ComponentProps<typeof CollapsibleContent>;\n\nexport const SourcesContent = ({\n    className,\n    ...props\n}: SourcesContentProps) => (\n    <CollapsibleContent\n        className={cn(\n            'mt-3 flex w-fit flex-col gap-2',\n            'outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:animate-in data-[state=open]:slide-in-from-top-2',\n            className,\n        )}\n        {...props}\n    />\n);\n\nexport type SourceProps = ComponentProps<'a'>;\n\nexport const Source = ({ href, title, children, ...props }: SourceProps) => (\n    <a\n        className=\"flex items-center gap-2\"\n        href={href}\n        rel=\"noreferrer\"\n        target=\"_blank\"\n        {...props}\n    >\n        {children ?? (\n            <>\n                <BookIcon className=\"h-4 w-4\" />\n                <span className=\"block font-medium\">{title}</span>\n            </>\n        )}\n    </a>\n);\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

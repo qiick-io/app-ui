@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "chat-reply-quote",
+  "title": "Chat reply quote",
+  "description": "The quoted message of a reply on Item (muted, left rule): jumps to the original in a bubble, carries the cancel action above the composer.",
+  "registryDependencies": [
+    "@qiick/item",
+    "@qiick/utils"
+  ],
+  "files": [
+    {
+      "path": "src/components/chat/chat-reply-quote.tsx",
+      "content": "import type { ReactNode } from 'react';\nimport {\n    Item,\n    ItemActions,\n    ItemContent,\n    ItemDescription,\n    ItemTitle,\n} from '@/components/ui/item';\nimport { cn } from '@/lib/utils';\n\ntype ChatReplyQuoteProps = {\n    author: ReactNode;\n    body: ReactNode;\n    /** Jump to the quoted message; the quote renders as a button. */\n    onSelect?: () => void;\n    /** Trailing action, such as the composer's cancel button. */\n    action?: ReactNode;\n    className?: string;\n};\n\n/**\n * The quoted message of a reply, on shadcn `Item` (muted, with a left rule):\n * inside a bubble it jumps to the original, above the composer it carries the\n * cancel action.\n */\nexport function ChatReplyQuote({\n    author,\n    body,\n    onSelect,\n    action,\n    className,\n}: ChatReplyQuoteProps) {\n    const content = (\n        <ItemContent className=\"min-w-0 gap-0 border-l-2 border-border pl-2\">\n            <ItemTitle className=\"text-xs\">{author}</ItemTitle>\n            <ItemDescription className=\"line-clamp-1 text-xs\">\n                {body}\n            </ItemDescription>\n        </ItemContent>\n    );\n    const itemClassName = cn(\n        'w-full flex-nowrap gap-2 px-2 py-1 text-left',\n        className,\n    );\n\n    if (onSelect) {\n        return (\n            <Item variant=\"muted\" size=\"sm\" className={itemClassName} asChild>\n                <button\n                    type=\"button\"\n                    data-test=\"chat-reply-quote\"\n                    onClick={onSelect}\n                >\n                    {content}\n                </button>\n            </Item>\n        );\n    }\n\n    return (\n        <Item\n            variant=\"muted\"\n            size=\"sm\"\n            className={itemClassName}\n            data-test=\"chat-reply-quote\"\n        >\n            {content}\n            {action ? <ItemActions>{action}</ItemActions> : null}\n        </Item>\n    );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

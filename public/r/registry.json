@@ -48,8 +48,8 @@
             "name": "alert-dialog",
             "type": "registry:ui",
             "title": "Alert dialog",
-            "description": "Confirmation dialog: Esc and Cancel never confirm.",
-            "dependencies": ["@radix-ui/react-alert-dialog"],
+            "description": "Confirmation dialog (shadcn new-york-v4): size default / sm, AlertDialogMedia, Action and Cancel take Button variant and size; Esc and Cancel never confirm.",
+            "dependencies": ["radix-ui"],
             "registryDependencies": ["@qiick/button", "@qiick/utils"],
             "files": [
                 {
@@ -62,11 +62,8 @@
             "name": "badge",
             "type": "registry:ui",
             "title": "Badge",
-            "description": "Status badge.",
-            "dependencies": [
-                "@radix-ui/react-slot",
-                "class-variance-authority"
-            ],
+            "description": "Badge (shadcn new-york-v4, incl. ghost / link) plus the qiick status variants muted, success, warning, info, ai; primary hover token.",
+            "dependencies": ["radix-ui", "class-variance-authority"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -80,7 +77,7 @@
             "type": "registry:ui",
             "title": "Breadcrumb",
             "description": "Breadcrumb primitives.",
-            "dependencies": ["@radix-ui/react-slot", "lucide-react"],
+            "dependencies": ["radix-ui", "lucide-react"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -93,7 +90,7 @@
             "name": "bubble",
             "type": "registry:ui",
             "title": "Bubble",
-            "description": "Chat bubble with muted, ghost, destructive, \u2026 variants.",
+            "description": "Chat bubble with muted, ghost, destructive, … variants.",
             "dependencies": ["class-variance-authority", "radix-ui"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
@@ -108,10 +105,7 @@
             "type": "registry:ui",
             "title": "Button",
             "description": "Button on the control-size scale (sm 24 / default 32 / lg 40), primary hover token.",
-            "dependencies": [
-                "@radix-ui/react-slot",
-                "class-variance-authority"
-            ],
+            "dependencies": ["radix-ui", "class-variance-authority"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -125,7 +119,7 @@
             "type": "registry:ui",
             "title": "Checkbox",
             "description": "Radix checkbox.",
-            "dependencies": ["@radix-ui/react-checkbox", "lucide-react"],
+            "dependencies": ["radix-ui", "lucide-react"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -139,11 +133,7 @@
             "type": "registry:ui",
             "title": "Dialog",
             "description": "Modal dialog with translated close button.",
-            "dependencies": [
-                "@radix-ui/react-dialog",
-                "lucide-react",
-                "react-i18next"
-            ],
+            "dependencies": ["radix-ui", "lucide-react", "react-i18next"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -157,7 +147,7 @@
             "type": "registry:ui",
             "title": "Dropdown menu",
             "description": "Radix dropdown menu.",
-            "dependencies": ["@radix-ui/react-dropdown-menu", "lucide-react"],
+            "dependencies": ["radix-ui", "lucide-react"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -235,7 +225,7 @@
             "type": "registry:ui",
             "title": "Label",
             "description": "Form label.",
-            "dependencies": ["@radix-ui/react-label"],
+            "dependencies": ["radix-ui"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -290,7 +280,7 @@
             "type": "registry:ui",
             "title": "Radio group",
             "description": "Radix radio group.",
-            "dependencies": ["@radix-ui/react-radio-group", "lucide-react"],
+            "dependencies": ["radix-ui", "lucide-react"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -304,7 +294,7 @@
             "type": "registry:ui",
             "title": "Select",
             "description": "Radix Select; trigger and items on the control scale.",
-            "dependencies": ["@radix-ui/react-select", "lucide-react"],
+            "dependencies": ["radix-ui", "lucide-react"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -318,7 +308,7 @@
             "type": "registry:ui",
             "title": "Separator",
             "description": "Horizontal or vertical rule.",
-            "dependencies": ["@radix-ui/react-separator"],
+            "dependencies": ["radix-ui"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -331,12 +321,8 @@
             "name": "sheet",
             "type": "registry:ui",
             "title": "Sheet",
-            "description": "Side panel built on the dialog primitive.",
-            "dependencies": [
-                "@radix-ui/react-dialog",
-                "lucide-react",
-                "react-i18next"
-            ],
+            "description": "Side panel built on the dialog primitive (shadcn new-york-v4, showCloseButton) with a translated close button.",
+            "dependencies": ["radix-ui", "lucide-react", "react-i18next"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -351,7 +337,7 @@
             "title": "Sidebar",
             "description": "Collapsible app sidebar with the straight full-height active bar (externa-core #463).",
             "dependencies": [
-                "@radix-ui/react-slot",
+                "radix-ui",
                 "class-variance-authority",
                 "lucide-react",
                 "react-i18next"
@@ -387,11 +373,39 @@
             ]
         },
         {
+            "name": "spinner",
+            "type": "registry:ui",
+            "title": "Spinner",
+            "description": "shadcn spinner (Loader2 with role=status) with a translated label.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/spinner.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "input-otp",
+            "type": "registry:ui",
+            "title": "Input OTP",
+            "description": "One-time code input (shadcn new-york-v4): InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator.",
+            "dependencies": ["input-otp", "lucide-react"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/input-otp.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
             "name": "switch",
             "type": "registry:ui",
             "title": "Switch",
-            "description": "Radix switch.",
-            "dependencies": ["@radix-ui/react-switch"],
+            "description": "Switch (shadcn new-york-v4), size default / sm.",
+            "dependencies": ["radix-ui"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -401,10 +415,24 @@
             ]
         },
         {
+            "name": "slider",
+            "type": "registry:ui",
+            "title": "Slider",
+            "description": "Range slider (shadcn new-york-v4), one or more thumbs.",
+            "dependencies": ["radix-ui"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/slider.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
             "name": "table",
             "type": "registry:ui",
             "title": "Table",
-            "description": "Table primitives used by the flat list panels.",
+            "description": "Table primitives (shadcn new-york-v4) used by the flat list panels.",
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -431,10 +459,7 @@
             "type": "registry:ui",
             "title": "Toggle",
             "description": "Two-state button on the control scale.",
-            "dependencies": [
-                "@radix-ui/react-toggle",
-                "class-variance-authority"
-            ],
+            "dependencies": ["radix-ui", "class-variance-authority"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -447,11 +472,8 @@
             "name": "toggle-group",
             "type": "registry:ui",
             "title": "Toggle group",
-            "description": "Segmented control (use variant=\"outline\" with type=\"single\").",
-            "dependencies": [
-                "@radix-ui/react-toggle-group",
-                "class-variance-authority"
-            ],
+            "description": "Segmented control (use variant=\"outline\" with type=\"single\"); spacing > 0 separates the items.",
+            "dependencies": ["radix-ui", "class-variance-authority"],
             "registryDependencies": ["@qiick/toggle", "@qiick/utils"],
             "files": [
                 {
@@ -478,8 +500,8 @@
             "name": "tooltip",
             "type": "registry:ui",
             "title": "Tooltip",
-            "description": "Radix tooltip.",
-            "dependencies": ["@radix-ui/react-tooltip"],
+            "description": "Tooltip (shadcn new-york-v4): foreground background, background text.",
+            "dependencies": ["radix-ui"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -566,6 +588,82 @@
             "files": [
                 {
                     "path": "src/components/admin/data-table-toolbar.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "data-table",
+            "type": "registry:component",
+            "title": "Data table",
+            "description": "Server-driven TanStack DataTable (sort, filter and paging done by the server), DataTableColumnHeader (sort dropdown), DataTableFacetedFilter (Popover + Command facet), selection and expand columns; pagination footer from page-layout.",
+            "dependencies": [
+                "@tanstack/react-table@^8.21.3",
+                "lucide-react",
+                "react-i18next"
+            ],
+            "registryDependencies": [
+                "@qiick/page-layout",
+                "@qiick/table",
+                "@qiick/button",
+                "@qiick/checkbox",
+                "@qiick/empty",
+                "@qiick/dropdown-menu",
+                "@qiick/badge",
+                "@qiick/command",
+                "@qiick/popover",
+                "@qiick/separator",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/admin/data-table.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/admin/data-table-column-header.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/admin/data-table-faceted-filter.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "paginated-multi-select",
+            "type": "registry:component",
+            "title": "Paginated multi-select",
+            "description": "Server-searched picker on Popover + Command: debounced search, next page on scroll, Badge chips, user rows with avatar; multiple={false} is the single-select picker.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/avatar",
+                "@qiick/avatar-tone",
+                "@qiick/badge",
+                "@qiick/button",
+                "@qiick/command",
+                "@qiick/popover",
+                "@qiick/spinner",
+                "@qiick/user-avatar",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/admin/paginated-multi-select.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "removable-badge",
+            "type": "registry:component",
+            "title": "Removable badge",
+            "description": "Removable tag chip: a secondary Badge with a ghost Button size=\"icon-xs\" and its own remove label.",
+            "dependencies": ["lucide-react"],
+            "registryDependencies": ["@qiick/badge", "@qiick/button"],
+            "files": [
+                {
+                    "path": "src/components/removable-badge.tsx",
                     "type": "registry:component"
                 }
             ]
@@ -713,7 +811,7 @@
             "type": "registry:ui",
             "title": "Context menu",
             "description": "Right-click menu, with the destructive item variant.",
-            "dependencies": ["@radix-ui/react-context-menu", "lucide-react"],
+            "dependencies": ["radix-ui", "lucide-react"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
                 {
@@ -726,7 +824,7 @@
             "name": "avatar",
             "type": "registry:ui",
             "title": "Avatar",
-            "description": "The shadcn avatar (sizes, AvatarBadge, AvatarGroup, AvatarGroupCount); `userId` gives each user a stable pastel swatch (theme `avatar-*` tokens).",
+            "description": "The shadcn avatar, unchanged (sizes, AvatarBadge, AvatarGroup, AvatarGroupCount). Per-user colour comes from `avatarToneClass()` (avatar-tone item) passed to AvatarFallback.",
             "dependencies": ["radix-ui"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
@@ -740,7 +838,7 @@
             "name": "drawer",
             "type": "registry:ui",
             "title": "Drawer",
-            "description": "Side drawer (vaul) with a scrolling body between a fixed header and footer.",
+            "description": "Side drawer (vaul) with a scrolling body between a fixed header and footer. qiick additions to shadcn: DrawerNested (vaul NestedRoot), DrawerContent showOverlay, focus moved into the drawer on open (never left on the trigger), right-side width max-w-md.",
             "dependencies": ["vaul"],
             "registryDependencies": ["@qiick/utils"],
             "files": [
@@ -754,7 +852,7 @@
             "name": "actions-overflow",
             "type": "registry:component",
             "title": "Actions overflow",
-            "description": "Toolbar actions that spill into a \u22ef menu only when space runs out (ResizeObserver), with a pinned slot that never spills.",
+            "description": "Toolbar actions that spill into a ⋯ menu only when space runs out (ResizeObserver), with a pinned slot that never spills.",
             "dependencies": ["lucide-react", "react-i18next"],
             "registryDependencies": [
                 "@qiick/button",
@@ -775,7 +873,11 @@
             "title": "User avatar",
             "description": "UserAvatar with per-user colour initials and the online / offline presence dot, plus the realtime ConnectionDot.",
             "dependencies": ["react-i18next"],
-            "registryDependencies": ["@qiick/avatar", "@qiick/utils"],
+            "registryDependencies": [
+                "@qiick/avatar",
+                "@qiick/avatar-tone",
+                "@qiick/utils"
+            ],
             "files": [
                 {
                     "path": "src/components/admin/user-avatar.tsx",
@@ -783,6 +885,25 @@
                 },
                 {
                     "path": "src/components/realtime/connection-dot.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "user-hover-card",
+            "type": "registry:component",
+            "title": "User hover card",
+            "description": "A user card on hover or focus (HoverCard): avatar, name, role badge, online / offline. Presence comes in as a prop.",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": [
+                "@qiick/user-avatar",
+                "@qiick/badge",
+                "@qiick/hover-card",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/user-hover-card.tsx",
                     "type": "registry:component"
                 }
             ]
@@ -846,7 +967,7 @@
             "name": "assistant-panel",
             "type": "registry:component",
             "title": "Assistant panel",
-            "description": "Assistant side panel: right drawer with thread and composer, toggled by \u2318J / Ctrl+J and the sidebar Assistant item.",
+            "description": "Assistant side panel: right drawer with thread and composer, toggled by ⌘J / Ctrl+J and the sidebar Assistant item.",
             "dependencies": ["lucide-react", "react-i18next"],
             "registryDependencies": [
                 "@qiick/drawer",
@@ -1104,6 +1225,300 @@
                     "path": "src/css/shadcn-tailwind.css",
                     "type": "registry:file",
                     "target": "resources/css/shadcn-tailwind.css"
+                }
+            ]
+        },
+        {
+            "name": "avatar-tone",
+            "type": "registry:lib",
+            "title": "Avatar tone",
+            "description": "avatarToneClass(id): the theme's avatar-1 … avatar-10 swatch classes for a user id, passed to AvatarFallback (and a sender name) where users must be told apart.",
+            "files": [
+                {
+                    "path": "src/lib/avatar-tone.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/avatar-tone.ts"
+                }
+            ]
+        },
+        {
+            "name": "collapsible",
+            "type": "registry:ui",
+            "title": "Collapsible",
+            "description": "shadcn collapsible; CollapsibleContent animates open and closed (tw-animate-css collapsible keyframes).",
+            "dependencies": ["radix-ui"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/collapsible.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "progress",
+            "type": "registry:ui",
+            "title": "Progress",
+            "description": "shadcn progress bar.",
+            "dependencies": ["radix-ui"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/progress.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "clipboard",
+            "type": "registry:lib",
+            "title": "Clipboard",
+            "description": "copyTextToClipboard() with an execCommand fallback (focus outside the document, insecure context) and readTextFromClipboard().",
+            "files": [
+                {
+                    "path": "src/lib/clipboard.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/clipboard.ts"
+                }
+            ]
+        },
+        {
+            "name": "ai-message-parts",
+            "type": "registry:lib",
+            "title": "AI message parts",
+            "description": "The parts model of an AI answer (reasoning, text, tool, provider tool, sources, usage) and the reducers that build it from the laravel/ai stream events or the stored steps.",
+            "files": [
+                {
+                    "path": "src/lib/ai-message-parts.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/ai-message-parts.ts"
+                }
+            ]
+        },
+        {
+            "name": "shimmer",
+            "type": "registry:component",
+            "title": "Shimmer",
+            "description": "AI Elements Shimmer: text that shimmers while something runs (needs shadcn-utilities).",
+            "registryDependencies": ["@qiick/shadcn-utilities", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ai-elements/shimmer.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "reasoning",
+            "type": "registry:component",
+            "title": "Reasoning",
+            "description": "AI Elements Reasoning: the model thinking, open while it streams, collapsed with \"Thought for N seconds\" after.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/collapsible",
+                "@qiick/shimmer",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ai-elements/reasoning.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/ai-elements/use-open-state.ts",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "chain-of-thought",
+            "type": "registry:component",
+            "title": "Chain of thought",
+            "description": "AI Elements ChainOfThought: several tool steps in a row as one collapsible list.",
+            "dependencies": ["lucide-react"],
+            "registryDependencies": [
+                "@qiick/badge",
+                "@qiick/collapsible",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ai-elements/chain-of-thought.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/ai-elements/use-open-state.ts",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "code-block",
+            "type": "registry:component",
+            "title": "Code block",
+            "description": "AI Elements CodeBlock: shiki-highlighted code (light and dark) with a copy button through copyTextToClipboard.",
+            "dependencies": ["lucide-react", "shiki"],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/clipboard",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ai-elements/code-block.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "tool",
+            "type": "registry:component",
+            "title": "Tool",
+            "description": "AI Elements Tool: one tool call with its state badge, parameters and result or error.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/badge",
+                "@qiick/code-block",
+                "@qiick/collapsible",
+                "@qiick/shimmer",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ai-elements/tool.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "sources",
+            "type": "registry:component",
+            "title": "Sources",
+            "description": "AI Elements Sources: the answer citations, collapsed behind \"Used N sources\".",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": ["@qiick/collapsible", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ai-elements/sources.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "context",
+            "type": "registry:component",
+            "title": "Context",
+            "description": "AI Elements Context: token usage of a turn against the model context window, with the input / output / reasoning / cache breakdown in a hover card.",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": [
+                "@qiick/ai-message-parts",
+                "@qiick/button",
+                "@qiick/hover-card",
+                "@qiick/progress",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ai-elements/context.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "ai-answer-parts",
+            "type": "registry:component",
+            "title": "AI answer parts",
+            "description": "AiAnswerParts renders the parts of an answer in order (Reasoning, Tool or ChainOfThought, text through the app renderer); AiAnswerSources and AiAnswerUsage add Sources and Context.",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": [
+                "@qiick/ai-message-parts",
+                "@qiick/chain-of-thought",
+                "@qiick/context",
+                "@qiick/reasoning",
+                "@qiick/shimmer",
+                "@qiick/sources",
+                "@qiick/tool"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ai/ai-answer-parts.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "chat-message-reactions",
+            "type": "registry:component",
+            "title": "Chat message reactions",
+            "description": "Reactions under a chat bubble on BubbleReactions: one Button xs per emoji with its count, pressed when the viewer reacted, a Tooltip naming who.",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": [
+                "@qiick/bubble",
+                "@qiick/button",
+                "@qiick/tooltip"
+            ],
+            "files": [
+                {
+                    "path": "src/components/chat/chat-message-reactions.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "chat-attachment-file",
+            "type": "registry:component",
+            "title": "Chat attachment file",
+            "description": "ChatAttachmentFile (a sent file on Attachment: opens on click, Download plus app menu entries) and ChatPendingFile (uploading, error, remove).",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/attachment",
+                "@qiick/dropdown-menu",
+                "@qiick/spinner"
+            ],
+            "files": [
+                {
+                    "path": "src/components/chat/chat-attachment-file.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "chat-reply-quote",
+            "type": "registry:component",
+            "title": "Chat reply quote",
+            "description": "The quoted message of a reply on Item (muted, left rule): jumps to the original in a bubble, carries the cancel action above the composer.",
+            "registryDependencies": ["@qiick/item", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/chat/chat-reply-quote.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "chat-pinned-bar",
+            "type": "registry:component",
+            "title": "Chat pinned bar",
+            "description": "Pinned messages above a thread, one muted Item with a pin each, jumping to the message.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": ["@qiick/item"],
+            "files": [
+                {
+                    "path": "src/components/chat/chat-pinned-bar.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "chat-mention",
+            "type": "registry:component",
+            "title": "Chat mention",
+            "description": "An @mention in a message: a primary-tinted secondary Badge opening the user hover card.",
+            "registryDependencies": ["@qiick/badge", "@qiick/user-hover-card"],
+            "files": [
+                {
+                    "path": "src/components/chat/chat-mention.tsx",
+                    "type": "registry:component"
                 }
             ]
         }

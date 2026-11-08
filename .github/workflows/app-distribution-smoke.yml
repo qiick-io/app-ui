@@ -1,0 +1,115 @@
+# Reusable smoke test of the self-hosted app distribution (qiick standards,
+# "Self-hosted app distribution"): create-project from the current commit, a
+# non-interactive install, the health endpoints, and an upgrade from the
+# previous release tag.
+#
+# In the app:
+#
+#   jobs:
+#     distribution-smoke:
+#       uses: qiick-io/app-ui/.github/workflows/app-distribution-smoke.yml@vX.Y.Z
+#       with:
+#         package: qiick/externa-core
+#         command: externa            # php artisan externa:install / externa:upgrade
+name: app distribution smoke
+
+on:
+  workflow_call:
+    inputs:
+      package:
+        description: Composer package name of the app (qiick/<app>)
+        type: string
+        required: true
+      command:
+        description: Artisan namespace of the install / upgrade commands
+        type: string
+        required: true
+      install-options:
+        description: Options for <command>:install in CI
+        type: string
+        default: --no-interaction --force --no-npm
+      upgrade-options:
+        description: Options for <command>:upgrade in CI
+        type: string
+        default: --no-interaction --force
+      previous-tag:
+        description: 'Release to upgrade from (default: the latest vX.Y.Z tag)'
+        type: string
+        default: ''
+      php-version:
+        type: string
+        default: '8.4'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          path: source
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ inputs.php-version }}
+          extensions: pdo_sqlite, sqlite3
+          coverage: none
+          tools: composer:v2
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+
+      # A path repository pinned to dev-develop stands in for Packagist, so the
+      # smoke tests this commit exactly as `composer create-project` ships it.
+      - name: create-project from this commit
+        run: |
+          composer create-project "${{ inputs.package }}" fresh dev-develop --no-interaction \
+            --repository='{"type":"path","url":"'"$GITHUB_WORKSPACE"'/source","options":{"symlink":false,"versions":{"${{ inputs.package }}":"dev-develop"}}}'
+
+      - name: Non-interactive install
+        working-directory: fresh
+        run: php artisan ${{ inputs.command }}:install ${{ inputs.install-options }}
+
+      - name: Health endpoints
+        working-directory: fresh
+        run: |
+          php artisan serve --port=8123 > /tmp/serve.log 2>&1 &
+          for attempt in $(seq 1 30); do curl -fsS http://127.0.0.1:8123/health/live >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:8123/health/live
+          curl -fsS http://127.0.0.1:8123/health/ready
+
+      - name: Find the previous release
+        id: previous
+        working-directory: source
+        run: |
+          tag="${{ inputs.previous-tag }}"
+          if [ -z "$tag" ]; then
+            tag=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Install the previous release
+        if: steps.previous.outputs.tag != ''
+        run: |
+          composer create-project "${{ inputs.package }}" upgraded "${{ steps.previous.outputs.tag }}" --no-interaction --remove-vcs \
+            --repository='{"type":"vcs","url":"'"$GITHUB_WORKSPACE"'/source"}'
+          cd upgraded
+          php artisan ${{ inputs.command }}:install ${{ inputs.install-options }}
+
+      # What a self-hosted operator does: take the new code, keep .env, storage
+      # and the database, then run the upgrade command.
+      - name: Upgrade to this commit
+        if: steps.previous.outputs.tag != ''
+        run: |
+          rsync -a --delete \
+            --exclude .git --exclude .env --exclude vendor --exclude node_modules \
+            --exclude storage --exclude 'database/*.sqlite' \
+            source/ upgraded/
+          cd upgraded
+          composer install --no-interaction --no-progress
+          php artisan ${{ inputs.command }}:upgrade ${{ inputs.upgrade-options }}

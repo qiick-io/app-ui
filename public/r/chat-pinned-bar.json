@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "chat-pinned-bar",
+  "title": "Chat pinned bar",
+  "description": "Pinned messages above a thread, one muted Item with a pin each, jumping to the message.",
+  "dependencies": [
+    "lucide-react",
+    "react-i18next"
+  ],
+  "registryDependencies": [
+    "@qiick/item"
+  ],
+  "files": [
+    {
+      "path": "src/components/chat/chat-pinned-bar.tsx",
+      "content": "import { Pin } from 'lucide-react';\nimport type { ReactNode } from 'react';\nimport { useTranslation } from 'react-i18next';\nimport {\n    Item,\n    ItemContent,\n    ItemDescription,\n    ItemGroup,\n    ItemMedia,\n    ItemTitle,\n} from '@/components/ui/item';\n\ntype ChatPinnedBarRow = {\n    id: number;\n    author: string;\n    body: ReactNode;\n};\n\ntype ChatPinnedBarProps = {\n    rows: ChatPinnedBarRow[];\n    onSelect: (id: number) => void;\n};\n\n/**\n * The pinned messages above a chat thread, one shadcn `Item` each (muted, with\n * a pin), jumping to the message on click.\n */\nexport function ChatPinnedBar({ rows, onSelect }: ChatPinnedBarProps) {\n    const { t } = useTranslation();\n\n    if (rows.length === 0) {\n        return null;\n    }\n\n    return (\n        <ItemGroup\n            aria-label={t('chat.pinned')}\n            className=\"gap-1\"\n            data-test=\"chat-pinned-bar\"\n        >\n            {rows.map((row) => (\n                <Item\n                    key={row.id}\n                    variant=\"muted\"\n                    size=\"sm\"\n                    className=\"w-full flex-nowrap gap-2 px-2 py-1.5 text-left\"\n                    asChild\n                >\n                    <button type=\"button\" onClick={() => onSelect(row.id)}>\n                        <ItemMedia>\n                            <Pin className=\"size-3 text-muted-foreground\" />\n                        </ItemMedia>\n                        <ItemContent className=\"min-w-0 flex-row items-baseline gap-1\">\n                            <ItemTitle className=\"shrink-0 text-xs\">\n                                {row.author}\n                            </ItemTitle>\n                            {row.body !== '' ? (\n                                <ItemDescription className=\"line-clamp-1 text-xs\">\n                                    {row.body}\n                                </ItemDescription>\n                            ) : null}\n                        </ItemContent>\n                    </button>\n                </Item>\n            ))}\n        </ItemGroup>\n    );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}
