@@ -287,7 +287,7 @@ export function DataTable<TData>({
  * layer, so the checkbox looks the same. Pass as the Checkbox `className`.
  */
 export const checkboxTargetClassName =
-    'relative isolate size-6 border-0 bg-transparent shadow-none data-[state=checked]:bg-transparent data-[state=indeterminate]:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 before:absolute before:inset-1 before:-z-10 before:rounded-[4px] before:border before:border-input before:shadow-xs data-[state=checked]:before:border-primary data-[state=checked]:before:bg-primary data-[state=indeterminate]:before:border-primary data-[state=indeterminate]:before:bg-primary focus-visible:before:border-ring focus-visible:before:ring-2 focus-visible:before:ring-ring focus-visible:before:ring-offset-2 focus-visible:before:ring-offset-background';
+    'relative isolate block size-6 border-0 bg-transparent shadow-none data-[state=checked]:bg-transparent data-[state=indeterminate]:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 before:absolute before:inset-1 before:-z-10 before:rounded-[4px] before:border before:border-input before:shadow-xs data-[state=checked]:before:border-primary data-[state=checked]:before:bg-primary data-[state=indeterminate]:before:border-primary data-[state=indeterminate]:before:bg-primary focus-visible:before:border-ring focus-visible:before:ring-2 focus-visible:before:ring-ring focus-visible:before:ring-offset-2 focus-visible:before:ring-offset-background';
 
 /**
  * The selection column of the shadcn data-table pattern: a select-all
