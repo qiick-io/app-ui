@@ -286,6 +286,10 @@ function withBlock(existing, managedBlock) {
  * @returns {string[]} Paths relative to the target root
  */
 function listFrontendFiles(targetRoot, frontendRoots) {
+    if (frontendRoots.length === 0) {
+        return [];
+    }
+
     try {
         return execFileSync(
             'git',

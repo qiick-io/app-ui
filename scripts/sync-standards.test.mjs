@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -134,4 +135,29 @@ test('non-kebab-case frontend names fail the check', () => {
         'resources/js/Pages is not kebab-case (frontend files and directories are kebab-case on disk).',
         'resources/js/components/UserCard.tsx is not kebab-case (frontend files and directories are kebab-case on disk).',
     ]);
+});
+
+test('a repo without frontend roots has no file names checked, even in git', () => {
+    const root = makeRepo({}, { 'README.md': '', 'docs/ARCHITECTURE.md': '' });
+
+    spawnSync('git', ['init', '-q'], { cwd: root });
+    syncStandards(root, { isCheck: false });
+
+    assert.deepEqual(syncStandards(root, { isCheck: true }), []);
+});
+
+test('gitignored output under a frontend root is not checked', () => {
+    const root = makeRepo(
+        { frontendRoots: ['resources/js'] },
+        {
+            '.gitignore': '/resources/js/actions\n',
+            'resources/js/actions/App/UserController.ts': '',
+            'resources/js/app.tsx': '',
+        },
+    );
+
+    spawnSync('git', ['init', '-q'], { cwd: root });
+    syncStandards(root, { isCheck: false });
+
+    assert.deepEqual(syncStandards(root, { isCheck: true }), []);
 });
