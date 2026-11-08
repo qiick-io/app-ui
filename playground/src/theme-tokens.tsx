@@ -14,6 +14,7 @@ const SWATCHES = [
     ['ai', 'ai-foreground'],
     ['ai-bg', 'ai-text'],
     ['sidebar', 'sidebar-foreground'],
+    ['sidebar', 'sidebar-muted-foreground'],
     ['sidebar-accent', 'sidebar-accent-foreground'],
 ] as const;
 

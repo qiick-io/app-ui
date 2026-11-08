@@ -465,6 +465,12 @@ const colourPairs = [
         need: 4.5,
     },
     {
+        name: 'sidebar-muted-foreground / sidebar (group labels)',
+        fg: '--sidebar-muted-foreground',
+        bg: '--sidebar',
+        need: 4.5,
+    },
+    {
         name: 'sidebar-ring / sidebar (focus)',
         fg: '--sidebar-ring',
         bg: '--sidebar',

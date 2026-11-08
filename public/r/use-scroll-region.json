@@ -1,0 +1,14 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "use-scroll-region",
+  "title": "useScrollRegion",
+  "description": "Puts a scroll container in the tab order while its content overflows, so the keyboard can scroll it (used by TablePanel).",
+  "files": [
+    {
+      "path": "src/hooks/use-scroll-region.ts",
+      "content": "import { useEffect, useState } from 'react';\n\n/**\n * Keyboard access for a scroll container (WCAG 2.1.1, axe\n * `scrollable-region-focusable`): while its content overflows, the container\n * takes `tabIndex={0}` so arrow keys and Page Up / Down scroll it; when nothing\n * overflows it stays out of the tab order.\n *\n * @returns {[(element: TElement | null) => void, 0 | undefined]} The callback ref and the `tabIndex` for the scroll container.\n */\nexport function useScrollRegion<TElement extends HTMLElement>(): [\n    (element: TElement | null) => void,\n    0 | undefined,\n] {\n    const [element, setElement] = useState<TElement | null>(null);\n    const [isScrollable, setIsScrollable] = useState(false);\n\n    useEffect(() => {\n        if (!element) {\n            return;\n        }\n\n        const update = (): void => {\n            setIsScrollable(\n                element.scrollHeight > element.clientHeight + 1 ||\n                    element.scrollWidth > element.clientWidth + 1,\n            );\n        };\n        const resizeObserver = new ResizeObserver(update);\n        const observeChildren = (): void => {\n            resizeObserver.disconnect();\n            resizeObserver.observe(element);\n\n            for (const child of Array.from(element.children)) {\n                resizeObserver.observe(child);\n            }\n\n            update();\n        };\n        const mutationObserver = new MutationObserver(observeChildren);\n\n        observeChildren();\n        mutationObserver.observe(element, { childList: true });\n\n        return () => {\n            resizeObserver.disconnect();\n            mutationObserver.disconnect();\n        };\n    }, [element]);\n\n    return [setElement, isScrollable ? 0 : undefined];\n}\n",
+      "type": "registry:hook"
+    }
+  ],
+  "type": "registry:hook"
+}

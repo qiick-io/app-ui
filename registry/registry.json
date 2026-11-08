@@ -523,6 +523,18 @@
             ]
         },
         {
+            "name": "use-scroll-region",
+            "type": "registry:hook",
+            "title": "useScrollRegion",
+            "description": "Puts a scroll container in the tab order while its content overflows, so the keyboard can scroll it (used by TablePanel).",
+            "files": [
+                {
+                    "path": "src/hooks/use-scroll-region.ts",
+                    "type": "registry:hook"
+                }
+            ]
+        },
+        {
             "name": "header-icon-button",
             "type": "registry:component",
             "title": "Header icon button",
@@ -560,6 +572,7 @@
                 "@qiick/page-header",
                 "@qiick/pagination",
                 "@qiick/select",
+                "@qiick/use-scroll-region",
                 "@qiick/utils"
             ],
             "files": [
