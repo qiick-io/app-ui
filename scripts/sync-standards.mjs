@@ -29,6 +29,7 @@
  * `--check` fails on a missing or different managed file or block, and on a
  * frontend file or directory name that is not kebab-case.
  */
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -277,44 +278,106 @@ function withBlock(existing, managedBlock) {
 }
 
 /**
+ * Files under the frontend roots: the repo's tracked and untracked files when it
+ * is a git checkout (so gitignored output such as Wayfinder's is skipped),
+ * otherwise everything on disk except `node_modules` and dot entries.
+ * @param {string} targetRoot
+ * @param {string[]} frontendRoots
+ * @returns {string[]} Paths relative to the target root
+ */
+function listFrontendFiles(targetRoot, frontendRoots) {
+    try {
+        return execFileSync(
+            'git',
+            [
+                'ls-files',
+                '--cached',
+                '--others',
+                '--exclude-standard',
+                '--',
+                ...frontendRoots,
+            ],
+            {
+                cwd: targetRoot,
+                encoding: 'utf8',
+                stdio: ['ignore', 'pipe', 'ignore'],
+            },
+        )
+            .split('\n')
+            .filter(
+                (file) =>
+                    file !== '' && fs.existsSync(path.join(targetRoot, file)),
+            );
+    } catch {
+        /** @type {string[]} */
+        const files = [];
+        /**
+         * @param {string} directory - Path relative to the target root
+         */
+        const walk = (directory) => {
+            for (const entry of fs.readdirSync(
+                path.join(targetRoot, directory),
+                {
+                    withFileTypes: true,
+                },
+            )) {
+                if (
+                    entry.name === 'node_modules' ||
+                    entry.name.startsWith('.')
+                ) {
+                    continue;
+                }
+
+                const relativePath = path.posix.join(directory, entry.name);
+
+                if (entry.isDirectory()) {
+                    walk(relativePath);
+                } else {
+                    files.push(relativePath);
+                }
+            }
+        };
+
+        for (const root of frontendRoots) {
+            if (fs.existsSync(path.join(targetRoot, root))) {
+                walk(root);
+            }
+        }
+
+        return files;
+    }
+}
+
+/**
  * Directory and file names under the frontend roots that are not kebab-case.
  * @param {string} targetRoot
  * @param {string[]} frontendRoots
  */
 export function findNonKebabCaseNames(targetRoot, frontendRoots) {
-    /** @type {string[]} */
-    const offenders = [];
+    const offenders = new Set();
 
-    /**
-     * @param {string} directory - Path relative to the target root
-     */
-    const walk = (directory) => {
-        for (const entry of fs.readdirSync(path.join(targetRoot, directory), {
-            withFileTypes: true,
-        })) {
-            if (entry.name === 'node_modules' || entry.name.startsWith('.')) {
-                continue;
+    for (const file of listFrontendFiles(targetRoot, frontendRoots)) {
+        const root = frontendRoots.find((frontendRoot) =>
+            file.startsWith(`${frontendRoot.replace(/\/$/, '')}/`),
+        );
+        const segments = file
+            .slice((root ?? '').length)
+            .split('/')
+            .filter(Boolean);
+
+        segments.forEach((segment, index) => {
+            if (!KEBAB_CASE_NAME.test(segment)) {
+                offenders.add(
+                    path.posix.join(
+                        root ?? '',
+                        ...segments.slice(0, index + 1),
+                    ),
+                );
             }
-
-            const relativePath = path.posix.join(directory, entry.name);
-
-            if (!KEBAB_CASE_NAME.test(entry.name)) {
-                offenders.push(relativePath);
-            }
-
-            if (entry.isDirectory()) {
-                walk(relativePath);
-            }
-        }
-    };
-
-    for (const root of frontendRoots) {
-        if (fs.existsSync(path.join(targetRoot, root))) {
-            walk(root);
-        }
+        });
     }
 
-    return offenders;
+    return [...offenders];
 }
 
 /**

@@ -9,6 +9,8 @@
  *
  *   Fails when the PHPStan baseline holds more errors (the sum of its `count:`
  *   entries) than the same file on the base ref: the baseline may only shrink.
+ *   The one exception is the PR that raises `level:` in phpstan.neon(.dist):
+ *   it may baseline the new level's errors.
  *
  *     <lint --format json> | node scripts/qiick-ratchet.mjs lint --rule <id> --baseline <file.json> [--update]
  *
@@ -41,6 +43,36 @@ function countBaselineErrors(neon) {
     );
 }
 
+/**
+ * @param {string} ref - Git ref, or '' for the working tree
+ * @param {string} file
+ * @returns {string | null}
+ */
+function readAt(ref, file) {
+    try {
+        return ref === ''
+            ? fs.readFileSync(file, 'utf8')
+            : execFileSync('git', ['show', `${ref}:${file}`], {
+                  encoding: 'utf8',
+                  stdio: ['ignore', 'pipe', 'ignore'],
+              });
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * The PHPStan level at a ref (`max` counts as 10).
+ * @param {string} ref
+ */
+function phpstanLevelAt(ref) {
+    const config =
+        readAt(ref, 'phpstan.neon') ?? readAt(ref, 'phpstan.neon.dist') ?? '';
+    const level = config.match(/^\s*level:\s*(\w+)/m)?.[1] ?? '0';
+
+    return level === 'max' ? 10 : Number(level);
+}
+
 function checkPhpstan() {
     const baselinePath = option('baseline', 'phpstan-baseline.neon');
     const baseRef =
@@ -67,6 +99,14 @@ function checkPhpstan() {
     console.log(
         `qiick-ratchet phpstan: ${current} baselined errors (${baseRef}: ${previous})`,
     );
+
+    if (current > previous && phpstanLevelAt('') > phpstanLevelAt(baseRef)) {
+        console.log(
+            `Level raised (${phpstanLevelAt(baseRef)} -> ${phpstanLevelAt('')}): the new level's errors may be baselined once.`,
+        );
+
+        return;
+    }
 
     if (current > previous) {
         console.error(
@@ -113,7 +153,11 @@ function countLintFindings(report, ruleId) {
         }
     }
 
-    return Object.fromEntries(Object.entries(counts).sort());
+    return Object.fromEntries(
+        Object.entries(counts).sort(([first], [second]) =>
+            first.localeCompare(second),
+        ),
+    );
 }
 
 function checkLint() {
