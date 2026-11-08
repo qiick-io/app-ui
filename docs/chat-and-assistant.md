@@ -35,6 +35,8 @@ Chat (`/chat`) and the Assistant (`/ai`) share **one structure**.
 ## Human chat messages
 
 - **Reactions** under the bubble (`ChatMessageReactions`): emoji and count only, one `Button size="xs"` each, pressed (`aria-pressed`) when the viewer reacted; who reacted is in a `Tooltip` and the accessible name, never avatars.
+- **Room for reactions.** The pill hangs below the bubble edge by design, and `MessageScrollerItem` uses `content-visibility: auto`, which clips whatever leaves the row. A bubble with reactions takes `mb-6` (the pill is about 21px with its ring); never less, or the last message's reactions are cut off.
+- **Photos fill the bubble.** With media, the bubble takes the media's width (the same `w-80` frame for a single photo and for albums), `BubbleContent` drops its padding so the media sits edge to edge under the bubble's rounded top corners, and the caption wraps inside that width. The bubble never grows wider than the media to fit a caption on one line.
 - **Reply quote** (`ChatReplyQuote`): a muted `Item` with a left rule, at the top of the reply bubble (jumps to the original) and above the composer while replying (with the cancel action).
 - **Pinned bar** (`ChatPinnedBar`): one muted `Item` with a pin per pinned message, above the thread.
 - **Files** (`ChatAttachmentFile`): a sent file on `Attachment` (opens on click, ⋮ menu with Download plus app entries); `ChatPendingFile` while it uploads (Spinner and %, error, remove). Images and videos go to the media album instead.
