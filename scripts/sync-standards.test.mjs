@@ -161,3 +161,15 @@ test('gitignored output under a frontend root is not checked', () => {
 
     assert.deepEqual(syncStandards(root, { isCheck: true }), []);
 });
+
+test('apps get the stack rules and every repo points at the new-product guide', () => {
+    const app = makeRepo({ app: true });
+    const library = makeRepo({});
+
+    syncStandards(app, { isCheck: false });
+    syncStandards(library, { isCheck: false });
+
+    assert.match(read(app, 'AGENTS.md'), /^## Stack$/m);
+    assert.doesNotMatch(read(library, 'AGENTS.md'), /^## Stack$/m);
+    assert.match(read(library, 'AGENTS.md'), /docs\/new-product\.md/);
+});

@@ -10,7 +10,9 @@
 
 Shared admin UI for the open-source, installable [qiick](https://qiick.io) apps: [Externa](https://github.com/qiick-io/externa-core), [Excubia](https://github.com/qiick-io/excubia-app), and the apps that follow.
 
-> **Status:** early development. Nothing is published yet.
+> **Status:** in use by externa-core and excubia-app. Releases are tagged `vX.Y.Z` (see [`RELEASING.md`](RELEASING.md)); apps pin a tag, never `develop`.
+
+**Starting a new qiick product? Read [`docs/new-product.md`](docs/new-product.md).** It goes from an empty repo to a first green CI: the stack, the scaffold script, the registry, the backend skeleton and the required checks.
 
 ## For agents and contributors
 
@@ -18,7 +20,7 @@ Before any UI change in a qiick app, read [`AGENTS.md`](AGENTS.md) (the hard rul
 
 ## Standards pack
 
-[`standards/`](standards/README.md) is the one public source of the rules every qiick repo follows: the code standard (names, role suffixes, the five Laravel layers, PHPDoc / JSDoc, contracts), testing, git and release rules, and these UI rules. `scripts/sync-standards.mjs` writes them into each repo's `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/rules/` and `tests/Arch/NamingArchitectureTest.php`, so agents read them at their first task; the drift check fails CI when a copy differs.
+[`standards/`](standards/README.md) is the one public source of the rules every qiick repo follows: the stack, the code standard (names, role suffixes, the five Laravel layers, PHPDoc / JSDoc, contracts), testing, git and release rules, and these UI rules. `scripts/sync-standards.mjs` writes them into each repo's `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/rules/` and `tests/Arch/NamingArchitectureTest.php`, so agents read them at their first task; the drift check fails CI when a copy differs.
 
 ## What it is
 

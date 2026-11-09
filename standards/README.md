@@ -18,7 +18,7 @@ One public source for the rules every qiick repo follows (Externa, Excubia, Sign
 | `tests/Arch/naming-architecture.php`        | the test above                  | **the repo's own**, written once |
 | `qiick-standards.eslint.js`                 | ESLint, in the editor           | whole file                       |
 
-The rules themselves are in [`rules/`](rules): [code](rules/code.md) (casing, full-word names, boolean prefixes, role suffixes, the five layers, PHPDoc / JSDoc, contracts and refactoring guardrails), [testing](rules/testing.md), [git](rules/git.md) (English, Conventional Commits, branches, squash), [releases](rules/release.md) (nothing ships without the maintainer), [automated checks](rules/checks.md) (knip, `noUnused*`, strict models, the Larastan and i18n ratchets), [UI](rules/ui.md) (the app-ui rules, only in repos with a `uiPreset`) and [self-hosted distribution](rules/distribution.md) (only in repos with `"app": true`).
+The rules themselves are in [`rules/`](rules): [stack](rules/stack.md) (only in repos with `"app": true`), [code](rules/code.md) (casing, full-word names, boolean prefixes, role suffixes, the five layers, PHPDoc / JSDoc, contracts and refactoring guardrails), [testing](rules/testing.md), [git](rules/git.md) (English, Conventional Commits, branches, squash), [releases](rules/release.md) (nothing ships without the maintainer), [automated checks](rules/checks.md) (knip, `noUnused*`, strict models, the Larastan and i18n ratchets), [UI](rules/ui.md) (the app-ui rules, only in repos with a `uiPreset`) and [self-hosted distribution](rules/distribution.md) (only in repos with `"app": true`).
 
 ## What CI enforces
 
@@ -54,6 +54,8 @@ The check skips everything that is the repo's own:
 - other test files in `tests/Arch/` for repo-only architecture rules.
 
 ## Adopting it in a repo
+
+A new product: [`docs/new-product.md`](../docs/new-product.md) and `scripts/new-product.mjs` do all of this in one step. An existing repo:
 
 1. Add `qiick-standards.json` at the repo root:
 

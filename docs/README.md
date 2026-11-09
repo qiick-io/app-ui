@@ -1,5 +1,7 @@
 # qiick app UI patterns
 
+New product? Start with [new-product.md](new-product.md).
+
 One page per pattern. Each names the registry item (when it exists) and the exact externa-core `develop` files to copy (paths under `resources/js/` unless noted). The playground renders the full screens: `npm run dev`, then `#/users`, `#/settings`, `#/assistant`, `#/chat`, `#/files` (add `/dark`).
 
 | Pattern                                                          | Page                                             |
