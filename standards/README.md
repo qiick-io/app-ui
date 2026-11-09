@@ -20,7 +20,7 @@ One public source for the rules every qiick repo follows (Externa, Excubia, Sign
 | `scripts/check-ui-tokens.mjs`               | `npm run lint`, CI (UI apps)    | whole file                       |
 | `scripts/ui-token-baseline.txt`             | the check above                 | **the repo's own**, written once |
 
-The rules themselves are in [`rules/`](rules): [code](rules/code.md) (casing, full-word names, boolean prefixes, role suffixes, the five layers, PHPDoc / JSDoc, contracts and refactoring guardrails), [testing](rules/testing.md), [git](rules/git.md) (English, Conventional Commits, branches, squash), [releases](rules/release.md) (nothing ships without the maintainer), [automated checks](rules/checks.md) (knip, `noUnused*`, strict models, the Larastan and i18n ratchets), [UI](rules/ui.md) (the app-ui rules, only in repos with a `uiPreset`) and [self-hosted distribution](rules/distribution.md) (only in repos with `"app": true`).
+The rules themselves are in [`rules/`](rules): [code](rules/code.md) (casing, full-word names, boolean prefixes, role suffixes, the five layers, PHPDoc / JSDoc, contracts and refactoring guardrails), [backend](rules/backend.md) (requests, permissions and policies, API, security, logging, realtime, AI, health; only in PHP repos), [testing](rules/testing.md), [git](rules/git.md) (English, Conventional Commits, branches, squash), [releases](rules/release.md) (nothing ships without the maintainer), [automated checks](rules/checks.md) (knip, `noUnused*`, strict models, the Larastan and i18n ratchets), [UI](rules/ui.md) (the app-ui rules, only in repos with a `uiPreset`) and [self-hosted distribution](rules/distribution.md) (only in repos with `"app": true`).
 
 ## What CI enforces
 

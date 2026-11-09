@@ -178,3 +178,17 @@ test('Laravel UI apps get the theme-token check with a baseline of their own', (
         !fs.existsSync(path.join(nonUiPackage, 'scripts/check-ui-tokens.mjs')),
     );
 });
+
+test('PHP repos get the backend conventions', () => {
+    const laravelRepo = makeRepo({ php: true });
+    const frontendOnlyRepo = makeRepo({});
+
+    syncStandards(laravelRepo, { isCheck: false });
+    syncStandards(frontendOnlyRepo, { isCheck: false });
+
+    assert.match(read(laravelRepo, 'AGENTS.md'), /^## Backend conventions$/m);
+    assert.doesNotMatch(
+        read(frontendOnlyRepo, 'AGENTS.md'),
+        /Backend conventions/,
+    );
+});
