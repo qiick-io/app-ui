@@ -657,6 +657,31 @@
             ]
         },
         {
+            "name": "date-range-picker",
+            "type": "registry:component",
+            "title": "Date range picker",
+            "description": "One field for a from–to range on the Calendar (externa-core): two clicks pick the days with a hover preview; withTime adds a start and an end time committed with Apply, min / max bound the days.",
+            "dependencies": [
+                "lucide-react",
+                "react-day-picker",
+                "react-i18next"
+            ],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/calendar",
+                "@qiick/input",
+                "@qiick/label",
+                "@qiick/popover",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/admin/date-range-picker.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
             "name": "paginated-multi-select",
             "type": "registry:component",
             "title": "Paginated multi-select",

@@ -82,6 +82,11 @@
         "loadMore": "Mehr laden",
         "loading": "Laden…"
     },
+    "dateRangePicker": {
+        "startTime": "Startzeit",
+        "endTime": "Endzeit",
+        "apply": "Anwenden"
+    },
     "picker": {
         "clearSelection": "Auswahl aufheben",
         "loading": "Wird geladen…",

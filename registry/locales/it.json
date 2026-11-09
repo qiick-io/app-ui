@@ -82,6 +82,11 @@
         "loadMore": "Carica altri",
         "loading": "Caricamento…"
     },
+    "dateRangePicker": {
+        "startTime": "Ora di inizio",
+        "endTime": "Ora di fine",
+        "apply": "Applica"
+    },
     "picker": {
         "clearSelection": "Cancella selezione",
         "loading": "Caricamento…",
