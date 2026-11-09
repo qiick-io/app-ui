@@ -87,6 +87,7 @@ function renderRulePages(config) {
     /** @type {Record<string, string>} */
     const pages = {
         code: readSource('rules/code.md'),
+        ...(config.php ? { backend: readSource('rules/backend.md') } : {}),
         testing: readSource('rules/testing.md'),
         git: readSource('rules/git.md'),
         release: readSource('rules/release.md'),
@@ -156,7 +157,13 @@ export function renderOutputs(config) {
             content: cursorRule(
                 'qiick code standard: names, suffixes, architecture, docs, contracts, CI checks, git',
                 'alwaysApply: true',
-                [pages.code, pages.checks, pages.git, pages.distribution]
+                [
+                    pages.code,
+                    pages.backend,
+                    pages.checks,
+                    pages.git,
+                    pages.distribution,
+                ]
                     .filter(Boolean)
                     .map((page, index) =>
                         index === 0 ? page.trim() : demoteHeadings(page.trim()),
