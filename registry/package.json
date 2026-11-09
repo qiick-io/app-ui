@@ -1,0 +1,34 @@
+{
+    "name": "@qiick/app-ui-registry",
+    "version": "0.1.0",
+    "private": true,
+    "description": "shadcn registry sources for the qiick apps. Built into ../public/r.",
+    "type": "module",
+    "scripts": {
+        "build": "shadcn build --output ../public/r"
+    },
+    "dependencies": {
+        "@inertiajs/react": "^2.3.28",
+        "@shadcn/react": "^0.3.1",
+        "@tanstack/react-table": "^8.21.3",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "cmdk": "^1.1.1",
+        "embla-carousel-react": "^8.6.0",
+        "i18next": "^26.4.2",
+        "input-otp": "^1.5.0",
+        "lucide-react": "^1.61.0",
+        "radix-ui": "^1.8.1",
+        "react": "^19.3.0",
+        "react-i18next": "^17.0.15",
+        "recharts": "^3.10.1",
+        "shiki": "^4.6.0",
+        "sonner": "^2.0.8",
+        "tailwind-merge": "^3.7.0",
+        "vaul": "^1.1.2"
+    },
+    "devDependencies": {
+        "@types/react": "^19.3.0",
+        "shadcn": "^4.23.0"
+    }
+}

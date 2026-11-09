@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "header-icon-button",
+  "title": "Header icon button",
+  "description": "Icon-only button with a tooltip label, for page headers and toolbars.",
+  "registryDependencies": [
+    "@qiick/button",
+    "@qiick/tooltip"
+  ],
+  "files": [
+    {
+      "path": "src/components/admin/header-icon-button.tsx",
+      "content": "import type { ComponentProps } from 'react';\nimport { Button } from '@/components/ui/button';\nimport {\n    Tooltip,\n    TooltipContent,\n    TooltipTrigger,\n} from '@/components/ui/tooltip';\n\n/**\n * Icon-only header/toolbar button with accessible tooltip label.\n */\nexport function HeaderIconButton({\n    label,\n    children,\n    variant = 'ghost',\n    size = 'icon',\n    ref,\n    ...props\n}: ComponentProps<typeof Button> & { label: string }) {\n    return (\n        <Tooltip>\n            <TooltipTrigger asChild>\n                <Button\n                    ref={ref}\n                    variant={variant}\n                    size={size}\n                    aria-label={label}\n                    {...props}\n                >\n                    {children}\n                </Button>\n            </TooltipTrigger>\n            <TooltipContent>{label}</TooltipContent>\n        </Tooltip>\n    );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

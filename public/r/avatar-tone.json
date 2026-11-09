@@ -1,0 +1,15 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "avatar-tone",
+  "title": "Avatar tone",
+  "description": "avatarToneClass(id): the theme's avatar-1 … avatar-10 swatch classes for a user id, passed to AvatarFallback (and a sender name) where users must be told apart.",
+  "files": [
+    {
+      "path": "src/lib/avatar-tone.ts",
+      "content": "/**\n * Per-user avatar colour, kept outside the shadcn `avatar` so that component stays\n * unchanged. Pass the result to `AvatarFallback`'s `className` (and to a sender name)\n * where users must be told apart: chat, presence, group members.\n *\n * Swatches are the theme's `avatar-1` … `avatar-10` tokens, written as literal classes so\n * Tailwind generates them. Colour is never the only cue: pair it with the name.\n *\n * @example <AvatarFallback className={avatarToneClass(user.id)}>EM</AvatarFallback>\n */\nconst AVATAR_TONES = [\n    'bg-avatar-1 text-avatar-foreground',\n    'bg-avatar-2 text-avatar-foreground',\n    'bg-avatar-3 text-avatar-foreground',\n    'bg-avatar-4 text-avatar-foreground',\n    'bg-avatar-5 text-avatar-foreground',\n    'bg-avatar-6 text-avatar-foreground',\n    'bg-avatar-7 text-avatar-foreground',\n    'bg-avatar-8 text-avatar-foreground',\n    'bg-avatar-9 text-avatar-foreground',\n    'bg-avatar-10 text-avatar-foreground',\n];\n\nfunction seedFromId(id: number | string): number | null {\n    if (typeof id === 'number') {\n        return Number.isNaN(id) ? null : id;\n    }\n\n    const trimmed = id.trim();\n\n    if (trimmed === '') {\n        return null;\n    }\n\n    const asNumber = Number(trimmed);\n\n    if (Number.isFinite(asNumber)) {\n        return asNumber;\n    }\n\n    let hash = 0;\n\n    for (let i = 0; i < trimmed.length; i++) {\n        hash = (Math.imul(31, hash) + trimmed.charCodeAt(i)) | 0;\n    }\n\n    return hash;\n}\n\n/**\n * Stable swatch class for a user (or group) id: numeric ids use abs(id) % 10,\n * other strings are hashed first. Undefined when there is no id.\n */\nexport function avatarToneClass(\n    id?: number | string | null,\n): string | undefined {\n    if (id === undefined || id === null) {\n        return undefined;\n    }\n\n    const seed = seedFromId(id);\n\n    return seed === null\n        ? AVATAR_TONES[0]\n        : AVATAR_TONES[Math.abs(seed) % AVATAR_TONES.length];\n}\n",
+      "type": "registry:file",
+      "target": "resources/js/lib/avatar-tone.ts"
+    }
+  ],
+  "type": "registry:lib"
+}

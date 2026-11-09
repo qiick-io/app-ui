@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "utils",
+  "title": "cn",
+  "description": "cn() with a tailwind-merge config that knows the control-size spacing keys, plus the Inertia toUrl() helper.",
+  "dependencies": [
+    "@inertiajs/react",
+    "clsx",
+    "tailwind-merge"
+  ],
+  "files": [
+    {
+      "path": "src/lib/utils.ts",
+      "content": "import type { InertiaLinkProps } from '@inertiajs/react';\nimport { clsx } from 'clsx';\nimport type { ClassValue } from 'clsx';\nimport { extendTailwindMerge } from 'tailwind-merge';\n\n/**\n * `tailwind-merge` aware of the control-size spacing keys (#462) so a caller's\n * `h-8` / `size-7` still overrides a variant's `h-control` / `size-control`.\n */\nconst twMerge = extendTailwindMerge({\n    extend: {\n        theme: { spacing: ['control', 'control-sm', 'control-lg'] },\n    },\n});\n\n/**\n * Merges Tailwind class names with conflict resolution via `tailwind-merge`.\n *\n * @param inputs - Class values accepted by `clsx`\n * @returns A single merged class string\n */\nexport function cn(...inputs: ClassValue[]) {\n    return twMerge(clsx(inputs));\n}\n\n/**\n * Normalizes an Inertia link `href` to a plain URL string.\n *\n * @param url - String href or Wayfinder-style `{ url }` object\n * @returns The URL string\n */\nexport function toUrl(url: NonNullable<InertiaLinkProps['href']>): string {\n    return typeof url === 'string' ? url : url.url;\n}\n",
+      "type": "registry:file",
+      "target": "resources/js/lib/utils.ts"
+    }
+  ],
+  "type": "registry:lib"
+}

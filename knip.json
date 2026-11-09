@@ -1,0 +1,26 @@
+{
+    "$schema": "https://unpkg.com/knip@6/schema.json",
+    "ignoreDependencies": ["@commitlint/types"],
+    "ignoreUnresolved": ["vite/client"],
+    "workspaces": {
+        ".": {
+            "entry": ["scripts/*.mjs", "qiick-standards.eslint.js"],
+            "project": ["scripts/*.mjs"]
+        },
+        "registry": {
+            "entry": ["src/**/*.{ts,tsx}"],
+            "project": ["src/**/*.{ts,tsx}"]
+        },
+        "playground": {
+            "entry": ["src/starter-kit/inertia.tsx"],
+            "project": ["src/**/*.{ts,tsx,css}"],
+            "ignoreDependencies": [
+                "lucide-react",
+                "@tanstack/react-table",
+                "recharts",
+                "i18next",
+                "react-i18next"
+            ]
+        }
+    }
+}

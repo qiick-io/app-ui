@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "theme-blue",
+  "title": "Theme: Blue preset",
+  "description": "Blue brand preset (Excubia): brand-only tokens over the shared base. Import after qiick-theme.css.",
+  "registryDependencies": [
+    "@qiick/theme"
+  ],
+  "files": [
+    {
+      "path": "src/css/qiick-theme-blue.css",
+      "content": "/*\n * Blue brand preset (Excubia): Refactoring UI \"Light Blue Vivid\" scale,\n * primary = the logo #1375A7. Copied from externa-core\n * `config/theme-presets.php` (`presets.blue`).\n *\n * A preset only sets brand colours (primary, ring, sidebar accents, the first\n * chart colours) over the shared base in qiick-theme.css (`@qiick/theme`).\n * Installed with `npx shadcn add @qiick/theme-blue`; import it after the theme:\n * it lands in the same `base` layer, so it wins by source order and unlayered\n * app rules still override it.\n */\n\n@layer base {\n    :root {\n        --primary: #1375a7;\n        --ring: #1375a7;\n        --chart-1: #1375a7;\n        --chart-2: #0e7c86;\n        --sidebar-primary: #1375a7;\n        --sidebar-accent: #e3f8ff;\n        --sidebar-accent-foreground: #035388;\n        --sidebar-ring: #1375a7;\n    }\n\n    .dark {\n        --primary: #2bb0ed;\n        --ring: #2bb0ed;\n        --chart-1: #2bb0ed;\n        --chart-2: #2cb1bc;\n        --sidebar-primary: #2bb0ed;\n        --sidebar-accent: #04364f;\n        --sidebar-accent-foreground: #81defd;\n        --sidebar-ring: #2bb0ed;\n    }\n}\n",
+      "type": "registry:file",
+      "target": "resources/css/qiick-theme-blue.css"
+    }
+  ],
+  "type": "registry:item"
+}

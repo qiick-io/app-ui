@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "settings-form-actions",
+  "title": "Settings form actions",
+  "description": "Sticky Save bar for settings forms.",
+  "dependencies": [
+    "lucide-react",
+    "react-i18next"
+  ],
+  "registryDependencies": [
+    "@qiick/button"
+  ],
+  "files": [
+    {
+      "path": "src/components/settings-form-actions.tsx",
+      "content": "import { Save } from 'lucide-react';\nimport { useTranslation } from 'react-i18next';\nimport { Button } from '@/components/ui/button';\n\ntype SettingsFormActionsProps = {\n    processing: boolean;\n    recentlySuccessful: boolean;\n    'data-test'?: string;\n};\n\n/**\n * Sticky Save bar for settings forms — pinned to the bottom of the\n * settings content scroll pane while the form scrolls underneath.\n */\nexport function SettingsFormActions({\n    processing,\n    recentlySuccessful,\n    'data-test': dataTest,\n}: SettingsFormActionsProps) {\n    const { t } = useTranslation();\n\n    return (\n        <div className=\"sticky bottom-0 z-10 -mx-1 border-t border-border/80 bg-background/90 px-1 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md supports-backdrop-filter:bg-background/75\">\n            <div\n                className=\"flex w-full flex-wrap items-center justify-end gap-4\"\n                role=\"status\"\n                aria-live=\"polite\"\n                aria-busy={processing || undefined}\n            >\n                {recentlySuccessful ? (\n                    <p className=\"animate-in text-sm text-muted-foreground duration-200 ease-in-out fade-in\">\n                        {t('common.saved')}\n                    </p>\n                ) : null}\n                {processing ? (\n                    <span className=\"sr-only\">{t('a11y.saving')}</span>\n                ) : null}\n                <Button\n                    type=\"submit\"\n                    disabled={processing}\n                    data-test={dataTest}\n                    aria-busy={processing || undefined}\n                >\n                    <Save className=\"size-4\" aria-hidden=\"true\" />\n                    {t('common.save')}\n                </Button>\n            </div>\n        </div>\n    );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

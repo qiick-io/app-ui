@@ -1,0 +1,116 @@
+{
+    "a11y": {
+        "breadcrumb": "Percorso di navigazione",
+        "close": "Chiudi",
+        "loading": "Caricamento",
+        "moreActions": "Altre azioni",
+        "saving": "Salvataggio",
+        "search": "Cerca",
+        "toggleSidebar": "Attiva/disattiva barra laterale"
+    },
+    "ai": {
+        "fabDescription": "Drawer rapido dell'assistente. Apri la pagina completa per la cronologia.",
+        "fabTitle": "Nuova chat",
+        "openFullPage": "Apri a schermo intero",
+        "reasoning": {
+            "thinking": "Sto ragionando…",
+            "thoughtFewSeconds": "Ha ragionato per qualche secondo",
+            "thoughtFor_one": "Ha ragionato per {{count}} secondo",
+            "thoughtFor_other": "Ha ragionato per {{count}} secondi"
+        },
+        "sources": {
+            "used_one": "{{count}} fonte usata",
+            "used_other": "{{count}} fonti usate"
+        },
+        "tool": {
+            "error": "Errore",
+            "parameters": "Parametri",
+            "result": "Risultato",
+            "state": {
+                "approval-requested": "In attesa di approvazione",
+                "approval-responded": "Risposto",
+                "input-available": "In esecuzione",
+                "input-streaming": "In attesa",
+                "output-available": "Completato",
+                "output-denied": "Rifiutato",
+                "output-error": "Errore"
+            },
+            "steps_one": "{{count}} passo con strumenti",
+            "steps_other": "{{count}} passi con strumenti"
+        },
+        "usage": {
+            "cache": "Cache",
+            "input": "Input",
+            "output": "Output",
+            "reasoning": "Ragionamento",
+            "trigger": "Contesto usato: {{percent}}"
+        }
+    },
+    "chat": {
+        "download": "Scarica",
+        "more": "Altro",
+        "pinned": "Messaggi fissati",
+        "reactionToggle": "Reazione {{emoji}}: {{names}}",
+        "removePendingFile": "Rimuovi file"
+    },
+    "common": {
+        "cancel": "Annulla",
+        "clearFilters": "Cancella filtri",
+        "delete": "Elimina",
+        "noResults": "Nessun risultato.",
+        "offline": "Offline",
+        "online": "Online",
+        "pageRange": "{{from}}–{{to}} di {{total}}",
+        "perPageOption": "{{count}} / pagina",
+        "rowsPerPage": "Righe per pagina",
+        "save": "Salva",
+        "saved": "Salvato",
+        "selectedCount": "{{count}} selezionati",
+        "sortAscending": "Ordine crescente",
+        "sortDescending": "Ordine decrescente"
+    },
+    "confirmDestructive": {
+        "typeToConfirm": "Digita \"{{name}}\" per confermare"
+    },
+    "files": {
+        "card": {
+            "select": "Seleziona {{name}}"
+        },
+        "loadMore": "Carica altri",
+        "loading": "Caricamento…",
+        "tags": {
+            "moreTags": "{{count}} altri tag"
+        }
+    },
+    "picker": {
+        "clearSelection": "Cancella selezione",
+        "loading": "Caricamento…",
+        "noResults": "Nessun risultato.",
+        "placeholder": "Seleziona…",
+        "search": "Cerca…"
+    },
+    "realtime": {
+        "connected": "Realtime connesso",
+        "connecting": "Connessione…",
+        "disabled": "Realtime off",
+        "offline": "Realtime offline"
+    },
+    "settings": {
+        "appearance": {
+            "dark": "Scuro",
+            "light": "Chiaro",
+            "system": "Sistema"
+        }
+    },
+    "userMenu": {
+        "accessibility": "Accessibilità",
+        "accessibilityOff": "Off",
+        "accessibilityOnCount": "{{count}} attive",
+        "appearance": "Aspetto",
+        "highContrast": "Alto contrasto",
+        "language": "Lingua",
+        "logOut": "Esci",
+        "reduceMotion": "Riduci movimento",
+        "settings": "Impostazioni"
+    }
+}

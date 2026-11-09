@@ -1,0 +1,9 @@
+@import 'tailwindcss';
+
+@import 'tw-animate-css';
+@import '../../registry/src/css/shadcn-tailwind.css';
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
+@import '../../registry/src/css/qiick-theme.css';
+
+@source '../../registry/src';

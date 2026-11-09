@@ -1,0 +1,48 @@
+{
+    "name": "qiick-app-ui",
+    "private": true,
+    "type": "module",
+    "workspaces": [
+        "registry",
+        "playground"
+    ],
+    "engines": {
+        "node": ">=24"
+    },
+    "scripts": {
+        "a11y:contrast": "node scripts/a11y-contrast.mjs",
+        "build": "npm run build --workspaces",
+        "dev": "npm run dev --workspace playground",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "knip": "knip",
+        "lint": "eslint . --max-warnings=0 && node scripts/check-ui-tokens.mjs",
+        "lint:i18n": "eslint registry/src --format json --rule '{\"i18next/no-literal-string\": [\"warn\", {\"mode\": \"jsx-text-only\"}]}' | node scripts/qiick-ratchet.mjs lint --rule i18next/no-literal-string --baseline i18n-literal-baseline.json",
+        "registry:check": "node scripts/check-registry.mjs",
+        "standards:check": "node scripts/sync-standards.mjs --check",
+        "standards:sync": "node scripts/sync-standards.mjs",
+        "test": "node --test scripts/*.test.mjs",
+        "types:check": "tsc --noEmit"
+    },
+    "devDependencies": {
+        "@commitlint/cli": "^21.2.3",
+        "@commitlint/config-conventional": "^21.2.3",
+        "@eslint/js": "^9.39.5",
+        "@stylistic/eslint-plugin": "^5.10.0",
+        "@types/node": "^24.13.6",
+        "eslint": "^9.39.5",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-import-resolver-typescript": "^4.4.5",
+        "eslint-plugin-i18next": "^6.1.5",
+        "eslint-plugin-import": "^2.32.0",
+        "eslint-plugin-jsx-a11y": "^6.10.2",
+        "eslint-plugin-react": "^7.37.5",
+        "eslint-plugin-react-hooks": "^7.0.1",
+        "globals": "^17.12.0",
+        "knip": "^6.44.2",
+        "prettier": "^3.9.9",
+        "prettier-plugin-tailwindcss": "^0.8.1",
+        "typescript": "^5.9.3",
+        "typescript-eslint": "^8.70.1"
+    }
+}

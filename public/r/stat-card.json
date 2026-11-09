@@ -1,0 +1,22 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "stat-card",
+  "title": "Stat card",
+  "description": "Key number from the shadcn dashboard-01 block (section cards): label, large tabular value, trend badge and a two-line footer. trendOf() builds the badge text.",
+  "dependencies": [
+    "lucide-react"
+  ],
+  "registryDependencies": [
+    "@qiick/badge",
+    "@qiick/card",
+    "@qiick/utils"
+  ],
+  "files": [
+    {
+      "path": "src/components/stat-card.tsx",
+      "content": "import { Minus, TrendingDown, TrendingUp } from 'lucide-react';\nimport type { ReactNode } from 'react';\nimport { Badge } from '@/components/ui/badge';\nimport {\n    Card,\n    CardAction,\n    CardDescription,\n    CardFooter,\n    CardHeader,\n    CardTitle,\n} from '@/components/ui/card';\nimport { cn } from '@/lib/utils';\n\nexport type StatTrend = {\n    /** Change against the previous period: positive, negative or zero. */\n    delta: number;\n    /** Text of the badge, e.g. \"+12.5%\" or \"+3\". */\n    label: string;\n};\n\n/**\n * A key number, copied from the shadcn `dashboard-01` block (`section-cards.tsx`): the label\n * as CardDescription, the value as a large tabular CardTitle, the change as an outline Badge\n * in CardAction, and a two-line footer (a headline, then muted context). Lucide trend icons\n * stand in for the block's Tabler ones.\n */\nexport function StatCard({\n    label,\n    value,\n    trend,\n    headline,\n    context,\n    className,\n}: {\n    label: string;\n    value: string;\n    trend?: StatTrend | null;\n    headline?: ReactNode;\n    context?: ReactNode;\n    className?: string;\n}) {\n    const TrendIcon =\n        trend === null || trend === undefined || trend.delta === 0\n            ? Minus\n            : trend.delta > 0\n              ? TrendingUp\n              : TrendingDown;\n\n    return (\n        <Card\n            className={cn(\n                '@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card',\n                className,\n            )}\n        >\n            <CardHeader>\n                <CardDescription>{label}</CardDescription>\n                <CardTitle className=\"text-2xl font-semibold tabular-nums @[250px]/card:text-3xl\">\n                    {value}\n                </CardTitle>\n                {trend ? (\n                    <CardAction>\n                        <Badge variant=\"outline\">\n                            <TrendIcon />\n                            {trend.label}\n                        </Badge>\n                    </CardAction>\n                ) : null}\n            </CardHeader>\n            {headline || context ? (\n                <CardFooter className=\"flex-col items-start gap-1.5 text-sm\">\n                    {headline ? (\n                        <div className=\"line-clamp-1 flex gap-2 font-medium\">\n                            {headline}\n                        </div>\n                    ) : null}\n                    {context ? (\n                        <div className=\"text-muted-foreground\">{context}</div>\n                    ) : null}\n                </CardFooter>\n            ) : null}\n        </Card>\n    );\n}\n\n/**\n * The badge text for a change: a percentage when there is a previous value, otherwise the\n * absolute change.\n */\nexport function trendOf(\n    value: number,\n    previous: number | null,\n): StatTrend | null {\n    if (previous === null) {\n        return null;\n    }\n\n    const delta = value - previous;\n\n    if (previous === 0) {\n        return {\n            delta,\n            label: delta === 0 ? '0' : `${delta > 0 ? '+' : ''}${delta}`,\n        };\n    }\n\n    const percent = (delta / previous) * 100;\n\n    return {\n        delta,\n        label: `${percent > 0 ? '+' : ''}${percent.toFixed(Math.abs(percent) < 10 ? 1 : 0)}%`,\n    };\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

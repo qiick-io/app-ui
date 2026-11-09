@@ -1,0 +1,27 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "user-avatar",
+  "title": "User avatar",
+  "description": "UserAvatar with per-user colour initials and the online / offline presence dot, plus the realtime ConnectionDot.",
+  "dependencies": [
+    "react-i18next"
+  ],
+  "registryDependencies": [
+    "@qiick/avatar",
+    "@qiick/avatar-tone",
+    "@qiick/utils"
+  ],
+  "files": [
+    {
+      "path": "src/components/admin/user-avatar.tsx",
+      "content": "import { useTranslation } from 'react-i18next';\nimport {\n    Avatar,\n    AvatarBadge,\n    AvatarFallback,\n    AvatarImage,\n} from '@/components/ui/avatar';\nimport { avatarToneClass } from '@/lib/avatar-tone';\nimport { cn } from '@/lib/utils';\n\n/**\n * Two-letter initials from a display name (first + last word), one letter for\n * a single word, else the first letter of `fallback` (an email, say).\n */\nexport function getInitials(name: string, fallback = ''): string {\n    const words = name.trim().split(/\\s+/).filter(Boolean);\n\n    if (words.length === 0) {\n        return fallback.trim().charAt(0).toUpperCase();\n    }\n\n    const first = words[0].charAt(0);\n    const last = words.length > 1 ? words[words.length - 1].charAt(0) : '';\n\n    return `${first}${last}`.toUpperCase();\n}\n\ntype UserAvatarProps = {\n    /** Stable id: picks the user's avatar swatch. */\n    userId: number | string;\n    /** Display name, for the initials and the image alt text. */\n    name: string;\n    /** Used for the initial when the name is empty. */\n    email?: string;\n    imageUrl?: string | null;\n    /** Presence: green online / grey offline badge. Omit for no badge. */\n    isOnline?: boolean;\n    size?: 'default' | 'sm' | 'lg';\n    className?: string;\n};\n\n/**\n * User avatar: the image, else per-user colour initials, with an optional\n * presence `AvatarBadge` (bottom-right). Decorative: the row text next to it\n * already names the user, so the badge is `aria-hidden` and only titled for\n * pointer users. Works as a child of `AvatarGroup`.\n */\nexport function UserAvatar({\n    userId,\n    name,\n    email = '',\n    imageUrl,\n    isOnline,\n    size = 'default',\n    className,\n}: UserAvatarProps) {\n    const { t } = useTranslation();\n\n    return (\n        <Avatar size={size} className={className}>\n            {imageUrl ? <AvatarImage src={imageUrl} alt={name} /> : null}\n            <AvatarFallback\n                className={cn(avatarToneClass(userId), 'text-xs font-medium')}\n            >\n                {getInitials(name, email)}\n            </AvatarFallback>\n            {isOnline === undefined ? null : (\n                <AvatarBadge\n                    className={isOnline ? 'bg-success' : 'bg-muted-foreground'}\n                    title={isOnline ? t('common.online') : t('common.offline')}\n                    data-test=\"user-online-dot\"\n                    data-online={isOnline ? '1' : '0'}\n                    aria-hidden\n                />\n            )}\n        </Avatar>\n    );\n}\n",
+      "type": "registry:component"
+    },
+    {
+      "path": "src/components/realtime/connection-dot.tsx",
+      "content": "import { useTranslation } from 'react-i18next';\nimport { AvatarBadge } from '@/components/ui/avatar';\nimport { cn } from '@/lib/utils';\n\n/** State of the app's realtime (WebSocket) connection. */\nexport type ConnectionState =\n    'connected' | 'connecting' | 'disabled' | 'offline';\n\n/**\n * Green when connected, amber while connecting, grey when realtime is off, red\n * only when the connection is lost (an error, unlike a user being offline).\n */\nconst TONES: Record<ConnectionState, string> = {\n    connected: 'bg-success',\n    connecting: 'bg-warning animate-pulse',\n    disabled: 'bg-muted-foreground',\n    offline: 'bg-destructive',\n};\n\n/**\n * The realtime connection as an `AvatarBadge`: render it inside `<Avatar>`, so\n * it sits bottom-right like every presence dot. The app passes its connection\n * state (in externa-core, `useEchoConnection()` for Reverb).\n */\nexport function ConnectionDot({\n    state,\n    className,\n}: {\n    state: ConnectionState;\n    className?: string;\n}) {\n    const { t } = useTranslation();\n    const label = t(`realtime.${state}`);\n\n    return (\n        <AvatarBadge\n            className={cn('pointer-events-none', TONES[state], className)}\n            title={label}\n            aria-label={label}\n            role=\"status\"\n            data-test=\"realtime-connection-dot\"\n            data-state={state}\n        />\n    );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}
