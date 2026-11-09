@@ -18,6 +18,7 @@
         "knip": "knip",
         "lint": "eslint . --max-warnings=0 && node scripts/check-ui-tokens.mjs",
         "lint:i18n": "eslint registry/src --format json --rule '{\"i18next/no-literal-string\": [\"warn\", {\"mode\": \"jsx-text-only\"}]}' | node scripts/qiick-ratchet.mjs lint --rule i18next/no-literal-string --baseline i18n-literal-baseline.json",
+        "lint:standards": "QIICK_RATCHET=1 eslint registry/src playground/src --format json | node scripts/qiick-ratchet.mjs lint --rule no-restricted-imports,no-restricted-properties,@typescript-eslint/naming-convention,id-length --baseline qiick-lint-baseline.json",
         "registry:check": "node scripts/check-registry.mjs",
         "standards:check": "node scripts/sync-standards.mjs --check",
         "standards:sync": "node scripts/sync-standards.mjs",
