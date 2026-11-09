@@ -33,7 +33,7 @@ Dark mode is the `.dark` class on an ancestor (`@custom-variant dark (&:is(.dark
 
     ```css
     :root {
-        --radius: 0.375rem;
+        --radius: 0.5rem;
         --sidebar: #ffffff;
     }
     ```

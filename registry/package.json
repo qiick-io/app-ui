@@ -1,6 +1,6 @@
 {
     "name": "@qiick/app-ui-registry",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "private": true,
     "description": "shadcn registry sources for the qiick apps. Built into ../public/r.",
     "type": "module",
@@ -20,6 +20,7 @@
         "lucide-react": "^1.61.0",
         "radix-ui": "^1.8.1",
         "react": "^19.3.0",
+        "react-day-picker": "^10.0.2",
         "react-i18next": "^17.0.15",
         "recharts": "^3.10.1",
         "shiki": "^4.6.0",

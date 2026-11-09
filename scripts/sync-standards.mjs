@@ -14,7 +14,7 @@
  *         "php": true,                     // Pest architecture test
  *         "frontendRoots": ["resources/js"], // kebab-case file name check
  *         "eslint": true,                  // shared ESLint config file
- *         "app": true                      // self-hosted app: distribution rules, knip config
+ *         "app": true                      // self-hosted app: stack and distribution rules
  *     }
  *
  * Managed files are of two kinds:
@@ -36,6 +36,8 @@ import { fileURLToPath } from 'node:url';
 
 const CONFIG_FILE = 'qiick-standards.json';
 const SOURCE_URL = 'https://github.com/qiick-io/app-ui/tree/develop/standards';
+const NEW_PRODUCT_URL =
+    'https://github.com/qiick-io/app-ui/blob/develop/docs/new-product.md';
 const BLOCK_BEGIN =
     '<!-- qiick-standards:begin. Generated from qiick-io/app-ui standards: do not edit inside this block, run the sync (see qiick-standards.json). -->';
 const BLOCK_END = '<!-- qiick-standards:end -->';
@@ -86,7 +88,9 @@ function demoteHeadings(markdown) {
 function renderRulePages(config) {
     /** @type {Record<string, string>} */
     const pages = {
+        ...(config.app ? { stack: readSource('rules/stack.md') } : {}),
         code: readSource('rules/code.md'),
+        ...(config.php ? { backend: readSource('rules/backend.md') } : {}),
         testing: readSource('rules/testing.md'),
         git: readSource('rules/git.md'),
         release: readSource('rules/release.md'),
@@ -129,7 +133,7 @@ export function renderOutputs(config) {
     const pages = renderRulePages(config);
     const agentsBody = [
         '# qiick standards',
-        `These rules bind every agent and contributor in this repo from the first task. They are the same in every qiick repo (source: ${SOURCE_URL}), and CI fails when this block differs from the source. Rules for this repo only live outside this block; where they are more specific, they win.`,
+        `These rules bind every agent and contributor in this repo from the first task. They are the same in every qiick repo (source: ${SOURCE_URL}), and CI fails when this block differs from the source. Rules for this repo only live outside this block; where they are more specific, they win. Starting a new qiick product: ${NEW_PRODUCT_URL}.`,
         ...Object.values(pages).map((page) => demoteHeadings(page.trim())),
     ].join('\n\n');
 
@@ -156,7 +160,14 @@ export function renderOutputs(config) {
             content: cursorRule(
                 'qiick code standard: names, suffixes, architecture, docs, contracts, CI checks, git',
                 'alwaysApply: true',
-                [pages.code, pages.checks, pages.git, pages.distribution]
+                [
+                    pages.stack,
+                    pages.code,
+                    pages.backend,
+                    pages.checks,
+                    pages.git,
+                    pages.distribution,
+                ]
                     .filter(Boolean)
                     .map((page, index) =>
                         index === 0 ? page.trim() : demoteHeadings(page.trim()),
@@ -212,6 +223,23 @@ export function renderOutputs(config) {
                 path: 'tests/Arch/naming-architecture.php',
                 kind: 'template',
                 content: readSource('php/naming-architecture.php'),
+            },
+        );
+    }
+
+    // Laravel apps with the qiick UI: the theme-token ratchet over resources/js
+    // (raw palette / #hex debt in the repo's own baseline, arbitrary font sizes never).
+    if (config.php && config.uiPreset) {
+        outputs.push(
+            {
+                path: 'scripts/check-ui-tokens.mjs',
+                kind: 'file',
+                content: readSource('scripts/check-ui-tokens.mjs'),
+            },
+            {
+                path: 'scripts/ui-token-baseline.txt',
+                kind: 'template',
+                content: readSource('templates/ui-token-baseline.txt'),
             },
         );
     }

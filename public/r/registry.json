@@ -45,6 +45,19 @@
             ]
         },
         {
+            "name": "alert",
+            "type": "registry:ui",
+            "title": "Alert",
+            "description": "Inline alert (shadcn new-york-v4) with the qiick status variants success, warning and info next to default and destructive.",
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/alert.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
             "name": "alert-dialog",
             "type": "registry:ui",
             "title": "Alert dialog",
@@ -789,6 +802,20 @@
             ]
         },
         {
+            "name": "calendar",
+            "type": "registry:ui",
+            "title": "Calendar",
+            "description": "Date grid (shadcn new-york-v4 on react-day-picker) with a connected range band, and slot components at module level so a parent's range hover preview does not remount the grid (externa-core date range picker).",
+            "dependencies": ["react-day-picker"],
+            "registryDependencies": ["@qiick/button", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/calendar.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
             "name": "card",
             "type": "registry:ui",
             "title": "Card",
@@ -956,12 +983,15 @@
             "name": "files-grid",
             "type": "registry:component",
             "title": "Files grid",
-            "description": "Files grid with file / folder cards: selection checkbox, context menu, tags, cover previews, infinite scroll with a Load more fallback.",
+            "description": "Files grid with square file / folder cards: preview above a 40px name row, tag hover card, ⋮ menu with the right-click actions, selection checkbox, infinite scroll with a Load more fallback.",
             "dependencies": ["lucide-react", "react-i18next"],
             "registryDependencies": [
+                "@qiick/badge",
                 "@qiick/button",
                 "@qiick/checkbox",
                 "@qiick/context-menu",
+                "@qiick/dropdown-menu",
+                "@qiick/hover-card",
                 "@qiick/tooltip",
                 "@qiick/utils"
             ],

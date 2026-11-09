@@ -1,0 +1,25 @@
+{
+    "no-restricted-imports": {},
+    "no-restricted-properties": {},
+    "@typescript-eslint/naming-convention": {
+        "playground/src/demos/assistant-panel.tsx": 1,
+        "playground/src/demos/command.tsx": 1,
+        "playground/src/screens/demo-shell.tsx": 1,
+        "playground/src/screens/demo-user-menu.tsx": 4,
+        "playground/src/screens/files-grid-body.tsx": 1,
+        "registry/src/components/admin/actions-overflow.tsx": 3,
+        "registry/src/components/admin/files/file-card.tsx": 3,
+        "registry/src/components/admin/paginated-multi-select.tsx": 3,
+        "registry/src/components/admin/truncated-text.tsx": 1,
+        "registry/src/components/ai-elements/code-block.tsx": 1,
+        "registry/src/components/ai-elements/use-open-state.ts": 4,
+        "registry/src/components/confirm-destructive-dialog.tsx": 3,
+        "registry/src/components/layout/page-header.tsx": 1,
+        "registry/src/components/layout/page-layout.tsx": 1,
+        "registry/src/lib/clipboard.ts": 1
+    },
+    "id-length": {
+        "registry/src/components/admin/data-table-toolbar.tsx": 1,
+        "registry/src/components/admin/paginated-multi-select.tsx": 1
+    }
+}

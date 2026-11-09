@@ -62,7 +62,8 @@ function BackgroundContextMenu({
 }
 
 /**
- * Files grid (externa-core `file-grid.tsx`): 2 → 8 columns, infinite scroll
+ * Files grid (externa-core `file-grid.tsx`): 2 columns on phones, then as many
+ * 15rem-or-wider columns as fit (`minmax(15rem, 1fr)`), infinite scroll
  * with a "Load more" fallback, empty-area click clears the selection.
  *
  * Load the next page with a page size of 48 (full rows at 2, 3, 4, 6 and 8
@@ -163,7 +164,7 @@ export function FileGrid<Item>({
             >
                 <div
                     {...gridProps}
-                    className="grid flex-1 grid-cols-2 content-start items-start gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8"
+                    className="grid flex-1 grid-cols-2 content-start items-start gap-3 sm:grid-cols-[repeat(auto-fill,minmax(15rem,1fr))]"
                 >
                     {items.map(renderItem)}
                 </div>

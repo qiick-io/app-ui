@@ -110,3 +110,43 @@ test('the phpstan ratchet fails when the baseline grows against the base ref', (
     fs.writeFileSync(path.join(directory, 'phpstan-baseline.neon'), neon(4));
     assert.equal(ratchet().status, 1);
 });
+
+test('several rules keep a baseline per rule', () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'qiick-ratchet-'));
+    const report = [
+        {
+            filePath: 'resources/js/app.tsx',
+            messages: [{ ruleId: 'id-length' }, { ruleId: 'id-length' }],
+        },
+    ];
+    const run = (baseline) => {
+        fs.writeFileSync(
+            path.join(directory, 'baseline.json'),
+            JSON.stringify(baseline),
+        );
+
+        return spawnSync(
+            process.execPath,
+            [
+                script,
+                'lint',
+                '--rule',
+                'id-length,no-restricted-imports',
+                '--baseline',
+                'baseline.json',
+            ],
+            { cwd: directory, input: JSON.stringify(report), encoding: 'utf8' },
+        );
+    };
+
+    assert.equal(run({ 'id-length': { 'resources/js/app.tsx': 2 } }).status, 0);
+    assert.match(
+        run({ 'id-length': { 'resources/js/app.tsx': 1 } }).stderr,
+        /2 id-length \(baseline 1\)/,
+    );
+    // A count under one rule does not cover another rule's findings.
+    assert.equal(
+        run({ 'no-restricted-imports': { 'resources/js/app.tsx': 2 } }).status,
+        1,
+    );
+});
