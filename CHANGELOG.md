@@ -8,9 +8,16 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-09
+
 ### Upgrade notes
 
+- Released as a patch at Luca's call so externa-core 1.4.0 can take it; by the semver table it would be a minor (the AI Elements compound exports are removed). Only externa-core uses those items.
 - **Apps with the Assistant (externa-core):** re-pull `trace`, `tool`, `reasoning`, `chain-of-thought`, `sources`, `suggestion`, `confirmation` and `ai-answer-parts` (`npx shadcn add @qiick/<name> --overwrite`), merge the locale keys (`ai.tool.*` is new, `ai.approval.*` moves into the registry), delete `components/ai-elements/use-open-state.ts`, and pass `describeToolCall` to `AiAnswerParts` with a sentence for each of your tools and actions. The compound exports (`ToolHeader`, `ToolContent`, `ToolInput`, `ToolOutput`, `ReasoningTrigger`, `ReasoningContent`, `SourcesTrigger`, `SourcesContent`, `Source`, `ChainOfThoughtHeader`, `ChainOfThoughtContent`, `ChainOfThoughtStep`) are gone.
+
+### Added
+
+- `date-range-picker` from externa-core (#62): one field, a two-click range on `Calendar` with a hover preview and Clear; optional `withTime` (start and end `Input type="time"`, Apply, `YYYY-MM-DDTHH:mm` in local time) and `min` / `max`. New keys `dateRangePicker.startTime`, `endTime`, `apply`. Upgrade: optional, `npx shadcn add @qiick/date-range-picker` (Excubia's custom time range, qiick-io/excubia-app#247).
 
 ### Changed
 
@@ -100,5 +107,7 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/qiick-io/app-ui/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/qiick-io/app-ui/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/qiick-io/app-ui/releases/tag/v0.1.0
