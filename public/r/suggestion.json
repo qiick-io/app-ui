@@ -1,0 +1,19 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "suggestion",
+  "title": "Suggestion",
+  "description": "AI Elements Suggestion: outline sm buttons in one sideways-scrolling row, each shrink-0.",
+  "registryDependencies": [
+    "@qiick/button",
+    "@qiick/shadcn-utilities",
+    "@qiick/utils"
+  ],
+  "files": [
+    {
+      "path": "src/components/ai-elements/suggestion.tsx",
+      "content": "import type { ComponentProps } from 'react';\nimport { Button } from '@/components/ui/button';\nimport { cn } from '@/lib/utils';\n\n/*\n * AI Elements `suggestion` as shadcn rebuilt it\n * (ui.shadcn.com/docs/ai-elements/base/suggestion): outline `sm` buttons in one\n * row that scrolls sideways, each `shrink-0` so a label never squeezes. A plain\n * scrolling row, not a ScrollArea: inside a flex column a ScrollArea shrank\n * below the buttons' height and clipped them.\n */\n\nexport type SuggestionsProps = ComponentProps<'div'>;\n\nexport const Suggestions = ({ className, ...props }: SuggestionsProps) => (\n    <div\n        className={cn(\n            'no-scrollbar flex shrink-0 scroll-fade-x gap-2 overflow-x-auto overscroll-x-contain',\n            className,\n        )}\n        {...props}\n    />\n);\n\nexport type SuggestionProps = Omit<ComponentProps<typeof Button>, 'onClick'> & {\n    /** The prompt sent when the suggestion is chosen. */\n    suggestion: string;\n    onClick?: (suggestion: string) => void;\n};\n\nexport const Suggestion = ({\n    suggestion,\n    onClick,\n    className,\n    variant = 'outline',\n    size = 'sm',\n    children,\n    ...props\n}: SuggestionProps) => (\n    <Button\n        className={cn('shrink-0', className)}\n        onClick={() => onClick?.(suggestion)}\n        size={size}\n        type=\"button\"\n        variant={variant}\n        {...props}\n    >\n        {children ?? suggestion}\n    </Button>\n);\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

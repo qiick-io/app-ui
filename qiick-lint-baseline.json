@@ -12,7 +12,6 @@
         "registry/src/components/admin/paginated-multi-select.tsx": 3,
         "registry/src/components/admin/truncated-text.tsx": 1,
         "registry/src/components/ai-elements/code-block.tsx": 1,
-        "registry/src/components/ai-elements/use-open-state.ts": 4,
         "registry/src/components/confirm-destructive-dialog.tsx": 3,
         "registry/src/components/layout/page-header.tsx": 1,
         "registry/src/components/layout/page-layout.tsx": 1,

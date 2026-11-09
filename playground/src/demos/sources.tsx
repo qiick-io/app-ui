@@ -1,18 +1,15 @@
-import {
-    Source,
-    Sources,
-    SourcesContent,
-    SourcesTrigger,
-} from '@/components/ai-elements/sources';
+import { Sources } from '@/components/ai-elements/sources';
+import { Trace } from '@/components/ui/trace';
 
 export default function SourcesDemo() {
     return (
-        <Sources>
-            <SourcesTrigger count={2} />
-            <SourcesContent>
-                <Source href="https://laravel.com/docs" title="Laravel docs" />
-                <Source href="https://ui.shadcn.com" title="shadcn/ui" />
-            </SourcesContent>
-        </Sources>
+        <Trace className="max-w-md">
+            <Sources
+                sources={[
+                    { url: 'https://ui.shadcn.com/docs', title: 'shadcn/ui' },
+                    { url: 'https://laravel.com/docs', title: null },
+                ]}
+            />
+        </Trace>
     );
 }

@@ -23,20 +23,20 @@
             "used_other": "{{count}} Quellen verwendet"
         },
         "tool": {
-            "error": "Fehler",
-            "parameters": "Parameter",
-            "result": "Ergebnis",
-            "state": {
-                "approval-requested": "Wartet auf Freigabe",
-                "approval-responded": "Beantwortet",
-                "input-available": "Läuft",
-                "input-streaming": "Ausstehend",
-                "output-available": "Abgeschlossen",
-                "output-denied": "Abgelehnt",
-                "output-error": "Fehler"
+            "title": {
+                "running": "Verwende {{tool}}",
+                "done": "{{tool}} verwendet",
+                "error": "{{tool}} konnte nicht verwendet werden",
+                "denied": "Abgelehnt: {{tool}}",
+                "approval": "{{tool}} braucht deine Freigabe"
             },
-            "steps_one": "{{count}} Werkzeugschritt",
-            "steps_other": "{{count}} Werkzeugschritte"
+            "provider": {
+                "web_search": "Im Web gesucht"
+            },
+            "steps_one": "In {{count}} Schritt erledigt",
+            "steps_other": "In {{count}} Schritten erledigt",
+            "stepsRunning_one": "In Arbeit, bisher {{count}} Schritt",
+            "stepsRunning_other": "In Arbeit, bisher {{count}} Schritte"
         },
         "usage": {
             "cache": "Cache",
@@ -44,6 +44,10 @@
             "output": "Ausgabe",
             "reasoning": "Denken",
             "trigger": "Kontext genutzt: {{percent}}"
+        },
+        "approval": {
+            "approve": "Freigeben",
+            "reject": "Ablehnen"
         }
     },
     "chat": {

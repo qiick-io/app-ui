@@ -8,6 +8,14 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Upgrade notes
+
+- **Apps with the Assistant (externa-core):** re-pull `trace`, `tool`, `reasoning`, `chain-of-thought`, `sources`, `suggestion`, `confirmation` and `ai-answer-parts` (`npx shadcn add @qiick/<name> --overwrite`), merge the locale keys (`ai.tool.*` is new, `ai.approval.*` moves into the registry), delete `components/ai-elements/use-open-state.ts`, and pass `describeToolCall` to `AiAnswerParts` with a sentence for each of your tools and actions. The compound exports (`ToolHeader`, `ToolContent`, `ToolInput`, `ToolOutput`, `ReasoningTrigger`, `ReasoningContent`, `SourcesTrigger`, `SourcesContent`, `Source`, `ChainOfThoughtHeader`, `ChainOfThoughtContent`, `ChainOfThoughtStep`) are gone.
+
+### Changed
+
+- AI Elements rebuilt on shadcn **Trace**, as shadcn did upstream (ui.shadcn.com/docs/ai-elements/base): a tool call is one line with a sentence the app writes (`AiAnswerParts` `describeToolCall`), never the JSON of its arguments and result; reasoning, chain of thought and sources are Trace lines too. New items `trace`, `suggestion` (a plain scrolling row: the ScrollArea version clipped the chips inside the answer's flex column) and `confirmation` (on `Item`). `docs/chat-and-assistant.md` describes the new answer anatomy.
+
 ## [0.2.0] - 2026-11-09
 
 ### Upgrade notes
