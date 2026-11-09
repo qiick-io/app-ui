@@ -36,6 +36,8 @@ jobs:
         run: npm run knip
       - name: Hard-coded UI strings (ratchet)
         run: npm run lint:i18n
+      - name: Restricted imports, boolean names, short names (ratchet)
+        run: npm run lint:standards
 
   types:
     runs-on: ubuntu-latest

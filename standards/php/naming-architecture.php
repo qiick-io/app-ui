@@ -14,6 +14,8 @@ declare(strict_types=1);
  *   rules (`Http\Middleware`, `Actions`, `Services`, …), or `strict types`, `env`, `Data`,
  *   `Enums`, `Contracts`, `traits`.
  * - `suffixes`: extra sub-namespace => suffix pairs for roles of this repo (`Parsers` => `Parser`).
+ * - `controllerPublicMethods`: controllers that already have more than five public methods,
+ *   with their current count (a ratchet: it may only go down; the test says when to lower it).
  */
 return [
     'namespace' => 'App',
@@ -42,4 +44,6 @@ return [
     ],
 
     'suffixes' => [],
+
+    'controllerPublicMethods' => [],
 ];

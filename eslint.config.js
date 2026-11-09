@@ -8,7 +8,9 @@ import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import typescript from 'typescript-eslint';
-import qiickStandards from './qiick-standards.eslint.js';
+import qiickStandards, {
+    qiickRatchetedRules,
+} from './qiick-standards.eslint.js';
 
 const controlStatements = [
     'if',
@@ -192,6 +194,12 @@ export default [
         rules: { 'i18next/no-literal-string': 'off' },
     },
     qiickStandards([
+        'registry/src/**/*.{ts,tsx}',
+        'playground/src/**/*.{ts,tsx}',
+    ]),
+    // Off here; `npm run lint:standards` turns them on and ratchets them against
+    // qiick-lint-baseline.json (qiick standards, Automated checks).
+    ...qiickRatchetedRules([
         'registry/src/**/*.{ts,tsx}',
         'playground/src/**/*.{ts,tsx}',
     ]),
