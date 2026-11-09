@@ -74,13 +74,13 @@
     },
     "files": {
         "card": {
-            "select": "Seleziona {{name}}"
+            "select": "Seleziona {{name}}",
+            "moreActions": "Altre azioni per {{name}}",
+            "tagsMenu_one": "{{count}} tag su {{name}}",
+            "tagsMenu_other": "{{count}} tag su {{name}}"
         },
         "loadMore": "Carica altri",
-        "loading": "Caricamento…",
-        "tags": {
-            "moreTags": "{{count}} altri tag"
-        }
+        "loading": "Caricamento…"
     },
     "picker": {
         "clearSelection": "Cancella selezione",

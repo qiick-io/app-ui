@@ -146,7 +146,7 @@ export function FilesGridBody({
                     topRight={
                         file.isFavorite ? (
                             <Star
-                                className="size-3.5 fill-warning text-warning drop-shadow-sm"
+                                className="size-3.5 fill-favorite text-favorite drop-shadow-sm"
                                 aria-label="Favourite"
                             />
                         ) : null

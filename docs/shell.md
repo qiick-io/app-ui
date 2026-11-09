@@ -46,6 +46,6 @@ The frame around every authenticated page: a two-tone sidebar on the left, a fra
     </NavUser>
     ```
 
-- Realtime dot (`ConnectionDot`): `bg-success` connected, pulsing `bg-warning` connecting, `bg-muted-foreground/40` off, `bg-destructive` offline.
-- Presence on avatars (`UserAvatar isOnline`): `bg-success` when online, `bg-muted-foreground/30` when offline.
+- Realtime dot (`ConnectionDot`): `bg-success` connected, pulsing `bg-warning` connecting, solid `bg-muted-foreground` off, `bg-destructive` offline.
+- Presence on avatars (`UserAvatar isOnline`): `bg-success` when online, solid `bg-muted-foreground` when offline (never transparent).
 - Avatars without a picture use the user's stable swatch (`avatar` with `userId`, theme tokens `--avatar-1` … `--avatar-10`).

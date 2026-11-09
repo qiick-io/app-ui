@@ -8,6 +8,11 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Changed
+
+- `files-grid`: `FileCard` follows externa-core #592 / #596. The whole card is square; the preview fills the area above a 40px name row (`cover`: edge to edge, no blurred strip); the name row has the name, a ghost `icon-xs` tag button with the tags in a `HoverCard` (only when there are tags) and a ⋮ `DropdownMenu` with the same actions as the right-click menu; folders look like files; no tab stop on the card surface. `FileGrid`: 2 columns on phones, `minmax(15rem, 1fr)` from `sm`. New locale keys `files.card.moreActions`, `files.card.tagsMenu_one` / `_other`; `files.tags.moreTags` removed. Upgrade: `npx shadcn add @qiick/files-grid --overwrite` (+ `badge`, `dropdown-menu`, `hover-card`) and merge the locale keys.
+- Docs: `shell.md` (offline presence and the disabled realtime dot are solid `bg-muted-foreground`), `theme.md` (registry presets set 8 brand tokens, never the `ai` tokens), `theme-tokens.md` (radius example), `files-grid.md` (the square card). `rules/release.md` gains the release lifecycle (beta / rc, Keep a Changelog with Upgrade notes, required check names) and `rules/distribution.md` the GHCR tags, docs site, Packagist checklist and the excubia-app install-smoke exception.
+
 ### Added
 
 - `standards/`: the qiick standards pack, one public source of the code, testing, git, release and UI rules for every qiick repo. `scripts/sync-standards.mjs` writes it into a repo (`AGENTS.md` / `CLAUDE.md` / `.github/copilot-instructions.md` blocks, `.cursor/rules/`, `tests/Arch/NamingArchitectureTest.php`, a zero-dependency ESLint kebab-case file-name config); `drift-check.yml` gains `standards: true` (and `registry: false` for repos without the UI registry) to fail CI on a drifted copy. Affects every app: add `qiick-standards.json`, run the sync, fill `tests/Arch/naming-architecture.php`. `docs/app-agents-section.md` is superseded by the pack.
