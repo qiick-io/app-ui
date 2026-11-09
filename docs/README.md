@@ -10,6 +10,10 @@ One page per pattern. Each names the registry item (when it exists) and the exac
 | Page: `PageLayout`, header actions, view tabs, segmented filters | [page.md](page.md)                               |
 | List page: toolbar, selection bar, overflow, table, pagination   | [list-page.md](list-page.md)                     |
 | Settings page: secondary nav, form, Save bar                     | [settings.md](settings.md)                       |
+| Forms: page vs drawer vs dialog, `Field`, validation errors      | [forms.md](forms.md)                             |
+| Detail page: record header, status, fields                       | [detail-page.md](detail-page.md)                 |
+| Auth pages and SSO                                               | [auth.md](auth.md)                               |
+| Error pages 403 / 404 / 500 / 503                                | [error-pages.md](error-pages.md)                 |
 | Empty states                                                     | [empty-states.md](empty-states.md)               |
 | Destructive actions                                              | [destructive-actions.md](destructive-actions.md) |
 | Dashboard cards                                                  | [dashboard.md](dashboard.md)                     |
@@ -17,5 +21,7 @@ One page per pattern. Each names the registry item (when it exists) and the exac
 | Chat and Assistant                                               | [chat-and-assistant.md](chat-and-assistant.md)   |
 | Files grid                                                       | [files-grid.md](files-grid.md)                   |
 | Theme: tokens, presets, control scale                            | [theme.md](theme.md)                             |
+
+Backend conventions (with the summary in [`standards/rules/backend.md`](../standards/rules/backend.md)): [roles and permissions](roles-and-permissions.md), [API](api.md), [realtime](realtime.md), [security headers](security-headers.md), [logging and activity log](logging-and-audit.md), [AI backend](ai-backend.md).
 
 Rules for all of them: [`../AGENTS.md`](../AGENTS.md). Copy the code and the positions; if a screen needs something not listed here and externa-core has no equivalent, ask Luca.

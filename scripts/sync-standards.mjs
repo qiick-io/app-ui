@@ -90,6 +90,7 @@ function renderRulePages(config) {
     const pages = {
         ...(config.app ? { stack: readSource('rules/stack.md') } : {}),
         code: readSource('rules/code.md'),
+        ...(config.php ? { backend: readSource('rules/backend.md') } : {}),
         testing: readSource('rules/testing.md'),
         git: readSource('rules/git.md'),
         release: readSource('rules/release.md'),
@@ -162,6 +163,7 @@ export function renderOutputs(config) {
                 [
                     pages.stack,
                     pages.code,
+                    pages.backend,
                     pages.checks,
                     pages.git,
                     pages.distribution,
@@ -221,6 +223,23 @@ export function renderOutputs(config) {
                 path: 'tests/Arch/naming-architecture.php',
                 kind: 'template',
                 content: readSource('php/naming-architecture.php'),
+            },
+        );
+    }
+
+    // Laravel apps with the qiick UI: the theme-token ratchet over resources/js
+    // (raw palette / #hex debt in the repo's own baseline, arbitrary font sizes never).
+    if (config.php && config.uiPreset) {
+        outputs.push(
+            {
+                path: 'scripts/check-ui-tokens.mjs',
+                kind: 'file',
+                content: readSource('scripts/check-ui-tokens.mjs'),
+            },
+            {
+                path: 'scripts/ui-token-baseline.txt',
+                kind: 'template',
+                content: readSource('templates/ui-token-baseline.txt'),
             },
         );
     }
