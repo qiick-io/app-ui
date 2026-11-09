@@ -8,6 +8,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Added
+
+- `alert` (status variants `success` / `warning` / `info`) and `calendar` (connected range band, module-level slots for a hover preview) from externa-core's `ui/`, so its drift check covers them. `calendar` adds the `react-day-picker` dependency.
+
 ### Changed
 
 - `files-grid`: `FileCard` follows externa-core #592 / #596. The whole card is square; the preview fills the area above a 40px name row (`cover`: edge to edge, no blurred strip); the name row has the name, a ghost `icon-xs` tag button with the tags in a `HoverCard` (only when there are tags) and a ⋮ `DropdownMenu` with the same actions as the right-click menu; folders look like files; no tab stop on the card surface. `FileGrid`: 2 columns on phones, `minmax(15rem, 1fr)` from `sm`. New locale keys `files.card.moreActions`, `files.card.tagsMenu_one` / `_other`; `files.tags.moreTags` removed. Upgrade: `npx shadcn add @qiick/files-grid --overwrite` (+ `badge`, `dropdown-menu`, `hover-card`) and merge the locale keys.
