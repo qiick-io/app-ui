@@ -11,6 +11,7 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 ### Added
 
 - New-product path: `docs/new-product.md` (empty repo to first green CI, required checks to ask for, a proposed `qiick-io/app-template`), `scripts/new-product.mjs` (writes `qiick-standards.json`, the `@qiick` registry in `components.json` and `.github/workflows/qiick.yml`, all pinned to one app-ui ref, then runs the sync) and `standards/rules/stack.md` (Laravel 13 React starter kit, Inertia 3, Pest 5, Node 24, ESLint + Prettier as the one lint toolchain, SQLite, Horizon, Reverb, en / it / de, Herd), synced into repos with `"app": true`. Every managed `AGENTS.md` block now links the guide. Affects every repo: re-sync; apps also get the Stack section. `docs/app-agents-section.md` is deleted.
+- `alert` (status variants `success` / `warning` / `info`) and `calendar` (connected range band, module-level slots for a hover preview) from externa-core's `ui/`, so its drift check covers them. `calendar` adds the `react-day-picker` dependency.
 
 ### Changed
 
