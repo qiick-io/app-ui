@@ -11,6 +11,7 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 ### Added
 
 - Prose rules as ratcheted checks. `qiick-standards.eslint.js` exports `qiickRatchetedRules()`: `no-restricted-imports` (other icon / component / toast libraries, `sonner` outside `@/lib/toast`), `no-restricted-properties` (`navigator.clipboard` outside `@/lib/clipboard`), `@typescript-eslint/naming-convention` (boolean prefixes, type-aware) and `id-length`; off in a plain lint run, on with `QIICK_RATCHET=1`, ratcheted per file and rule (`qiick-ratchet.mjs lint` now takes several comma-separated rules). The architecture test gains "controllers stay thin" (at most five public methods, existing debt in `controllerPublicMethods`). Measured on externa-core `develop`: 512 naming and 130 id-length findings, 14 controllers to baseline; app-ui baselines 29 + 2. Upgrade (ESLint repos): add `...qiickRatchetedRules([...])`, a `lint:standards` script and CI step, run it once with `--update`; PHP repos: paste the controller entries the test prints into `naming-architecture.php`.
+- `alert` (status variants `success` / `warning` / `info`) and `calendar` (connected range band, module-level slots for a hover preview) from externa-core's `ui/`, so its drift check covers them. `calendar` adds the `react-day-picker` dependency.
 
 ### Changed
 
