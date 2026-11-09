@@ -33,7 +33,7 @@ Composer and npm keep caret ranges inside the pinned major; Dependabot (or Renov
 
 **ESLint 9 (flat config) + Prettier 3** for TypeScript / React, **Pint** (`laravel` preset) and **Larastan** for PHP. ESLint loads the pack's `qiick-standards.eslint.js` (`"eslint": true` in `qiick-standards.json`), `typescript-eslint`, `eslint-plugin-react`, `react-hooks`, `jsx-a11y`, `import`, `@stylistic` and `i18next`; Prettier uses `prettier-plugin-tailwindcss`. externa-core is the reference (`eslint.config.js`, `.prettierrc`).
 
-Why ESLint and not oxlint / Vite+ `vp check`: the shared rules (boolean prefixes through type-aware `@typescript-eslint/naming-convention`, restricted imports, `padding-line-between-statements`, `jsx-a11y`, the i18n ratchet) exist and are tested in ESLint. A starter kit that ships Vite+ keeps `vite` for the build; lint and format run through ESLint and Prettier. Excubia converges by replacing `vp check` / oxlint with this toolchain.
+Why ESLint and not oxlint / Vite+ `vp check`: the shared rules (boolean prefixes through type-aware `@typescript-eslint/naming-convention`, restricted imports, `padding-line-between-statements`, `jsx-a11y`, the i18n ratchet) exist and are tested in ESLint. A starter kit that ships Vite+ keeps `vite` for the build; lint and format run through ESLint and Prettier. excubia-app converges by replacing `vp check` / oxlint with this toolchain; externa-core converges on Inertia 3 and Pest 5 (it is on Inertia 2 and Pest 4).
 
 The quality gate every app exposes as npm scripts: `lint` (ESLint `--max-warnings=0` + `check-ui-tokens`), `format:check`, `types:check` (`tsc --noEmit`), `knip`, `lint:i18n`; and in PHP `vendor/bin/pint --test`, `vendor/bin/phpstan analyse`, `php artisan test`.
 
