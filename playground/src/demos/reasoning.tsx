@@ -1,24 +1,13 @@
-import {
-    Reasoning,
-    ReasoningContent,
-    ReasoningTrigger,
-} from '@/components/ai-elements/reasoning';
+import { Reasoning } from '@/components/ai-elements/reasoning';
+import { Trace } from '@/components/ui/trace';
 
 export default function ReasoningDemo() {
     return (
-        <div className="flex w-full max-w-md flex-col gap-3">
-            <Reasoning isStreaming>
-                <ReasoningTrigger />
-                <ReasoningContent>
-                    The user asks for open invoices, so I filter by status…
-                </ReasoningContent>
-            </Reasoning>
+        <Trace className="max-w-md">
+            <Reasoning isStreaming />
             <Reasoning duration={4}>
-                <ReasoningTrigger />
-                <ReasoningContent>
-                    Three invoices are open; the oldest is from September.
-                </ReasoningContent>
+                The user wants open invoices: filter by status, newest first.
             </Reasoning>
-        </div>
+        </Trace>
     );
 }

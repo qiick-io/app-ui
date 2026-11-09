@@ -657,6 +657,31 @@
             ]
         },
         {
+            "name": "date-range-picker",
+            "type": "registry:component",
+            "title": "Date range picker",
+            "description": "One field for a from–to range on the Calendar (externa-core): two clicks pick the days with a hover preview; withTime adds a start and an end time committed with Apply, min / max bound the days.",
+            "dependencies": [
+                "lucide-react",
+                "react-day-picker",
+                "react-i18next"
+            ],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/calendar",
+                "@qiick/input",
+                "@qiick/label",
+                "@qiick/popover",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/admin/date-range-picker.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
             "name": "paginated-multi-select",
             "type": "registry:component",
             "title": "Paginated multi-select",
@@ -1299,6 +1324,24 @@
             ]
         },
         {
+            "name": "trace",
+            "type": "registry:ui",
+            "title": "Trace",
+            "description": "shadcn Trace (radix-nova source, lucide chevron): lines of agent work with running, error and pending states, collapsible to their detail. The base of the AI Elements.",
+            "dependencies": ["lucide-react"],
+            "registryDependencies": [
+                "@qiick/collapsible",
+                "@qiick/shadcn-utilities",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ui/trace.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
             "name": "progress",
             "type": "registry:ui",
             "title": "Progress",
@@ -1355,20 +1398,12 @@
             "name": "reasoning",
             "type": "registry:component",
             "title": "Reasoning",
-            "description": "AI Elements Reasoning: the model thinking, open while it streams, collapsed with \"Thought for N seconds\" after.",
+            "description": "AI Elements Reasoning on shadcn Trace: \"Thinking…\" shimmering while it streams, then \"Thought for N seconds\", collapsed, opening to the text.",
             "dependencies": ["lucide-react", "react-i18next"],
-            "registryDependencies": [
-                "@qiick/collapsible",
-                "@qiick/shimmer",
-                "@qiick/utils"
-            ],
+            "registryDependencies": ["@qiick/trace"],
             "files": [
                 {
                     "path": "src/components/ai-elements/reasoning.tsx",
-                    "type": "registry:component"
-                },
-                {
-                    "path": "src/components/ai-elements/use-open-state.ts",
                     "type": "registry:component"
                 }
             ]
@@ -1377,20 +1412,12 @@
             "name": "chain-of-thought",
             "type": "registry:component",
             "title": "Chain of thought",
-            "description": "AI Elements ChainOfThought: several tool steps in a row as one collapsible list.",
+            "description": "AI Elements Chain of Thought on shadcn Trace: a summary line (\"Done in 3 steps\") that opens to one Tool line per step.",
             "dependencies": ["lucide-react"],
-            "registryDependencies": [
-                "@qiick/badge",
-                "@qiick/collapsible",
-                "@qiick/utils"
-            ],
+            "registryDependencies": ["@qiick/trace"],
             "files": [
                 {
                     "path": "src/components/ai-elements/chain-of-thought.tsx",
-                    "type": "registry:component"
-                },
-                {
-                    "path": "src/components/ai-elements/use-open-state.ts",
                     "type": "registry:component"
                 }
             ]
@@ -1417,15 +1444,9 @@
             "name": "tool",
             "type": "registry:component",
             "title": "Tool",
-            "description": "AI Elements Tool: one tool call with its state badge, parameters and result or error.",
-            "dependencies": ["lucide-react", "react-i18next"],
-            "registryDependencies": [
-                "@qiick/badge",
-                "@qiick/code-block",
-                "@qiick/collapsible",
-                "@qiick/shimmer",
-                "@qiick/utils"
-            ],
+            "description": "AI Elements Tool on shadcn Trace: one line with a sentence the app writes for the call, never the raw JSON; a failed call opens to its error.",
+            "dependencies": ["lucide-react"],
+            "registryDependencies": ["@qiick/trace"],
             "files": [
                 {
                     "path": "src/components/ai-elements/tool.tsx",
@@ -1434,12 +1455,43 @@
             ]
         },
         {
+            "name": "suggestion",
+            "type": "registry:component",
+            "title": "Suggestion",
+            "description": "AI Elements Suggestion: outline sm buttons in one sideways-scrolling row, each shrink-0.",
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/shadcn-utilities",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/ai-elements/suggestion.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "confirmation",
+            "type": "registry:component",
+            "title": "Confirmation",
+            "description": "AI Elements Confirmation on Item: a call waiting for approval, its question and Reject / Approve.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": ["@qiick/button", "@qiick/item"],
+            "files": [
+                {
+                    "path": "src/components/ai-elements/confirmation.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
             "name": "sources",
             "type": "registry:component",
             "title": "Sources",
-            "description": "AI Elements Sources: the answer citations, collapsed behind \"Used N sources\".",
+            "description": "AI Elements Sources on shadcn Trace: \"Used N sources\", opening to one link per source.",
             "dependencies": ["lucide-react", "react-i18next"],
-            "registryDependencies": ["@qiick/collapsible", "@qiick/utils"],
+            "registryDependencies": ["@qiick/trace"],
             "files": [
                 {
                     "path": "src/components/ai-elements/sources.tsx",
@@ -1471,16 +1523,16 @@
             "name": "ai-answer-parts",
             "type": "registry:component",
             "title": "AI answer parts",
-            "description": "AiAnswerParts renders the parts of an answer in order (Reasoning, Tool or ChainOfThought, text through the app renderer); AiAnswerSources and AiAnswerUsage add Sources and Context.",
-            "dependencies": ["react-i18next"],
+            "description": "AiAnswerParts renders the parts of an answer in order on Trace (Reasoning, a Tool line or a Chain of Thought, text through the app renderer), with tool sentences from the app describeToolCall; AiAnswerSources and AiAnswerUsage add Sources and Context.",
+            "dependencies": ["i18next", "react-i18next"],
             "registryDependencies": [
                 "@qiick/ai-message-parts",
                 "@qiick/chain-of-thought",
                 "@qiick/context",
                 "@qiick/reasoning",
-                "@qiick/shimmer",
                 "@qiick/sources",
-                "@qiick/tool"
+                "@qiick/tool",
+                "@qiick/trace"
             ],
             "files": [
                 {

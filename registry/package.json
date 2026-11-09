@@ -1,6 +1,6 @@
 {
     "name": "@qiick/app-ui-registry",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "private": true,
     "description": "shadcn registry sources for the qiick apps. Built into ../public/r.",
     "type": "module",

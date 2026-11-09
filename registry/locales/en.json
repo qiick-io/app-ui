@@ -23,20 +23,20 @@
             "used_other": "Used {{count}} sources"
         },
         "tool": {
-            "error": "Error",
-            "parameters": "Parameters",
-            "result": "Result",
-            "state": {
-                "approval-requested": "Awaiting approval",
-                "approval-responded": "Responded",
-                "input-available": "Running",
-                "input-streaming": "Pending",
-                "output-available": "Completed",
-                "output-denied": "Denied",
-                "output-error": "Error"
+            "title": {
+                "running": "Using {{tool}}",
+                "done": "Used {{tool}}",
+                "error": "Could not use {{tool}}",
+                "denied": "Denied {{tool}}",
+                "approval": "{{tool}} needs your approval"
             },
-            "steps_one": "{{count}} tool step",
-            "steps_other": "{{count}} tool steps"
+            "provider": {
+                "web_search": "Searched the web"
+            },
+            "steps_one": "Done in {{count}} step",
+            "steps_other": "Done in {{count}} steps",
+            "stepsRunning_one": "Working, {{count}} step so far",
+            "stepsRunning_other": "Working, {{count}} steps so far"
         },
         "usage": {
             "cache": "Cache",
@@ -44,6 +44,10 @@
             "output": "Output",
             "reasoning": "Reasoning",
             "trigger": "Context used: {{percent}}"
+        },
+        "approval": {
+            "approve": "Approve",
+            "reject": "Reject"
         }
     },
     "chat": {
@@ -81,6 +85,11 @@
         },
         "loadMore": "Load more",
         "loading": "Loading…"
+    },
+    "dateRangePicker": {
+        "startTime": "Start time",
+        "endTime": "End time",
+        "apply": "Apply"
     },
     "picker": {
         "clearSelection": "Clear selection",
