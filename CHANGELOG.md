@@ -8,6 +8,13 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-09
+
+### Upgrade notes
+
+- **Every app:** bump the three pins from `v0.1.0` to `v0.2.0` (`qiick-standards.json` `ref`, the `@qiick` URL in `components.json`, every `uses: qiick-io/app-ui/.github/workflows/<workflow>.yml@…`), then re-sync the standards pack and re-pull changed registry items (`file-card`, `chat-layout`, `alert`, `calendar`).
+- New ratcheted lint rules and the thin-controller arch test ship with baselines, so existing apps stay green; new apps start at zero.
+
 ### Added
 
 - Prose rules as ratcheted checks. `qiick-standards.eslint.js` exports `qiickRatchetedRules()`: `no-restricted-imports` (other icon / component / toast libraries, `sonner` outside `@/lib/toast`), `no-restricted-properties` (`navigator.clipboard` outside `@/lib/clipboard`), `@typescript-eslint/naming-convention` (boolean prefixes, type-aware) and `id-length`; off in a plain lint run, on with `QIICK_RATCHET=1`, ratcheted per file and rule (`qiick-ratchet.mjs lint` now takes several comma-separated rules). The architecture test gains "controllers stay thin" (at most five public methods, existing debt in `controllerPublicMethods`). Measured on externa-core `develop`: 512 naming and 130 id-length findings, 14 controllers to baseline; app-ui baselines 29 + 2. Upgrade (ESLint repos): add `...qiickRatchetedRules([...])`, a `lint:standards` script and CI step, run it once with `--update`; PHP repos: paste the controller entries the test prints into `naming-architecture.php`.
