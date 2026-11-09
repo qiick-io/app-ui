@@ -7,8 +7,8 @@
 ## Shared base + brand-only presets
 
 - The **base** holds the 25 surface tokens every app shares: backgrounds, the two-tone shell, cards, popovers, borders, text, status colours. In dark mode the shell is two-tone: sidebar `#17232C` over background `#0E171E`.
-- A **preset** sets the 13 brand tokens only: `primary`, `ring`, `chart-1`, `chart-2`, `sidebar-primary`, `sidebar-accent`, `sidebar-accent-foreground`, `sidebar-ring`, and the five `ai` roles.
-- Presets in externa-core: **Teal** (default, Externa), **Blue** (Excubia), Indigo, Violet, Rose, Slate. Violet re-points the `ai` roles to teal (`ai_override`), so AI never looks like the brand.
+- A **preset** sets the 8 brand tokens only, in light and dark: `primary`, `ring`, `chart-1`, `chart-2`, `sidebar-primary`, `sidebar-accent`, `sidebar-accent-foreground`, `sidebar-ring`. Registry presets never set the `ai` tokens: AI stays violet in every product (`@qiick/theme-blue` is the example).
+- Presets in externa-core: **Teal** (default, Externa), **Blue** (Excubia), Indigo, Violet, Rose, Slate. externa-core's runtime Violet preset re-points the `ai` roles to teal (`ai_override`) so AI never looks like the brand; a registry preset in a violet brand would have to do the same, and needs the maintainer's OK first.
 - `app.css` fallbacks equal Teal (`AppCssThemeDefaultsTest`). A custom brand hex wins over the preset; the ring follows it only when it reaches 3:1 on the background.
 - An app chooses its preset. It never edits surface tokens.
 

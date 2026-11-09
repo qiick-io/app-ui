@@ -983,12 +983,15 @@
             "name": "files-grid",
             "type": "registry:component",
             "title": "Files grid",
-            "description": "Files grid with file / folder cards: selection checkbox, context menu, tags, cover previews, infinite scroll with a Load more fallback.",
+            "description": "Files grid with square file / folder cards: preview above a 40px name row, tag hover card, ⋮ menu with the right-click actions, selection checkbox, infinite scroll with a Load more fallback.",
             "dependencies": ["lucide-react", "react-i18next"],
             "registryDependencies": [
+                "@qiick/badge",
                 "@qiick/button",
                 "@qiick/checkbox",
                 "@qiick/context-menu",
+                "@qiick/dropdown-menu",
+                "@qiick/hover-card",
                 "@qiick/tooltip",
                 "@qiick/utils"
             ],
