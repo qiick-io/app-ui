@@ -82,6 +82,11 @@
         "loadMore": "Load more",
         "loading": "Loading…"
     },
+    "dateRangePicker": {
+        "startTime": "Start time",
+        "endTime": "End time",
+        "apply": "Apply"
+    },
     "picker": {
         "clearSelection": "Clear selection",
         "loading": "Loading…",
