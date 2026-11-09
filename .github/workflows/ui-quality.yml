@@ -1,0 +1,122 @@
+# Reusable UI quality checks for qiick apps, so no app keeps its own copy of the
+# scripts (qiick standards, "Automated checks"):
+#
+# - ui-quality: the theme-token ratchet (`scripts/check-ui-tokens.mjs`, synced
+#   by the standards pack, with the app's `scripts/ui-token-baseline.txt`) and
+#   the WCAG 2.2 AA contrast of the installed `@qiick/theme` and presets
+#   (`resources/css/qiick-theme*.css`), with app-ui's script at the pinned ref.
+# - accessibility (when `axe-test` is set): the Pest browser axe smoke test, in
+#   light, dark and high contrast. The test file is the app's own (its routes);
+#   excubia-app `tests/Browser/A11ySmokeBrowserTest.php` is the reference.
+#
+# In the app:
+#
+#   jobs:
+#     ui-quality:
+#       uses: qiick-io/app-ui/.github/workflows/ui-quality.yml@vX.Y.Z
+#       with:
+#         axe-test: tests/Browser/A11ySmokeBrowserTest.php
+#
+# Required check names: `ui-quality / ui-quality`, `ui-quality / accessibility`.
+name: ui quality
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: App root (where qiick-standards.json lives)
+        type: string
+        default: .
+      theme-dir:
+        description: Directory with the installed qiick-theme*.css files
+        type: string
+        default: resources/css
+      axe-test:
+        description: Pest browser test with the axe smoke (empty to skip)
+        type: string
+        default: ''
+      php-version:
+        type: string
+        default: '8.4'
+
+permissions:
+  contents: read
+
+jobs:
+  ui-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Read the pinned standards ref
+        id: pin
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          ref=$(node -e "process.stdout.write(require('./qiick-standards.json').ref ?? '')")
+          if [ -z "$ref" ]; then
+            echo "::error::qiick-standards.json needs \"ref\": \"<app-ui tag or branch>\""
+            exit 1
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: qiick-io/app-ui
+          ref: ${{ steps.pin.outputs.ref }}
+          path: .app-ui
+          sparse-checkout: scripts
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+
+      - name: Theme tokens only (ratchet)
+        working-directory: ${{ inputs.working-directory }}
+        run: node scripts/check-ui-tokens.mjs
+
+      - name: WCAG 2.2 AA contrast of the installed theme
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          if [ ! -f "${{ inputs.theme-dir }}/qiick-theme.css" ]; then
+            echo "::warning::${{ inputs.theme-dir }}/qiick-theme.css not found: install @qiick/theme (npx shadcn add @qiick/theme) to check its contrast here."
+            exit 0
+          fi
+          node "$GITHUB_WORKSPACE/.app-ui/scripts/a11y-contrast.mjs" --theme-dir "${{ inputs.theme-dir }}"
+
+  accessibility:
+    if: inputs.axe-test != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ inputs.php-version }}
+          extensions: pdo_sqlite, sqlite3, sockets
+          coverage: none
+          tools: composer:v2
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate --ansi
+
+      - run: npm run build
+
+      - name: Axe smoke (light, dark, high contrast)
+        run: vendor/bin/pest "${{ inputs.axe-test }}"
