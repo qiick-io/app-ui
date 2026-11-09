@@ -1,0 +1,41 @@
+# Reusable PR title check (qiick standards, "Git, commits and pull requests"):
+# PRs are squash-merged, so the title becomes the commit on develop and must be
+# a Conventional Commit (commitlint, config-conventional: lower-case subject,
+# header at most 100 characters). No dependency in the calling repo.
+#
+# In the repo (the `edited` type reruns the check when the title changes):
+#
+#   on:
+#     pull_request:
+#       types: [opened, edited, synchronize, reopened]
+#   jobs:
+#     pr-title:
+#       uses: qiick-io/app-ui/.github/workflows/pr-title.yml@vX.Y.Z
+#
+# Required check name: `pr-title / commitlint`.
+name: pr title
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  commitlint:
+    if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+
+      - name: Conventional Commit title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        working-directory: ${{ runner.temp }}
+        run: |
+          npm install --no-save --no-audit --no-fund --silent @commitlint/cli@21 @commitlint/config-conventional@21
+          echo "export default { extends: ['@commitlint/config-conventional'] };" > commitlint.config.mjs
+          printf '%s\n' "$PR_TITLE" | npx --no-install commitlint --verbose
