@@ -11,6 +11,7 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 ### Added
 
 - Pattern pages, each naming the externa-core (or excubia-app) files it follows: `forms.md` (page vs drawer vs dialog, `Field` / `FieldError`, `useForm` vs `<Form>`), `detail-page.md`, `auth.md` (Fortify, 2FA, passkeys, SSO through Signaculum with `qiick/laravel-oidc`), `roles-and-permissions.md` (`PermissionEnum`, `<app>:sync-permissions`, `permission:` middleware, policies, `useCan`), `error-pages.md`, `realtime.md`, `api.md`, `security-headers.md`, `logging-and-audit.md`, `ai-backend.md`. `standards/rules/backend.md` summarises them and is synced into PHP repos; `rules/ui.md` lists the four UI pages. Upgrade: re-sync.
+- `alert` (status variants `success` / `warning` / `info`) and `calendar` (connected range band, module-level slots for a hover preview) from externa-core's `ui/`, so its drift check covers them. `calendar` adds the `react-day-picker` dependency.
 
 ### Changed
 
