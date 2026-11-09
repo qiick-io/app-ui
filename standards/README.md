@@ -17,6 +17,8 @@ One public source for the rules every qiick repo follows (Externa, Excubia, Sign
 | `tests/Arch/NamingArchitectureTest.php`     | Pest, in CI (PHP repos)         | whole file                       |
 | `tests/Arch/naming-architecture.php`        | the test above                  | **the repo's own**, written once |
 | `qiick-standards.eslint.js`                 | ESLint, in the editor           | whole file                       |
+| `scripts/check-ui-tokens.mjs`               | `npm run lint`, CI (UI apps)    | whole file                       |
+| `scripts/ui-token-baseline.txt`             | the check above                 | **the repo's own**, written once |
 
 The rules themselves are in [`rules/`](rules): [code](rules/code.md) (casing, full-word names, boolean prefixes, role suffixes, the five layers, PHPDoc / JSDoc, contracts and refactoring guardrails), [backend](rules/backend.md) (requests, permissions and policies, API, security, logging, realtime, AI, health; only in PHP repos), [testing](rules/testing.md), [git](rules/git.md) (English, Conventional Commits, branches, squash), [releases](rules/release.md) (nothing ships without the maintainer), [automated checks](rules/checks.md) (knip, `noUnused*`, strict models, the Larastan and i18n ratchets), [UI](rules/ui.md) (the app-ui rules, only in repos with a `uiPreset`) and [self-hosted distribution](rules/distribution.md) (only in repos with `"app": true`).
 
@@ -37,7 +39,9 @@ The repo's own CI runs the rest, each one a step in its workflow:
 | Lazy loading, discarded or missing attributes                                                        | the test suite, with `Model::shouldBeStrict(! app()->isProduction())` in `AppServiceProvider`                                            |
 | Larastan baseline only shrinks                                                                       | `node scripts/qiick-ratchet.mjs phpstan`                                                                                                 |
 | No new hard-coded JSX text                                                                           | lint JSON report piped into `node scripts/qiick-ratchet.mjs lint --rule i18next/no-literal-string --baseline i18n-literal-baseline.json` |
-| Conventional Commit PR titles                                                                        | commitlint                                                                                                                               |
+| Conventional Commit PR titles                                                                        | [`pr-title.yml`](../.github/workflows/pr-title.yml) (reusable)                                                                           |
+| Theme tokens, theme contrast, axe smoke (UI apps)                                                    | [`ui-quality.yml`](../.github/workflows/ui-quality.yml) (reusable; `scripts/check-ui-tokens.mjs` is synced)                              |
+| Released migrations never change                                                                     | [`migrations-frozen.yml`](../.github/workflows/migrations-frozen.yml) (reusable)                                                         |
 | Self-hosted install and upgrade (apps)                                                               | [`app-distribution-smoke.yml`](../.github/workflows/app-distribution-smoke.yml)                                                          |
 
 `i18next/no-literal-string` runs with `{ "mode": "jsx-text-only" }`: JSX text, never attributes. ESLint repos load `eslint-plugin-i18next` with the rule off and turn it on from the ratchet command (`--rule`); Vite+ / oxlint repos load it through `jsPlugins`.
@@ -85,6 +89,15 @@ The check skips everything that is the repo's own:
             with:
                 standards: true
                 registry: false # repos without the @qiick UI registry
+        pr-title:
+            if: github.event_name == 'pull_request'
+            uses: qiick-io/app-ui/.github/workflows/pr-title.yml@vX.Y.Z
+        ui-quality: # repos with a uiPreset
+            uses: qiick-io/app-ui/.github/workflows/ui-quality.yml@vX.Y.Z
+            with:
+                axe-test: tests/Browser/A11ySmokeBrowserTest.php
+        migrations-frozen: # PHP apps and packages with migrations
+            uses: qiick-io/app-ui/.github/workflows/migrations-frozen.yml@vX.Y.Z
         distribution-smoke: # apps only
             uses: qiick-io/app-ui/.github/workflows/app-distribution-smoke.yml@vX.Y.Z
             with:

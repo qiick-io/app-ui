@@ -162,6 +162,23 @@ test('gitignored output under a frontend root is not checked', () => {
     assert.deepEqual(syncStandards(root, { isCheck: true }), []);
 });
 
+test('Laravel UI apps get the theme-token check with a baseline of their own', () => {
+    const app = makeRepo({ uiPreset: 'Teal', php: true });
+    const nonUiPackage = makeRepo({ php: true });
+
+    syncStandards(app, { isCheck: false });
+    syncStandards(nonUiPackage, { isCheck: false });
+
+    assert.ok(fs.existsSync(path.join(app, 'scripts/check-ui-tokens.mjs')));
+    assert.match(
+        read(app, 'scripts/ui-token-baseline.txt'),
+        /Format: path:kind:token:count/,
+    );
+    assert.ok(
+        !fs.existsSync(path.join(nonUiPackage, 'scripts/check-ui-tokens.mjs')),
+    );
+});
+
 test('PHP repos get the backend conventions', () => {
     const laravelRepo = makeRepo({ php: true });
     const frontendOnlyRepo = makeRepo({});
