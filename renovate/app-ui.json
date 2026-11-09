@@ -1,0 +1,42 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "description": "qiick app-ui release pins: qiick-standards.json ref, the @qiick registry URL in components.json and the reusable workflows, bumped together in one PR. Extend with github>qiick-io/app-ui//renovate/app-ui.",
+    "customManagers": [
+        {
+            "customType": "regex",
+            "description": "qiick standards pack ref",
+            "managerFilePatterns": ["/(^|/)qiick-standards\\.json$/"],
+            "matchStrings": [
+                "\"ref\":\\s*\"(?<currentValue>v\\d+\\.\\d+\\.\\d+[^\"]*)\""
+            ],
+            "depNameTemplate": "qiick-io/app-ui",
+            "datasourceTemplate": "github-tags"
+        },
+        {
+            "customType": "regex",
+            "description": "@qiick shadcn registry URL",
+            "managerFilePatterns": ["/(^|/)components\\.json$/"],
+            "matchStrings": [
+                "raw\\.githubusercontent\\.com/qiick-io/app-ui/(?<currentValue>v\\d+\\.\\d+\\.\\d+[^/]*)/public/r/"
+            ],
+            "depNameTemplate": "qiick-io/app-ui",
+            "datasourceTemplate": "github-tags"
+        }
+    ],
+    "packageRules": [
+        {
+            "description": "The reusable workflows (github-actions manager) move with the two pins above.",
+            "matchPackageNames": ["qiick-io/app-ui", "qiick-io/app-ui/**"],
+            "groupName": "qiick app-ui",
+            "groupSlug": "qiick-app-ui",
+            "pinDigests": false,
+            "separateMajorMinor": false,
+            "commitMessageTopic": "qiick app-ui",
+            "semanticCommitType": "chore",
+            "semanticCommitScope": "deps",
+            "prBodyNotes": [
+                "Before merging: run `node <app-ui at the new tag>/scripts/sync-standards.mjs --target .`, re-run `npx shadcn add @qiick/<item> --overwrite` for the items the CHANGELOG names, review `app-ui.overrides.json`, and follow the Upgrade notes: https://github.com/qiick-io/app-ui/blob/main/CHANGELOG.md"
+            ]
+        }
+    ]
+}
