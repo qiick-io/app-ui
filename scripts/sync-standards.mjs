@@ -216,6 +216,23 @@ export function renderOutputs(config) {
         );
     }
 
+    // Laravel apps with the qiick UI: the theme-token ratchet over resources/js
+    // (raw palette / #hex debt in the repo's own baseline, arbitrary font sizes never).
+    if (config.php && config.uiPreset) {
+        outputs.push(
+            {
+                path: 'scripts/check-ui-tokens.mjs',
+                kind: 'file',
+                content: readSource('scripts/check-ui-tokens.mjs'),
+            },
+            {
+                path: 'scripts/ui-token-baseline.txt',
+                kind: 'template',
+                content: readSource('templates/ui-token-baseline.txt'),
+            },
+        );
+    }
+
     outputs.push({
         path: 'scripts/qiick-ratchet.mjs',
         kind: 'file',

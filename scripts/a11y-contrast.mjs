@@ -8,9 +8,14 @@
  * every preset (registry/src/css/qiick-theme-*.css). A custom `--brand-primary`
  * set by an app is the app's to check.
  *
+ * Apps run the same script on their installed copy of `@qiick/theme` (the
+ * reusable `ui-quality.yml` does it), so no app keeps its own copy:
+ *
+ *     node <app-ui>/scripts/a11y-contrast.mjs --theme-dir resources/css
+ *
  * Thresholds: text ≥4.5:1, UI/border/focus ≥3:1.
  *
- * Usage: node scripts/a11y-contrast.mjs
+ * Usage: node scripts/a11y-contrast.mjs [--theme-dir <dir, relative to the working directory>]
  */
 
 import fs from 'node:fs';
@@ -18,7 +23,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const themeDir = path.join(root, 'registry/src/css');
+const themeDirFlag = process.argv.indexOf('--theme-dir');
+const themeDir =
+    themeDirFlag === -1
+        ? path.join(root, 'registry/src/css')
+        : path.resolve(process.cwd(), process.argv[themeDirFlag + 1]);
 const cssPath = path.join(themeDir, 'qiick-theme.css');
 const css = fs.readFileSync(cssPath, 'utf8');
 
