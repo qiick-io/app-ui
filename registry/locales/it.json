@@ -23,20 +23,20 @@
             "used_other": "{{count}} fonti usate"
         },
         "tool": {
-            "error": "Errore",
-            "parameters": "Parametri",
-            "result": "Risultato",
-            "state": {
-                "approval-requested": "In attesa di approvazione",
-                "approval-responded": "Risposto",
-                "input-available": "In esecuzione",
-                "input-streaming": "In attesa",
-                "output-available": "Completato",
-                "output-denied": "Rifiutato",
-                "output-error": "Errore"
+            "title": {
+                "running": "Uso {{tool}}",
+                "done": "Ho usato {{tool}}",
+                "error": "Non sono riuscito a usare {{tool}}",
+                "denied": "Rifiutato: {{tool}}",
+                "approval": "{{tool}} richiede la tua approvazione"
             },
-            "steps_one": "{{count}} passo con strumenti",
-            "steps_other": "{{count}} passi con strumenti"
+            "provider": {
+                "web_search": "Ho cercato sul web"
+            },
+            "steps_one": "Fatto in {{count}} passaggio",
+            "steps_other": "Fatto in {{count}} passaggi",
+            "stepsRunning_one": "Al lavoro, {{count}} passaggio finora",
+            "stepsRunning_other": "Al lavoro, {{count}} passaggi finora"
         },
         "usage": {
             "cache": "Cache",
@@ -44,6 +44,10 @@
             "output": "Output",
             "reasoning": "Ragionamento",
             "trigger": "Contesto usato: {{percent}}"
+        },
+        "approval": {
+            "approve": "Approva",
+            "reject": "Rifiuta"
         }
     },
     "chat": {

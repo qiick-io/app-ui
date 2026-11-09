@@ -1,0 +1,22 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "confirmation",
+  "title": "Confirmation",
+  "description": "AI Elements Confirmation on Item: a call waiting for approval, its question and Reject / Approve.",
+  "dependencies": [
+    "lucide-react",
+    "react-i18next"
+  ],
+  "registryDependencies": [
+    "@qiick/button",
+    "@qiick/item"
+  ],
+  "files": [
+    {
+      "path": "src/components/ai-elements/confirmation.tsx",
+      "content": "import { ShieldAlertIcon } from 'lucide-react';\nimport type { ReactNode } from 'react';\nimport { useTranslation } from 'react-i18next';\nimport { Button } from '@/components/ui/button';\nimport {\n    Item,\n    ItemActions,\n    ItemContent,\n    ItemDescription,\n    ItemMedia,\n    ItemTitle,\n} from '@/components/ui/item';\n\n/*\n * AI Elements `confirmation` as shadcn rebuilt it on Item\n * (ui.shadcn.com/docs/ai-elements/base/confirmation): a call waiting for\n * approval, with a question and Deny / Approve. It sits outside the `Trace`;\n * once answered, the call becomes a `Tool` line again. Change from upstream:\n * the button labels go through i18n (`ai.approval.*`), and Approve takes the\n * destructive variant, since the calls that ask for approval write or delete.\n */\n\nexport type ConfirmationProps = {\n    /** The question, such as \"Delete the collection Products?\". */\n    title: ReactNode;\n    description?: ReactNode;\n    disabled?: boolean;\n    onApprove: () => void;\n    onDeny: () => void;\n};\n\nexport const Confirmation = ({\n    title,\n    description,\n    disabled = false,\n    onApprove,\n    onDeny,\n}: ConfirmationProps) => {\n    const { t } = useTranslation();\n\n    return (\n        <Item variant=\"outline\" size=\"sm\">\n            <ItemMedia variant=\"icon\">\n                <ShieldAlertIcon />\n            </ItemMedia>\n            <ItemContent>\n                <ItemTitle>{title}</ItemTitle>\n                {description ? (\n                    <ItemDescription>{description}</ItemDescription>\n                ) : null}\n            </ItemContent>\n            <ItemActions>\n                <Button\n                    size=\"sm\"\n                    variant=\"outline\"\n                    disabled={disabled}\n                    onClick={onDeny}\n                >\n                    {t('ai.approval.reject')}\n                </Button>\n                <Button\n                    size=\"sm\"\n                    variant=\"destructive\"\n                    disabled={disabled}\n                    onClick={onApprove}\n                >\n                    {t('ai.approval.approve')}\n                </Button>\n            </ItemActions>\n        </Item>\n    );\n};\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

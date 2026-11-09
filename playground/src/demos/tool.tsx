@@ -1,38 +1,18 @@
-import {
-    Tool,
-    ToolContent,
-    ToolHeader,
-    ToolInput,
-    ToolOutput,
-} from '@/components/ai-elements/tool';
+import { Tool } from '@/components/ai-elements/tool';
+import { Trace } from '@/components/ui/trace';
 
 export default function ToolDemo() {
     return (
-        <div className="flex w-full max-w-md flex-col gap-2">
-            <Tool defaultOpen>
-                <ToolHeader
-                    type="tool-search_items"
-                    title="search_items"
-                    state="output-available"
-                />
-                <ToolContent>
-                    <ToolInput
-                        input={{ collection: 'invoices', status: 'open' }}
-                    />
-                    <ToolOutput output={{ total: 3 }} />
-                </ToolContent>
-            </Tool>
-            <Tool>
-                <ToolHeader
-                    type="tool-delete_item"
-                    title="delete_item"
-                    state="output-error"
-                />
-                <ToolContent>
-                    <ToolInput input={{ id: 42 }} />
-                    <ToolOutput output={null} errorText="Item 42 is locked." />
-                </ToolContent>
-            </Tool>
-        </div>
+        <Trace className="max-w-md">
+            <Tool title="Listed the collections" state="output-available" />
+            <Tool title="Creating the item" state="input-available" />
+            <Tool
+                title="Could not delete the item"
+                description="Invoice 42"
+                state="output-error"
+                errorText="The item is locked by another editor."
+            />
+            <Tool title="Denied deleting the folder" state="output-denied" />
+        </Trace>
     );
 }

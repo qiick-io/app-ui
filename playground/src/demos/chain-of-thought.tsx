@@ -1,34 +1,14 @@
-import { Search } from 'lucide-react';
-import {
-    ChainOfThought,
-    ChainOfThoughtContent,
-    ChainOfThoughtHeader,
-    ChainOfThoughtSearchResult,
-    ChainOfThoughtSearchResults,
-    ChainOfThoughtStep,
-} from '@/components/ai-elements/chain-of-thought';
+import { ChainOfThought } from '@/components/ai-elements/chain-of-thought';
+import { Tool } from '@/components/ai-elements/tool';
+import { Trace } from '@/components/ui/trace';
 
 export default function ChainOfThoughtDemo() {
     return (
-        <ChainOfThought defaultOpen className="max-w-md">
-            <ChainOfThoughtHeader>2 tool steps</ChainOfThoughtHeader>
-            <ChainOfThoughtContent>
-                <ChainOfThoughtStep
-                    icon={Search}
-                    label="Searched the web"
-                    status="complete"
-                >
-                    <ChainOfThoughtSearchResults>
-                        <ChainOfThoughtSearchResult>
-                            laravel.com
-                        </ChainOfThoughtSearchResult>
-                        <ChainOfThoughtSearchResult>
-                            ui.shadcn.com
-                        </ChainOfThoughtSearchResult>
-                    </ChainOfThoughtSearchResults>
-                </ChainOfThoughtStep>
-                <ChainOfThoughtStep label="Read 2 pages" status="active" />
-            </ChainOfThoughtContent>
-        </ChainOfThought>
+        <Trace className="max-w-md">
+            <ChainOfThought title="Done in 2 steps" defaultOpen>
+                <Tool title="Listed the collections" state="output-available" />
+                <Tool title="Read the field types" state="output-available" />
+            </ChainOfThought>
+        </Trace>
     );
 }
