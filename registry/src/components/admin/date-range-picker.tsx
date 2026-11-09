@@ -33,7 +33,7 @@ type DateRangePickerProps = {
     dataTest?: string;
     /** Adds a start and an end time; the range then commits with Apply. */
     withTime?: boolean;
-    /** Days before `min` or after `max` cannot be picked. */
+    /** Days before `min` or after `max` cannot be picked, nor their months shown. */
     min?: Date;
     max?: Date;
 };
@@ -231,6 +231,9 @@ export function DateRangePicker({
                     locale={DAY_PICKER_LOCALES[locale]}
                     selected={selected}
                     defaultMonth={pendingStart ?? from ?? to ?? max}
+                    // Navigation stops at the bounds, so two months never show an empty one.
+                    startMonth={min}
+                    endMonth={max}
                     disabled={disabledDays}
                     onSelect={(_range, day) => selectDay(day)}
                     onDayMouseEnter={(day) => setHoveredDay(day)}
