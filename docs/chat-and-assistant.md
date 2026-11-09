@@ -12,6 +12,7 @@ Chat (`/chat`) and the Assistant (`/ai`) share **one structure**.
     - `filters`: `FilterSearch` sized like the list column (`w-64 lg:w-80`).
     - `filtersRight`: list actions (Assistant: delete selected; Chat: segmented Collections / Users + archived toggle).
 - Body: `ChatLayout`: **list column on the left** (`w-64 lg:w-80`, `border-r`, scrolls, sections with uppercase labels such as Pinned / Today), **thread on the right**.
+- **Phone:** pass `isThreadOpen` (a thread or conversation is selected). Below `md` the list and the thread take turns, full width, and the thread header has a back button (`md:hidden`) that clears the selection. Test ids go on the parts through `listColumnProps` / `listProps` / `threadProps` (`data-*` only); the parts also carry `data-slot` (`chat-layout`, `chat-layout-list-column`, `chat-layout-list`, `chat-layout-thread`).
 - The thread has **no extra header** in the Assistant: conversation actions live on the list row (⋯ menu on hover). No double header anywhere.
 - The **composer is always at the bottom of the right column**: one rounded frame, auto-growing textarea, actions left, round send button right. With no thread selected it stays visible and disabled under the empty state.
 - Messages: user bubbles `muted`, aligned end; assistant messages `ghost`, full width; errors `destructive`.
