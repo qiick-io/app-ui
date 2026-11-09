@@ -12,6 +12,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 - Reusable workflows so no app keeps its own copy: `pr-title.yml` (commitlint on the PR title, no dependency in the app; `rules/git.md` claimed it, now apps can run it), `ui-quality.yml` (theme-token ratchet, WCAG contrast of the installed `@qiick/theme` with app-ui's `a11y-contrast.mjs --theme-dir`, optional axe smoke browser test) and `migrations-frozen.yml` (excubia-app's forward-only migration check, freeze baseline now optional). The pack syncs `scripts/check-ui-tokens.mjs` (identical to the externa-core and excubia-app copies) and a `scripts/ui-token-baseline.txt` template into Laravel apps with a `uiPreset`. Upgrade: apps call the three workflows and may delete their own `a11y-contrast.mjs` and `migrations-frozen.sh`.
 
+### Changed
+
+- `chat-layout`: `ChatLayout` takes `isThreadOpen` for the phone layout (list or thread, full width, below `md`), `data-*` attributes for its parts (`listColumnProps`, `listProps`, `threadProps`), passes other props to its root, and marks its parts with `data-slot`. Without `isThreadOpen` it renders as before. externa-core's `/ai` and `/chat` now render through it.
+
 ## [0.1.0] - 2026-11-09
 
 First tagged release. Everything below was on `develop` only; apps pinned `develop`.
