@@ -11,6 +11,23 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 ### Added
 
 - Pattern pages, each naming the externa-core (or excubia-app) files it follows: `forms.md` (page vs drawer vs dialog, `Field` / `FieldError`, `useForm` vs `<Form>`), `detail-page.md`, `auth.md` (Fortify, 2FA, passkeys, SSO through Signaculum with `qiick/laravel-oidc`), `roles-and-permissions.md` (`PermissionEnum`, `<app>:sync-permissions`, `permission:` middleware, policies, `useCan`), `error-pages.md`, `realtime.md`, `api.md`, `security-headers.md`, `logging-and-audit.md`, `ai-backend.md`. `standards/rules/backend.md` summarises them and is synced into PHP repos; `rules/ui.md` lists the four UI pages. Upgrade: re-sync.
+
+### Changed
+
+- `chat-layout`: `ChatLayout` takes `isThreadOpen` for the phone layout (list or thread, full width, below `md`), `data-*` attributes for its parts (`listColumnProps`, `listProps`, `threadProps`), passes other props to its root, and marks its parts with `data-slot`. Without `isThreadOpen` it renders as before. externa-core's `/ai` and `/chat` now render through it.
+
+## [0.1.0] - 2026-11-09
+
+First tagged release. Everything below was on `develop` only; apps pinned `develop`.
+
+### Upgrade notes
+
+- **Every app:** replace `develop` with `v0.1.0` in the three pins: `"ref"` in `qiick-standards.json`, the `@qiick` URL in `components.json`, and every `uses: qiick-io/app-ui/.github/workflows/<workflow>.yml@develop`. Nothing else changes: the content is the `develop` the apps already synced.
+- Optionally extend `github>qiick-io/app-ui//renovate/app-ui` in `renovate.json` so later releases arrive as PRs (see `RELEASING.md`).
+
+### Added
+
+- Versioning: `RELEASING.md` describes the tag that pins the registry, the standards pack and the reusable workflows together, the three places an app pins it, pre-release naming and the release commands; `renovate/app-ui.json` is a Renovate preset that bumps the three pins in one PR.
 - `standards/`: the qiick standards pack, one public source of the code, testing, git, release and UI rules for every qiick repo. `scripts/sync-standards.mjs` writes it into a repo (`AGENTS.md` / `CLAUDE.md` / `.github/copilot-instructions.md` blocks, `.cursor/rules/`, `tests/Arch/NamingArchitectureTest.php`, a zero-dependency ESLint kebab-case file-name config); `drift-check.yml` gains `standards: true` (and `registry: false` for repos without the UI registry) to fail CI on a drifted copy. Affects every app: add `qiick-standards.json`, run the sync, fill `tests/Arch/naming-architecture.php`. `docs/app-agents-section.md` is superseded by the pack.
 - Automated checks in the pack: knip, `noUnusedLocals` / `noUnusedParameters`, strict Eloquent models, a Larastan baseline ratchet and a hard-coded JSX text ratchet (`scripts/qiick-ratchet.mjs`), plus the self-hosted app distribution contract and the reusable `app-distribution-smoke.yml` (create-project, non-interactive install, health, upgrade from the previous tag). This repo runs knip and the i18n ratchet (registry sources: 0 literals) in CI; `knip` and `eslint-plugin-i18next` are new dev dependencies.
 
@@ -61,3 +78,6 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 - `input-group` has a transparent background in dark mode, like `input`. It had shadcn's `dark:bg-input/30`, so a search field or a password field looked lighter than the plain inputs next to it.
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
+
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/qiick-io/app-ui/releases/tag/v0.1.0
