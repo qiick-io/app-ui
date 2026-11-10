@@ -18,6 +18,10 @@ Stop at the first rung that holds: YAGNI, standard library, platform, installed 
 - Never lazy about trust-boundary validation, data-loss prevention, security, accessibility, or anything explicitly requested.
 - Non-trivial logic leaves one runnable check behind (a test).
 
+### Current sources, not memory
+
+Before writing framework or library code, or copying a component from an upstream registry (shadcn, AI Elements), read the current official page for the installed version. Training data and old copies go stale: until 2026-11-09 the registry's AI Elements were a superseded release, and nobody had compared them with the current pages. A file copied from upstream names its source page in its header comment, and the registry README records the source and date of every upstream item.
+
 ### Casing
 
 PHP / Laravel (Pint `laravel` preset, PSR-4, PER-CS):
@@ -226,6 +230,7 @@ Rules for working in `qiick-io/app-ui` itself, on top of the qiick standards abo
 
 - This repo is the **source** of the UI rules and of the standards pack. Every deliberate change from externa-core is listed in [`registry/README.md`](registry/README.md); copy code from externa-core `develop`, do not redesign.
 - Pattern pages: [`docs/`](docs/README.md). Theme: [`docs/theme.md`](docs/theme.md).
+- An item from an upstream registry (shadcn, AI Elements) records its source page, style and date in [`registry/README.md`](registry/README.md). Before adding, re-pulling or changing one, read the current upstream page and say in the PR what changed upstream.
 - Commit `public/r` with the registry sources (`npm run build`); CI fails when it is stale.
 - Quality gate before a PR: `npm run lint`, `format:check`, `types:check`, `registry:check`, `a11y:contrast`, `test`, `standards:check`.
 - Releases: [`RELEASING.md`](RELEASING.md).
