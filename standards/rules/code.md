@@ -12,6 +12,10 @@ Stop at the first rung that holds: YAGNI, standard library, platform, installed 
 - Never lazy about trust-boundary validation, data-loss prevention, security, accessibility, or anything explicitly requested.
 - Non-trivial logic leaves one runnable check behind (a test).
 
+## Current sources, not memory
+
+Before writing framework or library code, or copying a component from an upstream registry (shadcn, AI Elements), read the current official page for the installed version. Training data and old copies go stale: until 2026-11-09 the registry's AI Elements were a superseded release, and nobody had compared them with the current pages. A file copied from upstream names its source page in its header comment, and the registry README records the source and date of every upstream item.
+
 ## Names: full words
 
 - No single letters (`x`, `e`, `q`) and no abbreviations (`cfg`, `res`, `req`, `val`, `arr`, `tmp`, `idx`, `usr`, `ctx`, `def`, `cb`). Full words even at 30+ characters (`$collectionFieldDefinition`, `handleFormSubmissionError`).
