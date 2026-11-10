@@ -12,21 +12,9 @@ Stop at the first rung that holds: YAGNI, standard library, platform, installed 
 - Never lazy about trust-boundary validation, data-loss prevention, security, accessibility, or anything explicitly requested.
 - Non-trivial logic leaves one runnable check behind (a test).
 
-## Casing
+## Current sources, not memory
 
-PHP / Laravel (Pint `laravel` preset, PSR-4, PER-CS):
-
-- Classes, interfaces, traits, enums and their `.php` files: `PascalCase` (`StoreCollectionItemRequest.php`, 1:1 with PSR-4).
-- Methods, functions, properties, variables: `camelCase` (`$authenticatedUser`, `resolveEffectivePermissions()`).
-- Enum cases: `PascalCase` (`CollectionStatusEnum::PendingReview`).
-- Database tables and columns, `config/*.php` keys: `snake_case` (`created_by_user_id`).
-- Artisan commands and URL slugs: `kebab-case` (`externa:sync-permissions`, `/collection-items`).
-
-React / TypeScript / Inertia:
-
-- Components, `type`, `interface` and `enum` names: `PascalCase` (`CollectionItemDrawer`, `CollectionItemProps`).
-- Functions, hooks, variables, props: `camelCase` (`useAccessibilityPreferences`, `handleSubmission`).
-- **Files and directories on disk: `kebab-case`** (`collection-item-form.tsx`, `use-accessibility-preferences.tsx`), so macOS (case-insensitive) and Linux / Docker (case-sensitive) never disagree. No barrel `index.ts` files that only re-export. CI checks the file names.
+Before writing framework or library code, or copying a component from an upstream registry (shadcn, AI Elements), read the current official page for the installed version. Training data and old copies go stale: until 2026-11-09 the registry's AI Elements were a superseded release, and nobody had compared them with the current pages. A file copied from upstream names its source page in its header comment, and the registry README records the source and date of every upstream item.
 
 ## Names: full words
 
@@ -34,40 +22,8 @@ React / TypeScript / Inertia:
 - `i`, `j`, `k` only as indices of tight numeric loops; prefer `foreach ($collectionItems as $collectionItem)`, `for...of`, `.map()`.
 - **Booleans** (variables, columns, custom props, boolean-returning methods) start with `is`, `has`, `can` or `should` (`$isEmailVerified`, `canManageCollection()`, `shouldBroadcastImmediately`). Exempt: names fixed by a framework or library contract (see [Contracts](#contracts-never-break-them)).
 - **Collections** use specific plurals (`$publishedArticles`) or explicit maps (`$usersIndexedById`), never `$data`, `$list`, `$arr`.
-
-## Role suffixes
-
-Only Eloquent models use bare domain nouns (`User`, `CollectionItem`). Every other class of our own ends with its role, so neither a human nor an agent mistakes a model for a request, enum, event or job:
-
-| Directory                         | Suffix         | Notes                                                   |
-| --------------------------------- | -------------- | ------------------------------------------------------- |
-| `app/Models/`                     | none           | Relationships, casts, accessors, scopes, constants only |
-| `app/Http/Controllers/`           | `Controller`   |                                                         |
-| `app/Http/Requests/`              | `Request`      | Validation and authorization                            |
-| `app/Http/Resources/`             | `Resource`     |                                                         |
-| `app/Http/Responses/`             | `Response`     |                                                         |
-| `app/Http/Middleware/`            | `Middleware`   |                                                         |
-| `app/Actions/`                    | `Action`       | One write / use case, one public `execute(...)`         |
-| `app/Services/`                   | `Service`      | Orchestration, complex reads, external integrations     |
-| `app/Data/`                       | `Data`         | `readonly class` DTOs and value objects                 |
-| `app/Enums/`                      | `Enum`         | Backed values never change without a data migration     |
-| `app/Policies/`                   | `Policy`       |                                                         |
-| `app/Jobs/`                       | `Job`          |                                                         |
-| `app/Console/Commands/`           | `Command`      |                                                         |
-| `app/Events/`                     | `Event`        | Keep `broadcastAs()` wire names stable                  |
-| `app/Listeners/`                  | `Listener`     |                                                         |
-| `app/Notifications/`              | `Notification` |                                                         |
-| `app/Observers/`                  | `Observer`     |                                                         |
-| `app/Rules/`                      | `Rule`         |                                                         |
-| `app/Exceptions/`                 | `Exception`    |                                                         |
-| `app/Builders/`                   | `Builder`      | Dedicated query builders when scopes grow large         |
-| `app/Contracts/`                  | `Contract`     | Interfaces                                              |
-| traits (one place: `app/Traits/`) | `Trait`        |                                                         |
-| `tests/`                          | `Test`         | `*Test.php`, `*.test.ts(x)`                             |
-
-Do not invent other role nouns (`...Normalizer`, `...Publisher`, `...Recorder`, `...Writer`) or split domain classes arbitrarily between `app/Services/` and `app/Support/`: a write is an `Action`, an orchestrator or read pipeline is a `Service`. Packages apply the same table to their own namespace (`Qiick\Excubia\...`); a package may add roles of its own (`Parser`, `Renderer`, `Check`), listed in its architecture test config.
-
-**Never rename framework or package scaffolding.** Files native to Laravel or published by a package keep their upstream names: Fortify actions (`app/Actions/Fortify/*`), starter-kit files (`HandleInertiaRequests`, `HandleAppearance`, `app/Concerns/*`), default service providers, vendor-published files (Spatie, Horizon, Telescope, Pennant, Passport), and frontend primitives (`shadcn/ui` files in `components/ui/`). They are listed in the repo's `tests/Arch/naming-architecture.php`, never renamed.
+- Every class of our own ends with its role suffix (`*Controller`, `*Action`, `*Service`, `*Data`, `*Enum`, `*Job`, …); only Eloquent models use bare nouns. The full table is in the details.
+- **Never rename framework or package scaffolding:** files native to Laravel or published by a package keep their upstream names: Fortify actions (`app/Actions/Fortify/*`), starter-kit files (`HandleInertiaRequests`, `HandleAppearance`, `app/Concerns/*`), default service providers, vendor-published files (Spatie, Horizon, Telescope, Pennant, Passport), and frontend primitives (`shadcn/ui` files in `components/ui/`). They are listed in the repo's `tests/Arch/naming-architecture.php`, never renamed.
 
 ## Architecture: five layers
 
@@ -106,3 +62,53 @@ This replaces the "comment only exceptionally complex logic" default of Laravel 
 4. **Wire formats stay stable** when a PHP class is renamed: REST JSON keys, GraphQL type and field names, webhook payloads, `broadcastAs()` names, Inertia page paths, named routes, morph maps (`Relation::enforceMorphMap`), queued job class names. Enum backing values stay identical.
 5. **Convention-driven directories** (`app/GraphQL/`, `app/Ai/`, MCP tools) keep the names their resolver expects unless the resolver mapping changes in the same PR.
 6. **Mechanical renames and behaviour changes never share a PR.** Land the `git mv` + import updates first with green tests, then extract or change logic in a separate PR.
+
+<!-- qiick-standards:detail when: creating or renaming a file, class, enum, job, command or other PHP / TypeScript unit -->
+
+## Casing
+
+PHP / Laravel (Pint `laravel` preset, PSR-4, PER-CS):
+
+- Classes, interfaces, traits, enums and their `.php` files: `PascalCase` (`StoreCollectionItemRequest.php`, 1:1 with PSR-4).
+- Methods, functions, properties, variables: `camelCase` (`$authenticatedUser`, `resolveEffectivePermissions()`).
+- Enum cases: `PascalCase` (`CollectionStatusEnum::PendingReview`).
+- Database tables and columns, `config/*.php` keys: `snake_case` (`created_by_user_id`).
+- Artisan commands and URL slugs: `kebab-case` (`externa:sync-permissions`, `/collection-items`).
+
+React / TypeScript / Inertia:
+
+- Components, `type`, `interface` and `enum` names: `PascalCase` (`CollectionItemDrawer`, `CollectionItemProps`).
+- Functions, hooks, variables, props: `camelCase` (`useAccessibilityPreferences`, `handleSubmission`).
+- **Files and directories on disk: `kebab-case`** (`collection-item-form.tsx`, `use-accessibility-preferences.tsx`), so macOS (case-insensitive) and Linux / Docker (case-sensitive) never disagree. No barrel `index.ts` files that only re-export. CI checks the file names.
+
+## Role suffixes
+
+Only Eloquent models use bare domain nouns (`User`, `CollectionItem`). Every other class of our own ends with its role, so neither a human nor an agent mistakes a model for a request, enum, event or job:
+
+| Directory                         | Suffix         | Notes                                                   |
+| --------------------------------- | -------------- | ------------------------------------------------------- |
+| `app/Models/`                     | none           | Relationships, casts, accessors, scopes, constants only |
+| `app/Http/Controllers/`           | `Controller`   |                                                         |
+| `app/Http/Requests/`              | `Request`      | Validation and authorization                            |
+| `app/Http/Resources/`             | `Resource`     |                                                         |
+| `app/Http/Responses/`             | `Response`     |                                                         |
+| `app/Http/Middleware/`            | `Middleware`   |                                                         |
+| `app/Actions/`                    | `Action`       | One write / use case, one public `execute(...)`         |
+| `app/Services/`                   | `Service`      | Orchestration, complex reads, external integrations     |
+| `app/Data/`                       | `Data`         | `readonly class` DTOs and value objects                 |
+| `app/Enums/`                      | `Enum`         | Backed values never change without a data migration     |
+| `app/Policies/`                   | `Policy`       |                                                         |
+| `app/Jobs/`                       | `Job`          |                                                         |
+| `app/Console/Commands/`           | `Command`      |                                                         |
+| `app/Events/`                     | `Event`        | Keep `broadcastAs()` wire names stable                  |
+| `app/Listeners/`                  | `Listener`     |                                                         |
+| `app/Notifications/`              | `Notification` |                                                         |
+| `app/Observers/`                  | `Observer`     |                                                         |
+| `app/Rules/`                      | `Rule`         |                                                         |
+| `app/Exceptions/`                 | `Exception`    |                                                         |
+| `app/Builders/`                   | `Builder`      | Dedicated query builders when scopes grow large         |
+| `app/Contracts/`                  | `Contract`     | Interfaces                                              |
+| traits (one place: `app/Traits/`) | `Trait`        |                                                         |
+| `tests/`                          | `Test`         | `*Test.php`, `*.test.ts(x)`                             |
+
+Do not invent other role nouns (`...Normalizer`, `...Publisher`, `...Recorder`, `...Writer`) or split domain classes arbitrarily between `app/Services/` and `app/Support/`: a write is an `Action`, an orchestrator or read pipeline is a `Service`. Packages apply the same table to their own namespace (`Qiick\Excubia\...`); a package may add roles of its own (`Parser`, `Renderer`, `Check`), listed in its architecture test config.

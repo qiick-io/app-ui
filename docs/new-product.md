@@ -17,7 +17,7 @@ herd link && herd secure
 Then, in one `chore: bootstrap` commit on `develop` (the default branch for work; `main` holds releases only):
 
 - `.nvmrc` with `24`, `"engines": { "node": "24.x" }` in `package.json`.
-- Lint and format: ESLint 9 + Prettier as externa-core (`eslint.config.js`, `.prettierrc`, `.prettierignore`); if the kit ships Vite+ `vp check` / oxlint, remove it from the lint scripts (the stack page says why).
+- Lint and format: keep the kit's **Vite+** setup as it is (`vp check` with Oxlint and Oxfmt); never replace it with ESLint or Prettier. The standards sync adds `.oxlintrc.standards.json` and `.oxlintrc.i18n.json`; add the scripts `lint:standards` and `lint:i18n` as excubia-app has them.
 - `composer require laravel/horizon laravel/reverb spatie/laravel-permission spatie/laravel-activitylog` and `composer require --dev larastan/larastan laravel/boost` (each is part of the stack; nothing else without the maintainer).
 - `react-i18next` with `en`, `it`, `de` from the first screen.
 - `AppServiceProvider::boot()`: `Model::shouldBeStrict(! app()->isProduction())`.
@@ -33,12 +33,12 @@ node ../app-ui/scripts/new-product.mjs --target . --name <app> --preset Teal
 
 It writes, all pinned to the same `vX.Y.Z`:
 
-| File                          | What                                                                                                                                             |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `qiick-standards.json`        | `ref`, `uiPreset`, `php`, `frontendRoots`, `eslint`, `app: true`                                                                                 |
-| `components.json`             | the `@qiick` registry at `https://raw.githubusercontent.com/qiick-io/app-ui/vX.Y.Z/public/r/{name}.json`                                         |
-| `.github/workflows/qiick.yml` | the reusable checks: PR title, drift (standards + registry), UI quality, frozen migrations, distribution smoke                                   |
-| the standards sync            | `AGENTS.md` / `CLAUDE.md` / copilot blocks, `.cursor/rules`, `tests/Arch`, `qiick-standards.eslint.js`, `knip.json`, `scripts/qiick-ratchet.mjs` |
+| File                          | What                                                                                                                                                                   |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `qiick-standards.json`        | `ref`, `uiPreset`, `php`, `frontendRoots`, `oxlint: true`, `app: true`                                                                                                 |
+| `components.json`             | the `@qiick` registry at `https://raw.githubusercontent.com/qiick-io/app-ui/vX.Y.Z/public/r/{name}.json`                                                               |
+| `.github/workflows/qiick.yml` | the reusable checks: PR title, drift (standards + registry), UI quality, frozen migrations, distribution smoke                                                         |
+| the standards sync            | `AGENTS.md` / `CLAUDE.md` / copilot blocks, `.cursor/rules`, `tests/Arch`, `.oxlintrc.standards.json`, `.oxlintrc.i18n.json`, `knip.json`, `scripts/qiick-ratchet.mjs` |
 
 The preset is the product's brand colour. A product without a preset of its own uses Teal until the maintainer adds one to the registry (`@qiick/theme-<colour>`).
 

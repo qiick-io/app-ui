@@ -13,7 +13,8 @@
  *         "uiPreset": "Teal",              // brand preset; omit in repos without a UI
  *         "php": true,                     // Pest architecture test
  *         "frontendRoots": ["resources/js"], // kebab-case file name check
- *         "eslint": true,                  // shared ESLint config file
+ *         "oxlint": true,                  // Vite+ apps: the shared Oxlint configs
+ *         "eslint": true,                  // repos still on ESLint: the shared ESLint config
  *         "app": true                      // self-hosted app: stack and distribution rules
  *     }
  *
@@ -21,6 +22,7 @@
  *
  * - whole files (`.cursor/rules/*.mdc`, the architecture test, …): the repo's
  *   copy must match byte for byte (line endings aside);
+ *   `.qiick/standards/<page>.md` holds every rule page in full;
  * - blocks inside `AGENTS.md`, `CLAUDE.md` and `.github/copilot-instructions.md`
  *   between the `qiick-standards:begin` / `:end` markers: only the block is
  *   managed; everything outside it (repo rules, Laravel Boost guidelines) is the
@@ -41,6 +43,9 @@ const NEW_PRODUCT_URL =
 const BLOCK_BEGIN =
     '<!-- qiick-standards:begin. Generated from qiick-io/app-ui standards: do not edit inside this block, run the sync (see qiick-standards.json). -->';
 const BLOCK_END = '<!-- qiick-standards:end -->';
+/** Splits a rule page: above it, the always-loaded core; below it, details read on demand. */
+const DETAIL_MARKER = /^<!-- qiick-standards:detail when: (.+?) -->\n+/m;
+const DETAIL_DIRECTORY = '.qiick/standards';
 const KEBAB_CASE_NAME =
     /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.[a-z0-9]+(?:-[a-z0-9]+)*)*$/;
 
@@ -112,6 +117,32 @@ function renderRulePages(config) {
 }
 
 /**
+ * A rule page as the agent files show it: the core, then one pointer to the
+ * page's details in `.qiick/standards/`, naming when to read them (the agent
+ * files are loaded on every turn, the details only when a task needs them).
+ * A page without the detail marker is shown whole.
+ * @param {string} name - Rule page name (`code`, `ui`, …)
+ * @param {string} page - Markdown with an optional detail marker
+ */
+function corePage(name, page) {
+    const marker = page.match(DETAIL_MARKER);
+
+    if (!marker) {
+        return page;
+    }
+
+    const core = page.slice(0, marker.index).trimEnd();
+
+    return `${core}\n\n**Details:** \`${DETAIL_DIRECTORY}/${name}.md\`. Read it before ${marker[1]}.`;
+}
+
+/**
+ * A rule page in full, for `.qiick/standards/` and the Cursor rules.
+ * @param {string} page - Markdown with an optional detail marker
+ */
+const fullPage = (page) => page.replace(DETAIL_MARKER, '');
+
+/**
  * @param {string} body
  */
 const block = (body) => `${BLOCK_BEGIN}\n\n${body.trim()}\n\n${BLOCK_END}`;
@@ -126,7 +157,7 @@ const cursorRule = (description, frontmatter, body) =>
 
 /**
  * Everything the pack writes into a repo with this config.
- * @param {{ uiPreset?: string, php?: boolean, eslint?: boolean, app?: boolean, frontendRoots?: string[] }} config
+ * @param {{ uiPreset?: string, php?: boolean, eslint?: boolean, oxlint?: boolean, app?: boolean, frontendRoots?: string[] }} config
  * @returns {{ path: string, kind: 'file' | 'block' | 'template', content: string }[]}
  */
 export function renderOutputs(config) {
@@ -134,7 +165,9 @@ export function renderOutputs(config) {
     const agentsBody = [
         '# qiick standards',
         `These rules bind every agent and contributor in this repo from the first task. They are the same in every qiick repo (source: ${SOURCE_URL}), and CI fails when this block differs from the source. Rules for this repo only live outside this block; where they are more specific, they win. Starting a new qiick product: ${NEW_PRODUCT_URL}.`,
-        ...Object.values(pages).map((page) => demoteHeadings(page.trim())),
+        ...Object.entries(pages).map(([name, page]) =>
+            demoteHeadings(corePage(name, page).trim()),
+        ),
     ].join('\n\n');
 
     /** @type {{ path: string, kind: 'file' | 'block' | 'template', content: string }[]} */
@@ -169,6 +202,7 @@ export function renderOutputs(config) {
                     pages.distribution,
                 ]
                     .filter(Boolean)
+                    .map(fullPage)
                     .map((page, index) =>
                         index === 0 ? page.trim() : demoteHeadings(page.trim()),
                     )
@@ -181,7 +215,7 @@ export function renderOutputs(config) {
             content: cursorRule(
                 'qiick testing rules: Pest, browser tests, architecture test',
                 'globs: "**/*Test.php,**/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx"\nalwaysApply: false',
-                pages.testing,
+                fullPage(pages.testing),
             ),
         },
         {
@@ -190,7 +224,7 @@ export function renderOutputs(config) {
             content: cursorRule(
                 'Never release, tag or merge to main without the maintainer',
                 'alwaysApply: true',
-                pages.release,
+                fullPage(pages.release),
             ),
         },
         {
@@ -200,6 +234,14 @@ export function renderOutputs(config) {
         },
     ];
 
+    for (const [name, page] of Object.entries(pages)) {
+        outputs.push({
+            path: `${DETAIL_DIRECTORY}/${name}.md`,
+            kind: 'file',
+            content: `<!-- Generated from qiick-io/app-ui standards: do not edit, run the sync. The agent files hold the core of this page and point here. -->\n\n${fullPage(page).trim()}\n`,
+        });
+    }
+
     if (pages.ui) {
         outputs.push({
             path: '.cursor/rules/accessibility-and-theme.mdc',
@@ -207,7 +249,7 @@ export function renderOutputs(config) {
             content: cursorRule(
                 'qiick app UI: registry first, theme tokens, WCAG 2.2 AA',
                 'globs: "**/*.tsx"\nalwaysApply: false',
-                pages.ui,
+                fullPage(pages.ui),
             ),
         });
     }
@@ -264,6 +306,23 @@ export function renderOutputs(config) {
             kind: 'file',
             content: readSource('eslint/qiick-standards.eslint.js'),
         });
+    }
+
+    // Vite+ apps: the ratcheted rules and the i18n ratchet as Oxlint configs
+    // (excubia-app's, the reference since 2026-11-09).
+    if (config.oxlint) {
+        outputs.push(
+            {
+                path: '.oxlintrc.standards.json',
+                kind: 'file',
+                content: readSource('oxlint/oxlintrc.standards.json'),
+            },
+            {
+                path: '.oxlintrc.i18n.json',
+                kind: 'file',
+                content: readSource('oxlint/oxlintrc.i18n.json'),
+            },
+        );
     }
 
     return outputs;

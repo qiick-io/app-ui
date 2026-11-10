@@ -204,3 +204,50 @@ test('apps get the stack rules and every repo points at the new-product guide', 
     assert.doesNotMatch(read(library, 'AGENTS.md'), /^## Stack$/m);
     assert.match(read(library, 'AGENTS.md'), /docs\/new-product\.md/);
 });
+
+test('the agent files carry each page core with a pointer, the details live in .qiick/standards', () => {
+    const repo = makeRepo({ php: true, uiPreset: 'Teal', app: true });
+
+    syncStandards(repo, { isCheck: false });
+
+    const agents = read(repo, 'AGENTS.md');
+    const codeDetails = read(repo, '.qiick/standards/code.md');
+
+    assert.match(agents, /^### Architecture: five layers$/m);
+    assert.doesNotMatch(agents, /^### Role suffixes$/m);
+    assert.match(
+        agents,
+        /\*\*Details:\*\* `\.qiick\/standards\/code\.md`\. Read it before creating or renaming/,
+    );
+    assert.match(codeDetails, /^## Role suffixes$/m);
+    assert.match(codeDetails, /^## Architecture: five layers$/m);
+    assert.doesNotMatch(codeDetails, /qiick-standards:detail/);
+    assert.doesNotMatch(
+        read(repo, '.cursor/rules/code-craftsmanship.mdc'),
+        /qiick-standards:detail/,
+    );
+    assert.deepEqual(syncStandards(repo, { isCheck: true }), []);
+});
+
+test('Vite+ apps get the shared Oxlint configs, ESLint repos the ESLint one', () => {
+    const viteApp = makeRepo({ php: true, oxlint: true });
+    const eslintRepo = makeRepo({ php: true, eslint: true });
+
+    syncStandards(viteApp, { isCheck: false });
+    syncStandards(eslintRepo, { isCheck: false });
+
+    assert.match(
+        read(viteApp, '.oxlintrc.standards.json'),
+        /"no-restricted-imports"/,
+    );
+    assert.match(read(viteApp, '.oxlintrc.i18n.json'), /eslint-plugin-i18next/);
+    assert.equal(
+        fs.existsSync(path.join(viteApp, 'qiick-standards.eslint.js')),
+        false,
+    );
+    assert.equal(
+        fs.existsSync(path.join(eslintRepo, '.oxlintrc.standards.json')),
+        false,
+    );
+    assert.deepEqual(syncStandards(viteApp, { isCheck: true }), []);
+});

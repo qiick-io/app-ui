@@ -4,23 +4,29 @@ One public source for the rules every qiick repo follows (Externa, Excubia, Sign
 
 ## What a repo gets
 
-| File in the repo                            | Read by                         | Managed                          |
-| ------------------------------------------- | ------------------------------- | -------------------------------- |
-| `AGENTS.md`                                 | Codex, Cursor, Copilot agent, … | the `qiick-standards` block only |
-| `CLAUDE.md` (`@AGENTS.md` import)           | Claude Code                     | the `qiick-standards` block only |
-| `.github/copilot-instructions.md`           | GitHub Copilot                  | the `qiick-standards` block only |
-| `.cursor/rules/code-craftsmanship.mdc`      | Cursor, always                  | whole file                       |
-| `.cursor/rules/no-auto-release.mdc`         | Cursor, always                  | whole file                       |
-| `.cursor/rules/testing.mdc`                 | Cursor, on test files           | whole file                       |
-| `.cursor/rules/accessibility-and-theme.mdc` | Cursor, on `.tsx` (UI repos)    | whole file                       |
-| `.cursor/commands/code-comments.md`         | Cursor `/code-comments`         | whole file                       |
-| `tests/Arch/NamingArchitectureTest.php`     | Pest, in CI (PHP repos)         | whole file                       |
-| `tests/Arch/naming-architecture.php`        | the test above                  | **the repo's own**, written once |
-| `qiick-standards.eslint.js`                 | ESLint, in the editor           | whole file                       |
-| `scripts/check-ui-tokens.mjs`               | `npm run lint`, CI (UI apps)    | whole file                       |
-| `scripts/ui-token-baseline.txt`             | the check above                 | **the repo's own**, written once |
+| File in the repo                                  | Read by                         | Managed                          |
+| ------------------------------------------------- | ------------------------------- | -------------------------------- |
+| `AGENTS.md`                                       | Codex, Cursor, Copilot agent, … | the `qiick-standards` block only |
+| `CLAUDE.md` (`@AGENTS.md` import)                 | Claude Code                     | the `qiick-standards` block only |
+| `.github/copilot-instructions.md`                 | GitHub Copilot                  | the `qiick-standards` block only |
+| `.qiick/standards/<page>.md`                      | agents, when a pointer says so  | whole file                       |
+| `.cursor/rules/code-craftsmanship.mdc`            | Cursor, always                  | whole file                       |
+| `.cursor/rules/no-auto-release.mdc`               | Cursor, always                  | whole file                       |
+| `.cursor/rules/testing.mdc`                       | Cursor, on test files           | whole file                       |
+| `.cursor/rules/accessibility-and-theme.mdc`       | Cursor, on `.tsx` (UI repos)    | whole file                       |
+| `.cursor/commands/code-comments.md`               | Cursor `/code-comments`         | whole file                       |
+| `tests/Arch/NamingArchitectureTest.php`           | Pest, in CI (PHP repos)         | whole file                       |
+| `tests/Arch/naming-architecture.php`              | the test above                  | **the repo's own**, written once |
+| `.oxlintrc.standards.json`, `.oxlintrc.i18n.json` | Oxlint (Vite+ apps)             | whole file                       |
+| `qiick-standards.eslint.js`                       | ESLint (repos not on Vite+ yet) | whole file                       |
+| `scripts/check-ui-tokens.mjs`                     | `npm run lint`, CI (UI apps)    | whole file                       |
+| `scripts/ui-token-baseline.txt`                   | the check above                 | **the repo's own**, written once |
 
 The rules themselves are in [`rules/`](rules): [stack](rules/stack.md) (only in repos with `"app": true`), [code](rules/code.md) (casing, full-word names, boolean prefixes, role suffixes, the five layers, PHPDoc / JSDoc, contracts and refactoring guardrails), [backend](rules/backend.md) (requests, permissions and policies, API, security, logging, realtime, AI, health; only in PHP repos), [testing](rules/testing.md), [git](rules/git.md) (English, Conventional Commits, branches, squash), [releases](rules/release.md) (nothing ships without the maintainer), [automated checks](rules/checks.md) (knip, `noUnused*`, strict models, the Larastan and i18n ratchets), [UI](rules/ui.md) (the app-ui rules, only in repos with a `uiPreset`) and [self-hosted distribution](rules/distribution.md) (only in repos with `"app": true`).
+
+## Core and details
+
+`AGENTS.md` is loaded on every turn, so the block carries only what every task needs. A rule page splits at a `<!-- qiick-standards:detail when: … -->` line: above it, the **core** goes into the block; below it, the **details** stay in `.qiick/standards/<page>.md` (the whole page), and the block ends the page with a pointer: "**Details:** `.qiick/standards/code.md`. Read it before creating or renaming a file, class, …". Write the `when:` text as the tasks that need the details, one per distinct case; put a rule in the core when every task in that area needs it, and in the details when only some do. A page without the marker is in the block whole.
 
 ## What CI enforces
 
@@ -31,21 +37,22 @@ The reusable [`drift-check.yml`](../.github/workflows/drift-check.yml) with `sta
 
 The repo's own CI runs the rest, each one a step in its workflow:
 
-| Check                                                                                                | Command                                                                                                                                                                                                                            |
-| ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Architecture test (suffixes, readonly DTOs, `strict_types`, no `dd` / `env()` / `DB` in controllers) | Pest (`tests/Arch`)                                                                                                                                                                                                                |
-| Dead code: unused files, exports, dependencies                                                       | `npx knip`                                                                                                                                                                                                                         |
-| Unused locals and parameters                                                                         | `tsc --noEmit` with `noUnusedLocals` / `noUnusedParameters`                                                                                                                                                                        |
-| Lazy loading, discarded or missing attributes                                                        | the test suite, with `Model::shouldBeStrict(! app()->isProduction())` in `AppServiceProvider`                                                                                                                                      |
-| Larastan baseline only shrinks                                                                       | `node scripts/qiick-ratchet.mjs phpstan`                                                                                                                                                                                           |
-| Restricted imports, `navigator.clipboard`, boolean prefixes, single-letter names (ESLint repos)      | `QIICK_RATCHET=1 eslint … --format json` piped into `node scripts/qiick-ratchet.mjs lint --rule no-restricted-imports,no-restricted-properties,@typescript-eslint/naming-convention,id-length --baseline qiick-lint-baseline.json` |
-| No new hard-coded JSX text                                                                           | lint JSON report piped into `node scripts/qiick-ratchet.mjs lint --rule i18next/no-literal-string --baseline i18n-literal-baseline.json`                                                                                           |
-| Conventional Commit PR titles                                                                        | [`pr-title.yml`](../.github/workflows/pr-title.yml) (reusable)                                                                                                                                                                     |
-| Theme tokens, theme contrast, axe smoke (UI apps)                                                    | [`ui-quality.yml`](../.github/workflows/ui-quality.yml) (reusable; `scripts/check-ui-tokens.mjs` is synced)                                                                                                                        |
-| Released migrations never change                                                                     | [`migrations-frozen.yml`](../.github/workflows/migrations-frozen.yml) (reusable)                                                                                                                                                   |
-| Self-hosted install and upgrade (apps)                                                               | [`app-distribution-smoke.yml`](../.github/workflows/app-distribution-smoke.yml)                                                                                                                                                    |
+| Check                                                                                                | Command                                                                                                                                                                                                                             |
+| ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Architecture test (suffixes, readonly DTOs, `strict_types`, no `dd` / `env()` / `DB` in controllers) | Pest (`tests/Arch`)                                                                                                                                                                                                                 |
+| Dead code: unused files, exports, dependencies                                                       | `npx knip`                                                                                                                                                                                                                          |
+| Unused locals and parameters                                                                         | `tsc --noEmit` with `noUnusedLocals` / `noUnusedParameters`                                                                                                                                                                         |
+| Lazy loading, discarded or missing attributes                                                        | the test suite, with `Model::shouldBeStrict(! app()->isProduction())` in `AppServiceProvider`                                                                                                                                       |
+| Larastan baseline only shrinks                                                                       | `node scripts/qiick-ratchet.mjs phpstan`                                                                                                                                                                                            |
+| Restricted imports, `navigator.clipboard`, single-letter names (Vite+ apps)                          | `oxlint -c .oxlintrc.standards.json -f json resources/js` piped into `node scripts/qiick-ratchet.mjs lint --rule eslint/no-restricted-imports,eslint/no-restricted-properties,eslint/id-length --baseline qiick-lint-baseline.json` |
+| The same plus boolean prefixes (repos still on ESLint)                                               | `QIICK_RATCHET=1 eslint … --format json` piped into `node scripts/qiick-ratchet.mjs lint --rule no-restricted-imports,no-restricted-properties,@typescript-eslint/naming-convention,id-length --baseline qiick-lint-baseline.json`  |
+| No new hard-coded JSX text                                                                           | lint JSON report piped into `node scripts/qiick-ratchet.mjs lint --rule i18next/no-literal-string --baseline i18n-literal-baseline.json`                                                                                            |
+| Conventional Commit PR titles                                                                        | [`pr-title.yml`](../.github/workflows/pr-title.yml) (reusable)                                                                                                                                                                      |
+| Theme tokens, theme contrast, axe smoke (UI apps)                                                    | [`ui-quality.yml`](../.github/workflows/ui-quality.yml) (reusable; `scripts/check-ui-tokens.mjs` is synced)                                                                                                                         |
+| Released migrations never change                                                                     | [`migrations-frozen.yml`](../.github/workflows/migrations-frozen.yml) (reusable)                                                                                                                                                    |
+| Self-hosted install and upgrade (apps)                                                               | [`app-distribution-smoke.yml`](../.github/workflows/app-distribution-smoke.yml)                                                                                                                                                     |
 
-`i18next/no-literal-string` runs with `{ "mode": "jsx-text-only" }`: JSX text, never attributes. ESLint repos load `eslint-plugin-i18next` with the rule off and turn it on from the ratchet command (`--rule`); Vite+ / oxlint repos load it through `jsPlugins`.
+`i18next/no-literal-string` runs with `{ "mode": "jsx-text-only" }`: JSX text, never attributes. Vite+ apps load `eslint-plugin-i18next` as an Oxlint JS plugin (`.oxlintrc.i18n.json`); repos still on ESLint load it with the rule off and turn it on from the ratchet command (`--rule`).
 
 What CI cannot check (full-word names, docblocks, thin controllers beyond the `DB` rule, the release rules) is in the agent files, so every agent reads it before its first change.
 
@@ -70,12 +77,12 @@ A new product: [`docs/new-product.md`](../docs/new-product.md) and `scripts/new-
         "uiPreset": "Blue",
         "php": true,
         "frontendRoots": ["resources/js"],
-        "eslint": false,
+        "oxlint": true,
         "app": true
     }
     ```
 
-    `ref` is the app-ui tag (or branch) CI checks against; omit `uiPreset` in repos without a UI; `eslint: true` writes `qiick-standards.eslint.js` for repos that lint with ESLint (add `qiickStandards(['resources/js/**/*.{ts,tsx}'])` and `...qiickRatchetedRules(['resources/js/**/*.{ts,tsx}'])` to `eslint.config.js`, then write the first `qiick-lint-baseline.json` with the ratchet's `--update`); `app: true` adds the self-hosted distribution rules (apps, not Composer packages).
+    `ref` is the app-ui tag (or branch) CI checks against; omit `uiPreset` in repos without a UI; `oxlint: true` writes the Oxlint configs for Vite+ apps (the default; add the `lint:standards` and `lint:i18n` scripts as excubia-app has them); `eslint: true` writes `qiick-standards.eslint.js` for repos still on ESLint until they move to Vite+ (add `qiickStandards(['resources/js/**/*.{ts,tsx}'])` and `...qiickRatchetedRules(['resources/js/**/*.{ts,tsx}'])` to `eslint.config.js`, then write the first `qiick-lint-baseline.json` with the ratchet's `--update`); `app: true` adds the self-hosted distribution rules (apps, not Composer packages).
 
 2. Sync from an app-ui checkout at that ref:
 
