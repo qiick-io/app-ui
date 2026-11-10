@@ -8,6 +8,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Changed
+
+- `reasoning`: opens while the model thinks and closes when it finishes, as shadcn's AI Elements Reasoning does; once the person opens or closes it, their choice wins (#85). It used to stay collapsed. Upgrade: re-pull `reasoning`.
+
 ### Fixed
 
 - `confirmation`: Approve takes the brand (default) variant for a call that writes and the destructive variant only with the new `isDestructive` prop, so approving a create no longer looks like a delete (#83). Upgrade: re-pull `confirmation` and pass `isDestructive` for calls that delete.
