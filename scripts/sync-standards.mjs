@@ -13,7 +13,8 @@
  *         "uiPreset": "Teal",              // brand preset; omit in repos without a UI
  *         "php": true,                     // Pest architecture test
  *         "frontendRoots": ["resources/js"], // kebab-case file name check
- *         "eslint": true,                  // shared ESLint config file
+ *         "oxlint": true,                  // Vite+ apps: the shared Oxlint configs
+ *         "eslint": true,                  // repos still on ESLint: the shared ESLint config
  *         "app": true                      // self-hosted app: stack and distribution rules
  *     }
  *
@@ -156,7 +157,7 @@ const cursorRule = (description, frontmatter, body) =>
 
 /**
  * Everything the pack writes into a repo with this config.
- * @param {{ uiPreset?: string, php?: boolean, eslint?: boolean, app?: boolean, frontendRoots?: string[] }} config
+ * @param {{ uiPreset?: string, php?: boolean, eslint?: boolean, oxlint?: boolean, app?: boolean, frontendRoots?: string[] }} config
  * @returns {{ path: string, kind: 'file' | 'block' | 'template', content: string }[]}
  */
 export function renderOutputs(config) {
@@ -305,6 +306,23 @@ export function renderOutputs(config) {
             kind: 'file',
             content: readSource('eslint/qiick-standards.eslint.js'),
         });
+    }
+
+    // Vite+ apps: the ratcheted rules and the i18n ratchet as Oxlint configs
+    // (excubia-app's, the reference since 2026-11-09).
+    if (config.oxlint) {
+        outputs.push(
+            {
+                path: '.oxlintrc.standards.json',
+                kind: 'file',
+                content: readSource('oxlint/oxlintrc.standards.json'),
+            },
+            {
+                path: '.oxlintrc.i18n.json',
+                kind: 'file',
+                content: readSource('oxlint/oxlintrc.i18n.json'),
+            },
+        );
     }
 
     return outputs;

@@ -228,3 +228,26 @@ test('the agent files carry each page core with a pointer, the details live in .
     );
     assert.deepEqual(syncStandards(repo, { isCheck: true }), []);
 });
+
+test('Vite+ apps get the shared Oxlint configs, ESLint repos the ESLint one', () => {
+    const viteApp = makeRepo({ php: true, oxlint: true });
+    const eslintRepo = makeRepo({ php: true, eslint: true });
+
+    syncStandards(viteApp, { isCheck: false });
+    syncStandards(eslintRepo, { isCheck: false });
+
+    assert.match(
+        read(viteApp, '.oxlintrc.standards.json'),
+        /"no-restricted-imports"/,
+    );
+    assert.match(read(viteApp, '.oxlintrc.i18n.json'), /eslint-plugin-i18next/);
+    assert.equal(
+        fs.existsSync(path.join(viteApp, 'qiick-standards.eslint.js')),
+        false,
+    );
+    assert.equal(
+        fs.existsSync(path.join(eslintRepo, '.oxlintrc.standards.json')),
+        false,
+    );
+    assert.deepEqual(syncStandards(viteApp, { isCheck: true }), []);
+});

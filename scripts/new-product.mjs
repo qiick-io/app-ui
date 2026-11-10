@@ -149,7 +149,7 @@ export function scaffoldProduct({
                 uiPreset: preset,
                 php: true,
                 frontendRoots: ['resources/js'],
-                eslint: true,
+                oxlint: true,
                 app: true,
             },
             null,
