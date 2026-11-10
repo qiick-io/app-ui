@@ -36,7 +36,7 @@ Chat (`/chat`) and the Assistant (`/ai`) share **one structure**.
     - Text through the app's Markdown renderer (`renderText`; externa-core uses Streamdown, loaded lazily).
 - Under the parts: `AiAnswerSources` ("Used N sources", opening to the links) and, in the message footer, `AiAnswerUsage` (AI Elements `Context`: tokens against the model's context window, which the app knows per provider).
 - `Suggestion` chips after the last answer: outline `sm` buttons in one sideways-scrolling row, each `shrink-0`.
-- Calls waiting for approval render outside the parts (`hidePendingApprovals`) as a `Confirmation` (`Item` with the question from `describeToolCall` and Reject / Approve); once answered they become `Tool` lines.
+- Calls waiting for approval render outside the parts (`hidePendingApprovals`) as a `Confirmation` (`Item` with the question from `describeToolCall` and Reject / Approve; pass `isDestructive` when the call deletes, so Approve turns red only then); once answered they become `Tool` lines.
 - Not used yet: `Plan`, `Queue`, `Task` and `Subagent` need the agent to stream a plan, a todo list or sub-agent runs, which no qiick app does today. When one does, build them on `trace` the same way.
 
 ## Human chat messages
