@@ -24,4 +24,4 @@ One page per pattern. Each names the registry item (when it exists) and the exac
 
 Backend conventions (with the summary in [`standards/rules/backend.md`](../standards/rules/backend.md)): [roles and permissions](roles-and-permissions.md), [API](api.md), [realtime](realtime.md), [security headers](security-headers.md), [logging and activity log](logging-and-audit.md), [AI backend](ai-backend.md).
 
-Rules for all of them: [`../AGENTS.md`](../AGENTS.md). Copy the code and the positions; if a screen needs something not listed here and externa-core has no equivalent, ask Luca.
+Rules for all of them: [`../AGENTS.md`](../AGENTS.md). Copy the code and the positions; if a screen needs something not listed here and externa-core has no equivalent, ask the maintainer.
