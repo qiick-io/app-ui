@@ -8,6 +8,8 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-10
+
 ### Upgrade notes
 
 - **Vite+ apps (excubia-app):** set `"oxlint": true` in `qiick-standards.json`; the sync then manages `.oxlintrc.standards.json` and `.oxlintrc.i18n.json` (identical to excubia-app's, so nothing changes there). **externa-core** keeps `"eslint": true` until it moves to Vite+ in 1.5.0 (#609).
@@ -19,6 +21,8 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 - Standards aligned with the decisions of 2026-11-09 / 10 (#61): **Vite+ is the frontend toolchain** and excubia-app the reference that sets the lint rules (`stack.md`, core and details; `checks.md`; the new-product guide and `scripts/new-product.mjs` keep the kit's Vite+ and write `oxlint: true`); the pack ships excubia-app's Oxlint configs (`"oxlint": true`). `stack.md` gains the local-environment rules (one database per app, re-seed instead of copies, clean up worktrees / Herd sites / databases after a task). `git.md`: issue and PR metadata at creation, branch protection and update-branch, merge commits only on `main`, merge-back through a PR, nothing personal in tracked files. `release.md`: the release PR and the merge-back take merge commits.
 - Standards: progressive disclosure. Each rule page keeps its always-needed **core** in the agent files and moves the rest (casing and role-suffix table, stack versions and toolchain, backend API / security / logging / realtime / AI / operations, the automated checks list, release lifecycle, distribution steps, the UI pattern table) to `.qiick/standards/<page>.md`, with a pointer that says when to read it. Idea from mattpocock/skills `writing-for-agents` (context load, disclosure by branch).
 - `rules/code.md`: new rule "Current sources, not memory": read the current official page before writing framework code or copying an upstream registry component, name the source page in the copied file, and record upstream items in the registry README (the AI Elements copies had silently gone stale). Upgrade: re-sync.
+- Docs and comments say "the maintainer" (or "product decision") instead of a name: `RELEASING.md`, `docs/README.md`, the registry README and the `reasoning` item (#76). Upgrade: re-pull `reasoning` (comment only).
+- app-ui's own CI reruns on an edited pull request, so a fixed title turns `pr-title` green without reopening the PR (#79).
 
 ## [0.2.1] - 2026-11-09
 
@@ -119,7 +123,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/qiick-io/app-ui/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/qiick-io/app-ui/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/qiick-io/app-ui/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/qiick-io/app-ui/releases/tag/v0.1.0
