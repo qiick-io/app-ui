@@ -22,62 +22,14 @@ Stop at the first rung that holds: YAGNI, standard library, platform, installed 
 
 Before writing framework or library code, or copying a component from an upstream registry (shadcn, AI Elements), read the current official page for the installed version. Training data and old copies go stale: until 2026-11-09 the registry's AI Elements were a superseded release, and nobody had compared them with the current pages. A file copied from upstream names its source page in its header comment, and the registry README records the source and date of every upstream item.
 
-### Casing
-
-PHP / Laravel (Pint `laravel` preset, PSR-4, PER-CS):
-
-- Classes, interfaces, traits, enums and their `.php` files: `PascalCase` (`StoreCollectionItemRequest.php`, 1:1 with PSR-4).
-- Methods, functions, properties, variables: `camelCase` (`$authenticatedUser`, `resolveEffectivePermissions()`).
-- Enum cases: `PascalCase` (`CollectionStatusEnum::PendingReview`).
-- Database tables and columns, `config/*.php` keys: `snake_case` (`created_by_user_id`).
-- Artisan commands and URL slugs: `kebab-case` (`externa:sync-permissions`, `/collection-items`).
-
-React / TypeScript / Inertia:
-
-- Components, `type`, `interface` and `enum` names: `PascalCase` (`CollectionItemDrawer`, `CollectionItemProps`).
-- Functions, hooks, variables, props: `camelCase` (`useAccessibilityPreferences`, `handleSubmission`).
-- **Files and directories on disk: `kebab-case`** (`collection-item-form.tsx`, `use-accessibility-preferences.tsx`), so macOS (case-insensitive) and Linux / Docker (case-sensitive) never disagree. No barrel `index.ts` files that only re-export. CI checks the file names.
-
 ### Names: full words
 
 - No single letters (`x`, `e`, `q`) and no abbreviations (`cfg`, `res`, `req`, `val`, `arr`, `tmp`, `idx`, `usr`, `ctx`, `def`, `cb`). Full words even at 30+ characters (`$collectionFieldDefinition`, `handleFormSubmissionError`).
 - `i`, `j`, `k` only as indices of tight numeric loops; prefer `foreach ($collectionItems as $collectionItem)`, `for...of`, `.map()`.
 - **Booleans** (variables, columns, custom props, boolean-returning methods) start with `is`, `has`, `can` or `should` (`$isEmailVerified`, `canManageCollection()`, `shouldBroadcastImmediately`). Exempt: names fixed by a framework or library contract (see [Contracts](#contracts-never-break-them)).
 - **Collections** use specific plurals (`$publishedArticles`) or explicit maps (`$usersIndexedById`), never `$data`, `$list`, `$arr`.
-
-### Role suffixes
-
-Only Eloquent models use bare domain nouns (`User`, `CollectionItem`). Every other class of our own ends with its role, so neither a human nor an agent mistakes a model for a request, enum, event or job:
-
-| Directory                         | Suffix         | Notes                                                   |
-| --------------------------------- | -------------- | ------------------------------------------------------- |
-| `app/Models/`                     | none           | Relationships, casts, accessors, scopes, constants only |
-| `app/Http/Controllers/`           | `Controller`   |                                                         |
-| `app/Http/Requests/`              | `Request`      | Validation and authorization                            |
-| `app/Http/Resources/`             | `Resource`     |                                                         |
-| `app/Http/Responses/`             | `Response`     |                                                         |
-| `app/Http/Middleware/`            | `Middleware`   |                                                         |
-| `app/Actions/`                    | `Action`       | One write / use case, one public `execute(...)`         |
-| `app/Services/`                   | `Service`      | Orchestration, complex reads, external integrations     |
-| `app/Data/`                       | `Data`         | `readonly class` DTOs and value objects                 |
-| `app/Enums/`                      | `Enum`         | Backed values never change without a data migration     |
-| `app/Policies/`                   | `Policy`       |                                                         |
-| `app/Jobs/`                       | `Job`          |                                                         |
-| `app/Console/Commands/`           | `Command`      |                                                         |
-| `app/Events/`                     | `Event`        | Keep `broadcastAs()` wire names stable                  |
-| `app/Listeners/`                  | `Listener`     |                                                         |
-| `app/Notifications/`              | `Notification` |                                                         |
-| `app/Observers/`                  | `Observer`     |                                                         |
-| `app/Rules/`                      | `Rule`         |                                                         |
-| `app/Exceptions/`                 | `Exception`    |                                                         |
-| `app/Builders/`                   | `Builder`      | Dedicated query builders when scopes grow large         |
-| `app/Contracts/`                  | `Contract`     | Interfaces                                              |
-| traits (one place: `app/Traits/`) | `Trait`        |                                                         |
-| `tests/`                          | `Test`         | `*Test.php`, `*.test.ts(x)`                             |
-
-Do not invent other role nouns (`...Normalizer`, `...Publisher`, `...Recorder`, `...Writer`) or split domain classes arbitrarily between `app/Services/` and `app/Support/`: a write is an `Action`, an orchestrator or read pipeline is a `Service`. Packages apply the same table to their own namespace (`Qiick\Excubia\...`); a package may add roles of its own (`Parser`, `Renderer`, `Check`), listed in its architecture test config.
-
-**Never rename framework or package scaffolding.** Files native to Laravel or published by a package keep their upstream names: Fortify actions (`app/Actions/Fortify/*`), starter-kit files (`HandleInertiaRequests`, `HandleAppearance`, `app/Concerns/*`), default service providers, vendor-published files (Spatie, Horizon, Telescope, Pennant, Passport), and frontend primitives (`shadcn/ui` files in `components/ui/`). They are listed in the repo's `tests/Arch/naming-architecture.php`, never renamed.
+- Every class of our own ends with its role suffix (`*Controller`, `*Action`, `*Service`, `*Data`, `*Enum`, `*Job`, …); only Eloquent models use bare nouns. The full table is in the details.
+- **Never rename framework or package scaffolding:** files native to Laravel or published by a package keep their upstream names: Fortify actions (`app/Actions/Fortify/*`), starter-kit files (`HandleInertiaRequests`, `HandleAppearance`, `app/Concerns/*`), default service providers, vendor-published files (Spatie, Horizon, Telescope, Pennant, Passport), and frontend primitives (`shadcn/ui` files in `components/ui/`). They are listed in the repo's `tests/Arch/naming-architecture.php`, never renamed.
 
 ### Architecture: five layers
 
@@ -116,6 +68,8 @@ This replaces the "comment only exceptionally complex logic" default of Laravel 
 4. **Wire formats stay stable** when a PHP class is renamed: REST JSON keys, GraphQL type and field names, webhook payloads, `broadcastAs()` names, Inertia page paths, named routes, morph maps (`Relation::enforceMorphMap`), queued job class names. Enum backing values stay identical.
 5. **Convention-driven directories** (`app/GraphQL/`, `app/Ai/`, MCP tools) keep the names their resolver expects unless the resolver mapping changes in the same PR.
 6. **Mechanical renames and behaviour changes never share a PR.** Land the `git mv` + import updates first with green tests, then extract or change logic in a separate PR.
+
+**Details:** `.qiick/standards/code.md`. Read it before creating or renaming a file, class, enum, job, command or other PHP / TypeScript unit.
 
 ## Testing
 
@@ -157,24 +111,13 @@ Agents must not, unless the maintainer explicitly says so in this conversation:
 
 How a release goes, for reference: release PR → the maintainer merges it → tag `vX.Y.Z` on the merge commit → GitHub Release titled exactly with the tag, listing the included PRs → `main` is merged back into `develop`.
 
-### Lifecycle (what the release PR prepares)
-
-- **Versions:** Semantic Versioning. Pre-releases are `vX.Y.Z-beta.N`, then `vX.Y.Z-rc.N`, then `vX.Y.Z`; Composer packages declare them with `@beta` / `@RC` stability. Before `1.0.0` a minor may break; the notes say so.
-- **`CHANGELOG.md`:** [Keep a Changelog](https://keepachangelog.com/en/1.1.0/): `[Unreleased]` collects `Added` / `Changed` / `Deprecated` / `Removed` / `Fixed` / `Security` as PRs land; the release PR moves it to `[X.Y.Z] - YYYY-MM-DD` with an **Upgrade notes** subsection (commands to run, config or env changes, breaking changes, data migrations that take long) and the compare link.
-- **Versions in files:** `composer.json` / `package.json` `version`, the app's version constant or config, and the docs site version, bumped in the release PR only.
-- **Required checks** on `develop` and `main` (the maintainer sets them; agents ask): the repo's own test, lint and type jobs, `pr-title / commitlint`, `app-ui-drift / standards`, and in apps `app-ui-drift / drift`, `ui-quality / ui-quality`, `migrations-frozen / migrations-frozen`, `distribution-smoke / smoke`.
+**Details:** `.qiick/standards/release.md`. Read it before preparing a release PR or the CHANGELOG, bumping a version, or asking for required checks.
 
 ## Automated checks
 
-Machines enforce these in CI; keep them green, and never silence one to get green.
+Machines enforce these in CI; keep them green, and never silence one to get green. Fix the new finding; a baseline only shrinks.
 
-- **Dead code.** `knip` (unused files, exports, dependencies) runs in CI with the repo's committed `knip.json`. TypeScript has `noUnusedLocals` and `noUnusedParameters` on. Delete what is unused; prefix a parameter a signature forces on you with `_`. A knip `ignore*` entry needs a comment-worthy reason in the PR.
-- **Strict models.** Each app's `AppServiceProvider::boot()` calls `Model::shouldBeStrict(! app()->isProduction())`: lazy loading, silently discarded attributes and missing attributes throw outside production. Fix the query (eager load, `$fillable`, select the column), never turn it off.
-- **Larastan ratchet.** Each repo runs Larastan one level above where it started. Its `phpstan-baseline.neon` may only shrink: `scripts/qiick-ratchet.mjs phpstan` fails CI when the baseline holds more errors than on the base branch (only the PR that raises `level:` may baseline that level's errors). Never add to the baseline; fix the new error.
-- **Theme tokens only.** In apps with the qiick UI, `scripts/check-ui-tokens.mjs` (synced by the pack, part of `npm run lint`) fails on arbitrary font sizes (`text-[11px]`) and on raw palette / `#hex` classes beyond `scripts/ui-token-baseline.txt`; the baseline only shrinks. The reusable `ui-quality.yml` runs it with the WCAG 2.2 AA contrast check of the installed theme and the app's axe smoke browser test (light, dark, high contrast).
-- **Ratcheted code rules (ESLint repos).** `qiickRatchetedRules()` from `qiick-standards.eslint.js` turns prose rules into checks: only `lucide-react` icons and shadcn primitives (`no-restricted-imports` on other icon and component libraries), toasts only through `@/lib/toast` (not `sonner`), the clipboard only through `@/lib/clipboard` (`no-restricted-properties` on `navigator.clipboard`), booleans prefixed `is` / `has` / `can` / `should` (`@typescript-eslint/naming-convention`, type-aware; destructured contract names exempt), no single-letter names (`id-length`; `i`, `j`, `k`, `t`, `_` allowed). They run only in `npm run lint:standards` (`QIICK_RATCHET=1`), ratcheted per file and rule against `qiick-lint-baseline.json`: existing debt is listed, new findings fail, paid debt must be removed (`--update`).
-- **Thin controllers.** The architecture test fails on a controller with more than five public methods of its own; controllers that already have more are listed with their count in `tests/Arch/naming-architecture.php` (`controllerPublicMethods`), and the test fails when a count grows or when it shrinks without the entry being lowered.
-- **No hard-coded UI strings.** `i18next/no-literal-string` (JSX text only, not attributes such as `className` or `data-*`) flags visible text that bypasses translations: use `t('…')` with keys in every locale file. Existing debt is in `i18n-literal-baseline.json`; `scripts/qiick-ratchet.mjs lint` fails when a file's count grows, and when a count shrinks without the baseline being lowered (`--update`).
+**Details:** `.qiick/standards/checks.md`. Read it before fixing a failing check, or touching a baseline, `knip.json`, a ratchet or the strict-model setup.
 
 ## UI (qiick app UI)
 
@@ -182,28 +125,10 @@ No agent invents a layout, a component, a colour or a component position in a qi
 
 ### Before any UI change
 
-1. Find the pattern below and read its page: each one names the registry item and the exact externa-core `develop` files to copy.
+1. Find the pattern in the table in the details and read its page: each one names the registry item and the exact externa-core `develop` files to copy.
 2. Install it from the `@qiick` registry with `npx shadcn add @qiick/<name>`; do not rewrite it. The registry list: https://github.com/qiick-io/app-ui/blob/develop/registry/README.md
 3. If the registry does not have it yet, copy it from **externa-core `develop`**, file by file.
 4. If externa-core has no equivalent, **stop and ask the maintainer**. Do not design one.
-
-| Pattern                                                          | Page                                                                        |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| App shell: two-tone sidebar, header, user menu, presence         | https://github.com/qiick-io/app-ui/blob/develop/docs/shell.md               |
-| Page: `PageLayout`, header actions, view tabs, segmented filters | https://github.com/qiick-io/app-ui/blob/develop/docs/page.md                |
-| List page: toolbar, selection bar, overflow, table, pagination   | https://github.com/qiick-io/app-ui/blob/develop/docs/list-page.md           |
-| Settings page: secondary nav, form, Save bar                     | https://github.com/qiick-io/app-ui/blob/develop/docs/settings.md            |
-| Forms: page vs drawer vs dialog, `Field`, validation errors      | https://github.com/qiick-io/app-ui/blob/develop/docs/forms.md               |
-| Detail page: record header, status, fields                       | https://github.com/qiick-io/app-ui/blob/develop/docs/detail-page.md         |
-| Auth pages and SSO                                               | https://github.com/qiick-io/app-ui/blob/develop/docs/auth.md                |
-| Error pages 403 / 404 / 500 / 503                                | https://github.com/qiick-io/app-ui/blob/develop/docs/error-pages.md         |
-| Empty states                                                     | https://github.com/qiick-io/app-ui/blob/develop/docs/empty-states.md        |
-| Destructive actions                                              | https://github.com/qiick-io/app-ui/blob/develop/docs/destructive-actions.md |
-| Dashboard cards                                                  | https://github.com/qiick-io/app-ui/blob/develop/docs/dashboard.md           |
-| Notifications and messages (toasts)                              | https://github.com/qiick-io/app-ui/blob/develop/docs/notifications.md       |
-| Chat and Assistant                                               | https://github.com/qiick-io/app-ui/blob/develop/docs/chat-and-assistant.md  |
-| Files grid                                                       | https://github.com/qiick-io/app-ui/blob/develop/docs/files-grid.md          |
-| Theme: tokens, presets, control scale                            | https://github.com/qiick-io/app-ui/blob/develop/docs/theme.md               |
 
 ### Hard rules
 
@@ -221,6 +146,8 @@ No agent invents a layout, a component, a colour or a component position in a qi
 ### Theme
 
 Tokens come from the `@qiick/theme` registry item: one shared base (surfaces, the two-tone shell, text, borders) plus brand-only presets (Teal = Externa, Blue = Excubia). An app picks its preset and never edits surface tokens. This repo's preset: **Teal**.
+
+**Details:** `.qiick/standards/ui.md`. Read it before making any UI change (it has the table of pattern pages).
 
 <!-- qiick-standards:end -->
 

@@ -9,6 +9,7 @@ One public source for the rules every qiick repo follows (Externa, Excubia, Sign
 | `AGENTS.md`                                 | Codex, Cursor, Copilot agent, … | the `qiick-standards` block only |
 | `CLAUDE.md` (`@AGENTS.md` import)           | Claude Code                     | the `qiick-standards` block only |
 | `.github/copilot-instructions.md`           | GitHub Copilot                  | the `qiick-standards` block only |
+| `.qiick/standards/<page>.md`                | agents, when a pointer says so  | whole file                       |
 | `.cursor/rules/code-craftsmanship.mdc`      | Cursor, always                  | whole file                       |
 | `.cursor/rules/no-auto-release.mdc`         | Cursor, always                  | whole file                       |
 | `.cursor/rules/testing.mdc`                 | Cursor, on test files           | whole file                       |
@@ -21,6 +22,10 @@ One public source for the rules every qiick repo follows (Externa, Excubia, Sign
 | `scripts/ui-token-baseline.txt`             | the check above                 | **the repo's own**, written once |
 
 The rules themselves are in [`rules/`](rules): [stack](rules/stack.md) (only in repos with `"app": true`), [code](rules/code.md) (casing, full-word names, boolean prefixes, role suffixes, the five layers, PHPDoc / JSDoc, contracts and refactoring guardrails), [backend](rules/backend.md) (requests, permissions and policies, API, security, logging, realtime, AI, health; only in PHP repos), [testing](rules/testing.md), [git](rules/git.md) (English, Conventional Commits, branches, squash), [releases](rules/release.md) (nothing ships without the maintainer), [automated checks](rules/checks.md) (knip, `noUnused*`, strict models, the Larastan and i18n ratchets), [UI](rules/ui.md) (the app-ui rules, only in repos with a `uiPreset`) and [self-hosted distribution](rules/distribution.md) (only in repos with `"app": true`).
+
+## Core and details
+
+`AGENTS.md` is loaded on every turn, so the block carries only what every task needs. A rule page splits at a `<!-- qiick-standards:detail when: … -->` line: above it, the **core** goes into the block; below it, the **details** stay in `.qiick/standards/<page>.md` (the whole page), and the block ends the page with a pointer: "**Details:** `.qiick/standards/code.md`. Read it before creating or renaming a file, class, …". Write the `when:` text as the tasks that need the details, one per distinct case; put a rule in the core when every task in that area needs it, and in the details when only some do. A page without the marker is in the block whole.
 
 ## What CI enforces
 
