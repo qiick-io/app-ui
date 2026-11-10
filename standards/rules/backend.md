@@ -26,6 +26,8 @@ How the five layers look in a qiick app. Each topic has a page with the externa-
 - Route groups are gated with the `permission:<value>` middleware; record-level decisions (ownership, state) live in `app/Policies/*Policy.php`, called through `Gate::authorize()` or `authorize()`. `Gate::before` grants `super-admin` everything.
 - The UI receives `auth.permissions` as a shared Inertia prop and hides what the user cannot do (`useCan()`); the server check is the one that counts.
 
+<!-- qiick-standards:detail when: adding or changing an API, security headers or rate limits, activity logging, broadcasting, AI tools, health endpoints or Artisan commands -->
+
 ## API
 
 Only when the spec asks for one: REST under `/api/v1`, `*Resource` responses, a hand-written OpenAPI file served at `/api/v1/openapi.json`, hashed API keys with scopes, named rate limiters. Details: https://github.com/qiick-io/app-ui/blob/develop/docs/api.md
