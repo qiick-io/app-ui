@@ -10,10 +10,13 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Upgrade notes
 
+- **Vite+ apps (excubia-app):** set `"oxlint": true` in `qiick-standards.json`; the sync then manages `.oxlintrc.standards.json` and `.oxlintrc.i18n.json` (identical to excubia-app's, so nothing changes there). **externa-core** keeps `"eslint": true` until it moves to Vite+ in 1.5.0 (#609).
+
 - **Every repo:** re-sync. The `AGENTS.md` / Copilot block shrinks (37.5 KB to 20.1 KB in an app with PHP, UI and distribution rules) and the sync writes the full rule pages to `.qiick/standards/`; commit that directory. If the repo's Prettier formats Markdown, add `.qiick/` to `.prettierignore` so a format run never changes the managed files.
 
 ### Changed
 
+- Standards aligned with the decisions of 2026-11-09 / 10 (#61): **Vite+ is the frontend toolchain** and excubia-app the reference that sets the lint rules (`stack.md`, core and details; `checks.md`; the new-product guide and `scripts/new-product.mjs` keep the kit's Vite+ and write `oxlint: true`); the pack ships excubia-app's Oxlint configs (`"oxlint": true`). `stack.md` gains the local-environment rules (one database per app, re-seed instead of copies, clean up worktrees / Herd sites / databases after a task). `git.md`: issue and PR metadata at creation, branch protection and update-branch, merge commits only on `main`, merge-back through a PR, nothing personal in tracked files. `release.md`: the release PR and the merge-back take merge commits.
 - Standards: progressive disclosure. Each rule page keeps its always-needed **core** in the agent files and moves the rest (casing and role-suffix table, stack versions and toolchain, backend API / security / logging / realtime / AI / operations, the automated checks list, release lifecycle, distribution steps, the UI pattern table) to `.qiick/standards/<page>.md`, with a pointer that says when to read it. Idea from mattpocock/skills `writing-for-agents` (context load, disclosure by branch).
 - `rules/code.md`: new rule "Current sources, not memory": read the current official page before writing framework code or copying an upstream registry component, name the source page in the copied file, and record upstream items in the registry README (the AI Elements copies had silently gone stale). Upgrade: re-sync.
 
