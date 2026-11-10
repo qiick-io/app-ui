@@ -1,6 +1,8 @@
 # Self-hosted app distribution
 
-For apps a customer installs (not for Composer packages, which ship with plain `composer require` / `update`). externa-core is the reference implementation.
+For apps a customer installs (not for Composer packages, which ship with plain `composer require` / `update`). externa-core is the reference implementation. In short: install with `composer create-project qiick/<app>` and `php artisan <app>:install`, update with `php artisan <app>:upgrade` (never `create-project`).
+
+<!-- qiick-standards:detail when: changing install, upgrade, the Docker image, the release workflow, the docs pages or Packagist metadata -->
 
 1. **Install from Packagist:** `composer create-project qiick/<app>`. `create-project` only copies `.env` and runs `key:generate`: no migrate, seed or database assumption.
 2. **First run:** `php artisan <app>:install`, interactive (database, name / URL, stack profile, optional seed, frontend build), with a non-interactive mode for CI (`--no-interaction --force`).

@@ -1,6 +1,8 @@
 # Automated checks
 
-Machines enforce these in CI; keep them green, and never silence one to get green.
+Machines enforce these in CI; keep them green, and never silence one to get green. Fix the new finding; a baseline only shrinks.
+
+<!-- qiick-standards:detail when: fixing a failing check, or touching a baseline, `knip.json`, a ratchet or the strict-model setup -->
 
 - **Dead code.** `knip` (unused files, exports, dependencies) runs in CI with the repo's committed `knip.json`. TypeScript has `noUnusedLocals` and `noUnusedParameters` on. Delete what is unused; prefix a parameter a signature forces on you with `_`. A knip `ignore*` entry needs a comment-worthy reason in the PR.
 - **Strict models.** Each app's `AppServiceProvider::boot()` calls `Model::shouldBeStrict(! app()->isProduction())`: lazy loading, silently discarded attributes and missing attributes throw outside production. Fix the query (eager load, `$fillable`, select the column), never turn it off.

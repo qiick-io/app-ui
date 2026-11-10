@@ -16,6 +16,8 @@ Agents must not, unless the maintainer explicitly says so in this conversation:
 
 How a release goes, for reference: release PR → the maintainer merges it → tag `vX.Y.Z` on the merge commit → GitHub Release titled exactly with the tag, listing the included PRs → `main` is merged back into `develop`.
 
+<!-- qiick-standards:detail when: preparing a release PR or the CHANGELOG, bumping a version, or asking for required checks -->
+
 ## Lifecycle (what the release PR prepares)
 
 - **Versions:** Semantic Versioning. Pre-releases are `vX.Y.Z-beta.N`, then `vX.Y.Z-rc.N`, then `vX.Y.Z`; Composer packages declare them with `@beta` / `@RC` stability. Before `1.0.0` a minor may break; the notes say so.
