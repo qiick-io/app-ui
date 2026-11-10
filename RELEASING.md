@@ -2,9 +2,9 @@
 
 One version covers everything apps consume from this repo: the `@qiick` registry (`public/r`, theme included), the standards pack (`standards/`, `scripts/sync-standards.mjs`) and the reusable workflows (`.github/workflows/*.yml` with `workflow_call`). A tag `vX.Y.Z` pins all three, so a merge into `develop` never changes an app's CI: an app moves only when it bumps its tag.
 
-## No release without Luca
+## No release without the maintainer
 
-Never merge `develop` → `main`, create a tag or publish a GitHub release unless Luca explicitly says so ("rilascia"). Agents may open the `develop` → `main` release PR and stop there.
+Never merge `develop` → `main`, create a tag or publish a GitHub release unless the maintainer explicitly says so. Agents may open the `develop` → `main` release PR and stop there.
 
 ## Branching and tags
 

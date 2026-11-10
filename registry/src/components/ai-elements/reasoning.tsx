@@ -15,10 +15,10 @@ import {
  * (ui.shadcn.com/docs/ai-elements/base/reasoning): "Thinking…" shimmering while
  * the model reasons, then "Thought for N seconds", opening to the text.
  * Changes from upstream: collapsed by default with no auto-open while it
- * streams (Luca, 2026-11-07: reasoning is shown to everyone, collapsed); the
- * duration comes from the caller (measured while streaming, unknown on
- * reload); the labels go through i18n (`ai.reasoning.*`). Render it inside a
- * `Trace`.
+ * streams (product decision, 2026-11-07: reasoning is shown to everyone,
+ * collapsed); the duration comes from the caller (measured while streaming,
+ * unknown on reload); the labels go through i18n (`ai.reasoning.*`). Render it
+ * inside a `Trace`.
  */
 
 export type ReasoningProps = {
