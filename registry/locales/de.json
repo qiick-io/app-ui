@@ -111,6 +111,15 @@
             "system": "System"
         }
     },
+    "shortcuts": {
+        "description": "Auf dieser Seite aktive Tastenkürzel.",
+        "groupGeneral": "Allgemein",
+        "groupList": "Liste",
+        "groupNavigation": "Navigation",
+        "showHelp": "Tastenkürzel anzeigen",
+        "singleKeyOff": "Einzeltasten-Kürzel sind in deinen Einstellungen deaktiviert; Kürzel mit ⌘ / Strg funktionieren weiterhin.",
+        "title": "Tastenkürzel"
+    },
     "userMenu": {
         "accessibility": "Barrierefreiheit",
         "accessibilityOff": "Aus",
