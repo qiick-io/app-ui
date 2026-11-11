@@ -1654,6 +1654,30 @@
                     "type": "registry:component"
                 }
             ]
+        },
+        {
+            "name": "grouped-view-tabs",
+            "type": "registry:component",
+            "title": "Grouped view tabs",
+            "description": "Optional pattern grouped-tabs: GroupedViewTabs groups a record's views by question, with counts and severity markers; sub-menu or two-rows variant; one select below sm.",
+            "dependencies": [
+                "@inertiajs/react",
+                "lucide-react",
+                "react-i18next"
+            ],
+            "registryDependencies": [
+                "@qiick/badge",
+                "@qiick/dropdown-menu",
+                "@qiick/native-select",
+                "@qiick/tabs",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/grouped-view-tabs.tsx",
+                    "type": "registry:component"
+                }
+            ]
         }
     ]
 }

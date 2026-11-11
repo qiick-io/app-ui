@@ -141,5 +141,11 @@
         "logOut": "Esci",
         "reduceMotion": "Riduci movimento",
         "settings": "Impostazioni"
+    },
+    "viewTabs": {
+        "severity": {
+            "critical": "Ha problemi critici",
+            "warning": "Ha avvisi"
+        }
     }
 }

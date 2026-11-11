@@ -15,6 +15,7 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
   - `CommandPaletteTrigger` is the header control.
   - It builds on `keyboard-shortcuts`.
   - Page: `docs/optional/command-palette.md`, including the backend rules: one throttled endpoint, scoped by policy. New `commandPalette.*` locale keys.
+- Optional pattern `grouped-tabs` (#93): the `grouped-view-tabs` item. `GroupedViewTabs` groups a record's views by the question they answer, with open-item counts and a severity marker (icon and label) per view and per group. It comes in two variants, declared as `grouped-tabs:sub-menu` or `grouped-tabs:two-rows`. Below `sm` it is one select. Page: `docs/optional/grouped-tabs.md`, linked from the view rules in `page.md`. New `viewTabs.severity.*` locale keys.
 
 - Optional pattern `keyboard-shortcuts` (#95): the `keyboard-shortcuts` item.
   - `ShortcutsProvider` runs one document listener for every shortcut a mounted component registers with `useShortcut`; the latest registration of a key wins.

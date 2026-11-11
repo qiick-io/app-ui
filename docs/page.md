@@ -56,6 +56,8 @@ Views are navigation, not actions: they never go in `headerActions`. A page with
 - A list row of a record opens the record (the row and its name link to the first view). Editing becomes a row action (`HeaderIconButton` with a pencil), next to the other row actions.
 - The sidebar item stays active on every view: match the section prefix (`/projects/*`).
 
+More than about six views: the optional [grouped view tabs](optional/grouped-tabs.md) pattern groups them, with counts and severity markers.
+
 Source: Excubia `pages/projects/show.tsx` (`ProjectTabs`), `pages/projects/index.tsx` (row link and edit action), `routes/web.php` (`projects.view`).
 
 ## Segmented filters
