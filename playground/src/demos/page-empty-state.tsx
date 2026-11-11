@@ -14,7 +14,7 @@ export default function PageEmptyStateDemo() {
                     New user
                 </Button>
             }
-            docsHref="https://docs.externa.qiick.io"
+            docsHref="https://docs.qiick.io/externa"
             docsLabel="Documentation"
         />
     );
