@@ -17,6 +17,10 @@
         "sidebar-entities": {
             "title": "Sidebar filter, pinned and needs-attention entity lists",
             "page": "docs/optional/sidebar-entities.md"
+        },
+        "table-density": {
+            "title": "Table density preference",
+            "page": "docs/optional/table-density.md"
         }
     }
 }

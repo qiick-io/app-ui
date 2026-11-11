@@ -162,5 +162,10 @@
             "critical": "Ha problemi critici",
             "warning": "Ha avvisi"
         }
+    },
+    "tableDensity": {
+        "comfortable": "Comoda",
+        "compact": "Compatta",
+        "label": "Densità delle tabelle"
     }
 }

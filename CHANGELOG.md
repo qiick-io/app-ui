@@ -15,6 +15,7 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
   - `SidebarEntityFlyout` opens the same blocks from the icon-only sidebar. `PinToggleButton` is the star that pins a record.
   - The optional sidebar filter: `SidebarFilterProvider`, `SidebarFilterInput`, `useSidebarFilter`.
   - Page: `docs/optional/sidebar-entities.md`, with the backend rules (pins table, deferred and cached shared prop, scoped by visibility), linked from `shell.md`. New `sidebarEntities.*` locale keys.
+- Optional pattern `table-density` (#96): the `table-density-toggle` item (`TableDensityToggle`, `applyTableDensity`). The `theme` tightens table rows by 8px (a text row from 37px to 29px) under `[data-density='compact']`; controls keep their size. Page: `docs/optional/table-density.md`. New `tableDensity.*` locale keys. Upgrade: re-pull `theme` (additive rules only).
 
 - Optional pattern `command-palette` (#91): the `command-palette` item.
   - `CommandPalette` is a ⌘K / Ctrl+K dialog. It filters local `groups` (navigation, actions) as you type, and calls a debounced, abortable server `search` for records. It keeps recent results per browser, and ⌘ / Ctrl+Enter opens a link in a new tab.
