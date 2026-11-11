@@ -10,6 +10,11 @@
             "page": "docs/optional/grouped-tabs.md",
             "variants": ["sub-menu", "two-rows"]
         },
+        "inbox-list": {
+            "title": "Inbox list: saved views, bulk actions, item detail",
+            "page": "docs/optional/inbox-list.md",
+            "variants": ["side-panel", "full-page"]
+        },
         "keyboard-shortcuts": {
             "title": "Keyboard shortcuts and the ? help dialog",
             "page": "docs/optional/keyboard-shortcuts.md"

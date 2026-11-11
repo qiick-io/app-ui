@@ -1715,6 +1715,31 @@
                     "type": "registry:component"
                 }
             ]
+        },
+        {
+            "name": "inbox-list",
+            "type": "registry:component",
+            "title": "Inbox list",
+            "description": "Optional pattern inbox-list: InboxSavedViews (preset filter sets as URL links with counts) and InboxDetailSheet (the item beside the list: summary and actions, what to do, collapsed sections, open full page).",
+            "dependencies": [
+                "@inertiajs/react",
+                "lucide-react",
+                "react-i18next"
+            ],
+            "registryDependencies": [
+                "@qiick/badge",
+                "@qiick/button",
+                "@qiick/button-group",
+                "@qiick/collapsible",
+                "@qiick/sheet",
+                "@qiick/skeleton"
+            ],
+            "files": [
+                {
+                    "path": "src/components/inbox-list.tsx",
+                    "type": "registry:component"
+                }
+            ]
         }
     ]
 }
