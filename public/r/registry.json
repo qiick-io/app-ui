@@ -1635,6 +1635,25 @@
                     "target": "resources/js/lib/shortcut-keys.ts"
                 }
             ]
+        },
+        {
+            "name": "command-palette",
+            "type": "registry:component",
+            "title": "Command palette",
+            "description": "Optional pattern command-palette: CommandPalette (⌘K dialog with local groups, debounced server search, recent results) and CommandPaletteTrigger for the header.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/command",
+                "@qiick/keyboard-shortcuts",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/command-palette.tsx",
+                    "type": "registry:component"
+                }
+            ]
         }
     ]
 }

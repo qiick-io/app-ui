@@ -57,6 +57,17 @@
         "reactionToggle": "{{emoji}} reaction: {{names}}",
         "removePendingFile": "Remove file"
     },
+    "commandPalette": {
+        "description": "Search pages, records and actions.",
+        "empty": "No results.",
+        "open": "Open the command palette",
+        "placeholder": "Search or jump to…",
+        "recent": "Recent",
+        "searchFailed": "Search failed. Showing local results only.",
+        "searching": "Searching…",
+        "title": "Command palette",
+        "trigger": "Search"
+    },
     "common": {
         "cancel": "Cancel",
         "clearFilters": "Clear filters",

@@ -10,6 +10,12 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Added
 
+- Optional pattern `command-palette` (#91): the `command-palette` item.
+  - `CommandPalette` is a ⌘K / Ctrl+K dialog. It filters local `groups` (navigation, actions) as you type, and calls a debounced, abortable server `search` for records. It keeps recent results per browser, and ⌘ / Ctrl+Enter opens a link in a new tab.
+  - `CommandPaletteTrigger` is the header control.
+  - It builds on `keyboard-shortcuts`.
+  - Page: `docs/optional/command-palette.md`, including the backend rules: one throttled endpoint, scoped by policy. New `commandPalette.*` locale keys.
+
 - Optional pattern `keyboard-shortcuts` (#95): the `keyboard-shortcuts` item.
   - `ShortcutsProvider` runs one document listener for every shortcut a mounted component registers with `useShortcut`; the latest registration of a key wins.
   - Single-key shortcuts never fire while typing, and turn off with the user's setting (WCAG 2.1.4). ⌘ / Ctrl shortcuts never fire inside a rich-text editor, and a key another handler already took is left alone.

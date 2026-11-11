@@ -57,6 +57,17 @@
         "reactionToggle": "Reaktion {{emoji}}: {{names}}",
         "removePendingFile": "Datei entfernen"
     },
+    "commandPalette": {
+        "description": "Seiten, Datensätze und Aktionen suchen.",
+        "empty": "Keine Ergebnisse.",
+        "open": "Befehlspalette öffnen",
+        "placeholder": "Suchen oder springen zu…",
+        "recent": "Zuletzt geöffnet",
+        "searchFailed": "Suche fehlgeschlagen. Nur lokale Ergebnisse werden angezeigt.",
+        "searching": "Suche läuft…",
+        "title": "Befehlspalette",
+        "trigger": "Suchen"
+    },
     "common": {
         "cancel": "Abbrechen",
         "clearFilters": "Filter zurücksetzen",

@@ -63,4 +63,5 @@ Adopt one by adding its name (with its variant when it has variants) to `pattern
 
 | Optional pattern                         | Name in `patterns`   | Page                                                                                |
 | ---------------------------------------- | -------------------- | ----------------------------------------------------------------------------------- |
+| Command palette and global search (⌘K)   | `command-palette`    | https://github.com/qiick-io/app-ui/blob/develop/docs/optional/command-palette.md    |
 | Keyboard shortcuts and the ? help dialog | `keyboard-shortcuts` | https://github.com/qiick-io/app-ui/blob/develop/docs/optional/keyboard-shortcuts.md |
