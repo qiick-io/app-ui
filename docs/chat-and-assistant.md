@@ -30,13 +30,13 @@ Chat (`/chat`) and the Assistant (`/ai`) share **one structure**.
 
 - An answer is a list of **parts** (`lib/ai-message-parts.ts`): reasoning, text, tool calls, provider tools (web search), plus sources and token usage. The stream reducers (`appendReasoning`, `appendText`, `addToolCall`, `applyToolResult`, `markApprovalRequested`, `addProviderTool`, `addSource`) build them live; `partsFromSteps` rebuilds them from the stored steps, so a reload shows the same thing.
 - `AiAnswerParts` renders them in order inside the assistant `Bubble` (`ghost`), on the AI Elements shadcn rebuilt on **Trace** (one compact line per piece of work, never a bordered card):
-    - `Reasoning`: "Thinking…" shimmering while it streams, then "Thought for N seconds", collapsed, opening to the text.
+    - `Reasoning`: "Thinking…" shimmering while it streams, then "Thought for N seconds"; open while it streams and closed when it finishes, unless the person opened or closed it (as upstream; no height limit).
     - `Tool`: one line per call with a **sentence the app writes** for it, through the `describeToolCall` prop (`(call, t) => { title, description? }`, called with the tool name, its input and its state). Running: present tense, shimmering ("Listing the collections"); done: past tense ("Listed the collections"); failed: "Could not …", in red, opening to the error message. Never the raw JSON of the arguments or the result: it means nothing to the reader, and the audit log keeps it. Without a describer the line names the tool generically ("Used Manage collections").
     - `ChainOfThought` for several calls in a row: "Done in N steps" (shimmering "Working, N steps so far" while one runs), opening to one `Tool` line per step.
     - Text through the app's Markdown renderer (`renderText`; externa-core uses Streamdown, loaded lazily).
 - Under the parts: `AiAnswerSources` ("Used N sources", opening to the links) and, in the message footer, `AiAnswerUsage` (AI Elements `Context`: tokens against the model's context window, which the app knows per provider).
 - `Suggestion` chips after the last answer: outline `sm` buttons in one sideways-scrolling row, each `shrink-0`.
-- Calls waiting for approval render outside the parts (`hidePendingApprovals`) as a `Confirmation` (`Item` with the question from `describeToolCall` and Reject / Approve); once answered they become `Tool` lines.
+- Calls waiting for approval render outside the parts (`hidePendingApprovals`) as a `Confirmation` (`Item` with the question from `describeToolCall` and Reject / Approve; pass `isDestructive` when the call deletes, so Approve turns red only then); once answered they become `Tool` lines.
 - Not used yet: `Plan`, `Queue`, `Task` and `Subagent` need the agent to stream a plan, a todo list or sub-agent runs, which no qiick app does today. When one does, build them on `trace` the same way.
 
 ## Human chat messages

@@ -15,7 +15,8 @@
  *         "frontendRoots": ["resources/js"], // kebab-case file name check
  *         "oxlint": true,                  // Vite+ apps: the shared Oxlint configs
  *         "eslint": true,                  // repos still on ESLint: the shared ESLint config
- *         "app": true                      // self-hosted app: stack and distribution rules
+ *         "app": true,                     // self-hosted app: stack and distribution rules
+ *         "patterns": ["command-palette"]  // optional UI patterns it adopts (standards/patterns.json)
  *     }
  *
  * Managed files are of two kinds:
@@ -46,6 +47,7 @@ const BLOCK_END = '<!-- qiick-standards:end -->';
 /** Splits a rule page: above it, the always-loaded core; below it, details read on demand. */
 const DETAIL_MARKER = /^<!-- qiick-standards:detail when: (.+?) -->\n+/m;
 const DETAIL_DIRECTORY = '.qiick/standards';
+const DOCS_URL = 'https://github.com/qiick-io/app-ui/blob/develop';
 const KEBAB_CASE_NAME =
     /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.[a-z0-9]+(?:-[a-z0-9]+)*)*$/;
 
@@ -64,6 +66,95 @@ function readSource(relativePath) {
     return normalize(
         fs.readFileSync(path.join(standardsRoot, relativePath), 'utf8'),
     );
+}
+
+/**
+ * @typedef {{ title: string, page: string, variants?: string[] }} OptionalPattern
+ * @typedef {Record<string, OptionalPattern>} PatternCatalogue
+ */
+
+/**
+ * The optional UI patterns an app may adopt (`standards/patterns.json`).
+ * @returns {PatternCatalogue}
+ */
+function readPatternCatalogue() {
+    return JSON.parse(readSource('patterns.json')).patterns;
+}
+
+/**
+ * Checks the `patterns` an app declares against the catalogue: every name must
+ * exist, and a pattern with variants needs exactly one of them (`name:variant`),
+ * so the agent files can tell which accepted variant this app follows.
+ * @param {{ patterns?: unknown }} config
+ * @param {PatternCatalogue} catalogue
+ * @returns {string[]} Errors, empty when the declaration is valid
+ */
+export function validatePatterns(config, catalogue) {
+    if (config.patterns === undefined) {
+        return [];
+    }
+
+    if (
+        !Array.isArray(config.patterns) ||
+        config.patterns.some((entry) => typeof entry !== 'string')
+    ) {
+        return [`${CONFIG_FILE}: "patterns" must be a list of names.`];
+    }
+
+    /** @type {string[]} */
+    const errors = [];
+    const seenNames = new Set();
+
+    for (const entry of config.patterns) {
+        const [name, variant] = entry.split(':');
+        const pattern = catalogue[name];
+
+        if (!pattern) {
+            errors.push(
+                `${CONFIG_FILE}: "${name}" is not an optional pattern (see standards/patterns.json).`,
+            );
+            continue;
+        }
+
+        if (seenNames.has(name)) {
+            errors.push(`${CONFIG_FILE}: "${name}" is listed twice.`);
+        }
+
+        seenNames.add(name);
+        const variants = pattern.variants ?? [];
+
+        if (variants.length > 0 && !variants.includes(variant)) {
+            errors.push(
+                `${CONFIG_FILE}: "${name}" needs one of its variants: ${variants.map((candidate) => `"${name}:${candidate}"`).join(', ')}.`,
+            );
+        }
+
+        if (variants.length === 0 && variant !== undefined) {
+            errors.push(`${CONFIG_FILE}: "${name}" has no variants.`);
+        }
+    }
+
+    return errors;
+}
+
+/**
+ * The sentence the UI rules show for the optional patterns this app adopts.
+ * @param {string[]} adoptedPatterns - `name` or `name:variant` entries, already validated
+ * @param {PatternCatalogue} catalogue
+ */
+function describeAdoptedPatterns(adoptedPatterns, catalogue) {
+    if (adoptedPatterns.length === 0) {
+        return 'none';
+    }
+
+    return adoptedPatterns
+        .map((entry) => {
+            const [name, variant] = entry.split(':');
+            const label = variant ? `${name} (${variant})` : name;
+
+            return `[${label}](${DOCS_URL}/${catalogue[name].page})`;
+        })
+        .join(', ');
 }
 
 /**
@@ -87,10 +178,11 @@ function demoteHeadings(markdown) {
 }
 
 /**
- * @param {{ uiPreset?: string, app?: boolean }} config
+ * @param {{ uiPreset?: string, app?: boolean, php?: boolean, patterns?: string[] }} config
+ * @param {PatternCatalogue} catalogue
  * @returns {Record<string, string>} Rule page name => Markdown
  */
-function renderRulePages(config) {
+function renderRulePages(config, catalogue) {
     /** @type {Record<string, string>} */
     const pages = {
         ...(config.app ? { stack: readSource('rules/stack.md') } : {}),
@@ -107,13 +199,67 @@ function renderRulePages(config) {
     }
 
     if (config.uiPreset) {
-        pages.ui = readSource('rules/ui.md').replace(
-            '{{preset}}',
-            config.uiPreset,
-        );
+        pages.ui = readSource('rules/ui.md')
+            .replace('{{preset}}', config.uiPreset)
+            .replace(
+                '{{patterns}}',
+                describeAdoptedPatterns(config.patterns ?? [], catalogue),
+            )
+            .replace('{{catalogue}}', renderCatalogueTable(catalogue));
     }
 
     return pages;
+}
+
+/**
+ * The optional patterns as a Markdown table for the UI details page.
+ * @param {PatternCatalogue} catalogue
+ */
+function renderCatalogueTable(catalogue) {
+    const entries = Object.entries(catalogue);
+
+    if (entries.length === 0) {
+        return 'No optional pattern is published yet.';
+    }
+
+    const rows = entries.map(([name, pattern]) => {
+        const variants = pattern.variants ?? [];
+        const declarations =
+            variants.length === 0
+                ? [name]
+                : variants.map((variant) => `${name}:${variant}`);
+
+        return [
+            pattern.title,
+            declarations.map((declaration) => `\`${declaration}\``).join(', '),
+            `${DOCS_URL}/${pattern.page}`,
+        ];
+    });
+
+    return markdownTable(
+        ['Optional pattern', 'Name in `patterns`', 'Page'],
+        rows,
+    );
+}
+
+/**
+ * A Markdown table with padded columns, as Prettier writes it, so a repo that
+ * formats its Markdown never rewrites the managed files.
+ * @param {string[]} header
+ * @param {string[][]} rows
+ */
+function markdownTable(header, rows) {
+    const widths = header.map((cell, column) =>
+        Math.max(cell.length, ...rows.map((row) => row[column].length)),
+    );
+    const line = (cells) =>
+        `| ${cells.map((cell, column) => cell.padEnd(widths[column])).join(' | ')} |`;
+
+    return [
+        line(header),
+        `| ${widths.map((width) => '-'.repeat(width)).join(' | ')} |`,
+        ...rows.map(line),
+    ].join('\n');
 }
 
 /**
@@ -157,11 +303,12 @@ const cursorRule = (description, frontmatter, body) =>
 
 /**
  * Everything the pack writes into a repo with this config.
- * @param {{ uiPreset?: string, php?: boolean, eslint?: boolean, oxlint?: boolean, app?: boolean, frontendRoots?: string[] }} config
+ * @param {{ uiPreset?: string, php?: boolean, eslint?: boolean, oxlint?: boolean, app?: boolean, frontendRoots?: string[], patterns?: string[] }} config
+ * @param {PatternCatalogue} [catalogue] - Defaults to `standards/patterns.json`
  * @returns {{ path: string, kind: 'file' | 'block' | 'template', content: string }[]}
  */
-export function renderOutputs(config) {
-    const pages = renderRulePages(config);
+export function renderOutputs(config, catalogue = readPatternCatalogue()) {
+    const pages = renderRulePages(config, catalogue);
     const agentsBody = [
         '# qiick standards',
         `These rules bind every agent and contributor in this repo from the first task. They are the same in every qiick repo (source: ${SOURCE_URL}), and CI fails when this block differs from the source. Rules for this repo only live outside this block; where they are more specific, they win. Starting a new qiick product: ${NEW_PRODUCT_URL}.`,
@@ -473,10 +620,14 @@ export function findNonKebabCaseNames(targetRoot, frontendRoots) {
 
 /**
  * @param {string} targetRoot
- * @param {{ isCheck: boolean }} options
+ * @param {{ isCheck: boolean, catalogue?: PatternCatalogue }} options
  * @returns {string[]} Errors (check mode) or written paths (sync mode)
+ * @throws {Error} In sync mode, when `patterns` names an unknown pattern or variant
  */
-export function syncStandards(targetRoot, { isCheck }) {
+export function syncStandards(
+    targetRoot,
+    { isCheck, catalogue = readPatternCatalogue() },
+) {
     const configPath = path.join(targetRoot, CONFIG_FILE);
 
     if (!fs.existsSync(configPath)) {
@@ -484,10 +635,20 @@ export function syncStandards(targetRoot, { isCheck }) {
     }
 
     const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    const patternErrors = validatePatterns(config, catalogue);
+
+    if (patternErrors.length > 0) {
+        if (!isCheck) {
+            throw new Error(patternErrors.join('\n'));
+        }
+
+        return patternErrors;
+    }
+
     /** @type {string[]} */
     const messages = [];
 
-    for (const output of renderOutputs(config)) {
+    for (const output of renderOutputs(config, catalogue)) {
         const absolutePath = path.join(targetRoot, output.path);
         const hasFile = fs.existsSync(absolutePath);
         const existing = hasFile

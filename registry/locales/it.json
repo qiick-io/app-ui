@@ -57,6 +57,17 @@
         "reactionToggle": "Reazione {{emoji}}: {{names}}",
         "removePendingFile": "Rimuovi file"
     },
+    "commandPalette": {
+        "description": "Cerca pagine, record e azioni.",
+        "empty": "Nessun risultato.",
+        "open": "Apri la palette dei comandi",
+        "placeholder": "Cerca o vai a…",
+        "recent": "Recenti",
+        "searchFailed": "Ricerca non riuscita. Mostro solo i risultati locali.",
+        "searching": "Ricerca in corso…",
+        "title": "Palette dei comandi",
+        "trigger": "Cerca"
+    },
     "common": {
         "cancel": "Annulla",
         "clearFilters": "Cancella filtri",
@@ -91,6 +102,12 @@
         "endTime": "Ora di fine",
         "apply": "Applica"
     },
+    "inbox": {
+        "detailDescription": "Dettagli e azioni dell'elemento.",
+        "nextStep": "Cosa fare",
+        "openFullPage": "Apri a pagina intera",
+        "savedViews": "Viste salvate"
+    },
     "picker": {
         "clearSelection": "Cancella selezione",
         "loading": "Caricamento…",
@@ -111,6 +128,30 @@
             "system": "Sistema"
         }
     },
+    "shortcuts": {
+        "description": "Scorciatoie attive in questa schermata.",
+        "groupGeneral": "Generale",
+        "groupList": "Lista",
+        "groupNavigation": "Navigazione",
+        "showHelp": "Mostra le scorciatoie da tastiera",
+        "singleKeyOff": "Le scorciatoie a un tasto sono disattivate nelle tue impostazioni; quelle con ⌘ / Ctrl funzionano ancora.",
+        "title": "Scorciatoie da tastiera"
+    },
+    "sidebarEntities": {
+        "filter": "Filtra la navigazione",
+        "filterPlaceholder": "Filtra…",
+        "needsAttention": "Da controllare",
+        "pin": "Fissa {{name}}",
+        "pinHint": "Fissa un progetto con la stella per tenerlo qui.",
+        "pinned": "Fissati",
+        "status": {
+            "good": "In salute",
+            "warning": "Ha avvisi",
+            "critical": "Ha problemi critici"
+        },
+        "unpin": "Togli {{name}} dai fissati",
+        "viewAll": "Vedi tutti"
+    },
     "userMenu": {
         "accessibility": "Accessibilità",
         "accessibilityOff": "Off",
@@ -121,5 +162,16 @@
         "logOut": "Esci",
         "reduceMotion": "Riduci movimento",
         "settings": "Impostazioni"
+    },
+    "viewTabs": {
+        "severity": {
+            "critical": "Ha problemi critici",
+            "warning": "Ha avvisi"
+        }
+    },
+    "tableDensity": {
+        "comfortable": "Comoda",
+        "compact": "Compatta",
+        "label": "Densità delle tabelle"
     }
 }

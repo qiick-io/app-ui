@@ -1616,6 +1616,130 @@
                     "type": "registry:component"
                 }
             ]
+        },
+        {
+            "name": "keyboard-shortcuts",
+            "type": "registry:component",
+            "title": "Keyboard shortcuts",
+            "description": "Optional pattern keyboard-shortcuts: ShortcutsProvider (one document listener, single-key shortcuts off while typing or by user setting), useShortcut, ShortcutHint, the ? help dialog, and lib/shortcut-keys.ts (mod+k definitions, reserved keys).",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": ["@qiick/dialog", "@qiick/kbd"],
+            "files": [
+                {
+                    "path": "src/components/keyboard-shortcuts.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/lib/shortcut-keys.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/shortcut-keys.ts"
+                }
+            ]
+        },
+        {
+            "name": "command-palette",
+            "type": "registry:component",
+            "title": "Command palette",
+            "description": "Optional pattern command-palette: CommandPalette (⌘K dialog with local groups, debounced server search, recent results) and CommandPaletteTrigger for the header.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/command",
+                "@qiick/keyboard-shortcuts",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/command-palette.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "grouped-view-tabs",
+            "type": "registry:component",
+            "title": "Grouped view tabs",
+            "description": "Optional pattern grouped-tabs: GroupedViewTabs groups a record's views by question, with counts and severity markers; sub-menu or two-rows variant; one select below sm.",
+            "dependencies": [
+                "@inertiajs/react",
+                "lucide-react",
+                "react-i18next"
+            ],
+            "registryDependencies": [
+                "@qiick/badge",
+                "@qiick/dropdown-menu",
+                "@qiick/native-select",
+                "@qiick/tabs",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/grouped-view-tabs.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "sidebar-entity-list",
+            "type": "registry:component",
+            "title": "Sidebar entity list",
+            "description": "Optional pattern sidebar-entities: SidebarEntityList (Pinned and Needs attention under a nav item, View all), SidebarEntityFlyout for the icon-only sidebar, PinToggleButton, and the sidebar filter (SidebarFilterProvider, SidebarFilterInput, useSidebarFilter).",
+            "dependencies": [
+                "@inertiajs/react",
+                "lucide-react",
+                "react-i18next"
+            ],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/dropdown-menu",
+                "@qiick/sidebar",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/sidebar-entity-list.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "table-density-toggle",
+            "type": "registry:component",
+            "title": "Table density toggle",
+            "description": "Optional pattern table-density: TableDensityToggle (Comfortable / Compact segmented control) and applyTableDensity(); the theme tightens table rows under data-density=\"compact\".",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": ["@qiick/theme", "@qiick/toggle-group"],
+            "files": [
+                {
+                    "path": "src/components/table-density-toggle.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "inbox-list",
+            "type": "registry:component",
+            "title": "Inbox list",
+            "description": "Optional pattern inbox-list: InboxSavedViews (preset filter sets as URL links with counts) and InboxDetailSheet (the item beside the list: summary and actions, what to do, collapsed sections, open full page).",
+            "dependencies": [
+                "@inertiajs/react",
+                "lucide-react",
+                "react-i18next"
+            ],
+            "registryDependencies": [
+                "@qiick/badge",
+                "@qiick/button",
+                "@qiick/button-group",
+                "@qiick/collapsible",
+                "@qiick/sheet",
+                "@qiick/skeleton"
+            ],
+            "files": [
+                {
+                    "path": "src/components/inbox-list.tsx",
+                    "type": "registry:component"
+                }
+            ]
         }
     ]
 }

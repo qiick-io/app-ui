@@ -57,6 +57,17 @@
         "reactionToggle": "Reaktion {{emoji}}: {{names}}",
         "removePendingFile": "Datei entfernen"
     },
+    "commandPalette": {
+        "description": "Seiten, Datensätze und Aktionen suchen.",
+        "empty": "Keine Ergebnisse.",
+        "open": "Befehlspalette öffnen",
+        "placeholder": "Suchen oder springen zu…",
+        "recent": "Zuletzt geöffnet",
+        "searchFailed": "Suche fehlgeschlagen. Nur lokale Ergebnisse werden angezeigt.",
+        "searching": "Suche läuft…",
+        "title": "Befehlspalette",
+        "trigger": "Suchen"
+    },
     "common": {
         "cancel": "Abbrechen",
         "clearFilters": "Filter zurücksetzen",
@@ -91,6 +102,12 @@
         "endTime": "Endzeit",
         "apply": "Anwenden"
     },
+    "inbox": {
+        "detailDescription": "Details und Aktionen des Eintrags.",
+        "nextStep": "Was zu tun ist",
+        "openFullPage": "Ganze Seite öffnen",
+        "savedViews": "Gespeicherte Ansichten"
+    },
     "picker": {
         "clearSelection": "Auswahl aufheben",
         "loading": "Wird geladen…",
@@ -111,6 +128,30 @@
             "system": "System"
         }
     },
+    "shortcuts": {
+        "description": "Auf dieser Seite aktive Tastenkürzel.",
+        "groupGeneral": "Allgemein",
+        "groupList": "Liste",
+        "groupNavigation": "Navigation",
+        "showHelp": "Tastenkürzel anzeigen",
+        "singleKeyOff": "Einzeltasten-Kürzel sind in deinen Einstellungen deaktiviert; Kürzel mit ⌘ / Strg funktionieren weiterhin.",
+        "title": "Tastenkürzel"
+    },
+    "sidebarEntities": {
+        "filter": "Navigation filtern",
+        "filterPlaceholder": "Filtern…",
+        "needsAttention": "Braucht Aufmerksamkeit",
+        "pin": "{{name}} anheften",
+        "pinHint": "Hefte ein Projekt mit dem Stern an, um es hier zu behalten.",
+        "pinned": "Angeheftet",
+        "status": {
+            "good": "Gesund",
+            "warning": "Hat Warnungen",
+            "critical": "Hat kritische Probleme"
+        },
+        "unpin": "{{name}} lösen",
+        "viewAll": "Alle anzeigen"
+    },
     "userMenu": {
         "accessibility": "Barrierefreiheit",
         "accessibilityOff": "Aus",
@@ -121,5 +162,16 @@
         "logOut": "Abmelden",
         "reduceMotion": "Bewegung reduzieren",
         "settings": "Einstellungen"
+    },
+    "viewTabs": {
+        "severity": {
+            "critical": "Hat kritische Probleme",
+            "warning": "Hat Warnungen"
+        }
+    },
+    "tableDensity": {
+        "comfortable": "Bequem",
+        "compact": "Kompakt",
+        "label": "Tabellendichte"
     }
 }

@@ -57,6 +57,17 @@
         "reactionToggle": "{{emoji}} reaction: {{names}}",
         "removePendingFile": "Remove file"
     },
+    "commandPalette": {
+        "description": "Search pages, records and actions.",
+        "empty": "No results.",
+        "open": "Open the command palette",
+        "placeholder": "Search or jump to…",
+        "recent": "Recent",
+        "searchFailed": "Search failed. Showing local results only.",
+        "searching": "Searching…",
+        "title": "Command palette",
+        "trigger": "Search"
+    },
     "common": {
         "cancel": "Cancel",
         "clearFilters": "Clear filters",
@@ -91,6 +102,12 @@
         "endTime": "End time",
         "apply": "Apply"
     },
+    "inbox": {
+        "detailDescription": "Item details and actions.",
+        "nextStep": "What to do",
+        "openFullPage": "Open full page",
+        "savedViews": "Saved views"
+    },
     "picker": {
         "clearSelection": "Clear selection",
         "loading": "Loading…",
@@ -111,6 +128,30 @@
             "system": "System"
         }
     },
+    "shortcuts": {
+        "description": "Shortcuts active on this screen.",
+        "groupGeneral": "General",
+        "groupList": "List",
+        "groupNavigation": "Navigation",
+        "showHelp": "Show keyboard shortcuts",
+        "singleKeyOff": "Single-key shortcuts are off in your settings; ⌘ / Ctrl shortcuts still work.",
+        "title": "Keyboard shortcuts"
+    },
+    "sidebarEntities": {
+        "filter": "Filter navigation",
+        "filterPlaceholder": "Filter…",
+        "needsAttention": "Needs attention",
+        "pin": "Pin {{name}}",
+        "pinHint": "Pin a project with the star to keep it here.",
+        "pinned": "Pinned",
+        "status": {
+            "good": "Healthy",
+            "warning": "Has warnings",
+            "critical": "Has critical problems"
+        },
+        "unpin": "Unpin {{name}}",
+        "viewAll": "View all"
+    },
     "userMenu": {
         "accessibility": "Accessibility",
         "accessibilityOff": "Off",
@@ -121,5 +162,16 @@
         "logOut": "Log out",
         "reduceMotion": "Reduce motion",
         "settings": "Settings"
+    },
+    "viewTabs": {
+        "severity": {
+            "critical": "Has critical problems",
+            "warning": "Has warnings"
+        }
+    },
+    "tableDensity": {
+        "comfortable": "Comfortable",
+        "compact": "Compact",
+        "label": "Table density"
     }
 }

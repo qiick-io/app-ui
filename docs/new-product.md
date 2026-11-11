@@ -35,7 +35,7 @@ It writes, all pinned to the same `vX.Y.Z`:
 
 | File                          | What                                                                                                                                                                   |
 | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `qiick-standards.json`        | `ref`, `uiPreset`, `php`, `frontendRoots`, `oxlint: true`, `app: true`                                                                                                 |
+| `qiick-standards.json`        | `ref`, `uiPreset`, `php`, `frontendRoots`, `oxlint: true`, `app: true`, and later `patterns` (the [optional patterns](optional/README.md) it adopts)                   |
 | `components.json`             | the `@qiick` registry at `https://raw.githubusercontent.com/qiick-io/app-ui/vX.Y.Z/public/r/{name}.json`                                                               |
 | `.github/workflows/qiick.yml` | the reusable checks: PR title, drift (standards + registry), UI quality, frozen migrations, distribution smoke                                                         |
 | the standards sync            | `AGENTS.md` / `CLAUDE.md` / copilot blocks, `.cursor/rules`, `tests/Arch`, `.oxlintrc.standards.json`, `.oxlintrc.i18n.json`, `knip.json`, `scripts/qiick-ratchet.mjs` |

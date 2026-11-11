@@ -1,0 +1,22 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "table-density-toggle",
+  "title": "Table density toggle",
+  "description": "Optional pattern table-density: TableDensityToggle (Comfortable / Compact segmented control) and applyTableDensity(); the theme tightens table rows under data-density=\"compact\".",
+  "dependencies": [
+    "lucide-react",
+    "react-i18next"
+  ],
+  "registryDependencies": [
+    "@qiick/theme",
+    "@qiick/toggle-group"
+  ],
+  "files": [
+    {
+      "path": "src/components/table-density-toggle.tsx",
+      "content": "import { Rows3, Rows4 } from 'lucide-react';\nimport { useTranslation } from 'react-i18next';\nimport { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';\n\n/**\n * Table density (optional pattern `table-density`,\n * docs/optional/table-density.md).\n *\n * Long tables read better compact for people who scan many rows a day, and\n * comfortable for everyone else, so density is a per-user preference. The\n * theme does the work (`[data-density='compact']` tightens table rows); this\n * is the segmented control that changes it, for Appearance settings and,\n * optionally, a table toolbar.\n */\n\nexport type TableDensity = 'comfortable' | 'compact';\n\n/** The attribute the theme reads; set it on <html> from the user's preference. */\nexport const TABLE_DENSITY_ATTRIBUTE = 'data-density';\n\n/**\n * Applies a density to the document, as the app does at boot and after the\n * user changes it (persisting it is the app's job).\n */\nexport function applyTableDensity(density: TableDensity): void {\n    document.documentElement.setAttribute(TABLE_DENSITY_ATTRIBUTE, density);\n}\n\nexport function TableDensityToggle({\n    value,\n    onChange,\n}: {\n    value: TableDensity;\n    onChange: (density: TableDensity) => void;\n}) {\n    const { t } = useTranslation();\n\n    return (\n        <ToggleGroup\n            type=\"single\"\n            variant=\"outline\"\n            value={value}\n            aria-label={t('tableDensity.label')}\n            onValueChange={(nextValue) => {\n                // Radix sends '' when the active item is clicked again.\n                if (nextValue === 'comfortable' || nextValue === 'compact') {\n                    onChange(nextValue);\n                }\n            }}\n        >\n            <ToggleGroupItem value=\"comfortable\">\n                <Rows3 aria-hidden=\"true\" className=\"size-4\" />\n                {t('tableDensity.comfortable')}\n            </ToggleGroupItem>\n            <ToggleGroupItem value=\"compact\">\n                <Rows4 aria-hidden=\"true\" className=\"size-4\" />\n                {t('tableDensity.compact')}\n            </ToggleGroupItem>\n        </ToggleGroup>\n    );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}
