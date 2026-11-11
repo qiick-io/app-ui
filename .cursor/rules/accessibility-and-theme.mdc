@@ -67,3 +67,4 @@ Adopt one by adding its name (with its variant when it has variants) to `pattern
 | Grouped view tabs with counts                           | `grouped-tabs:sub-menu`, `grouped-tabs:two-rows` | https://github.com/qiick-io/app-ui/blob/develop/docs/optional/grouped-tabs.md       |
 | Keyboard shortcuts and the ? help dialog                | `keyboard-shortcuts`                             | https://github.com/qiick-io/app-ui/blob/develop/docs/optional/keyboard-shortcuts.md |
 | Sidebar filter, pinned and needs-attention entity lists | `sidebar-entities`                               | https://github.com/qiick-io/app-ui/blob/develop/docs/optional/sidebar-entities.md   |
+| Table density preference                                | `table-density`                                  | https://github.com/qiick-io/app-ui/blob/develop/docs/optional/table-density.md      |

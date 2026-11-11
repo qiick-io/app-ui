@@ -162,5 +162,10 @@
             "critical": "Has critical problems",
             "warning": "Has warnings"
         }
+    },
+    "tableDensity": {
+        "comfortable": "Comfortable",
+        "compact": "Compact",
+        "label": "Table density"
     }
 }

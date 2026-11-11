@@ -1701,6 +1701,20 @@
                     "type": "registry:component"
                 }
             ]
+        },
+        {
+            "name": "table-density-toggle",
+            "type": "registry:component",
+            "title": "Table density toggle",
+            "description": "Optional pattern table-density: TableDensityToggle (Comfortable / Compact segmented control) and applyTableDensity(); the theme tightens table rows under data-density=\"compact\".",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": ["@qiick/theme", "@qiick/toggle-group"],
+            "files": [
+                {
+                    "path": "src/components/table-density-toggle.tsx",
+                    "type": "registry:component"
+                }
+            ]
         }
     ]
 }
