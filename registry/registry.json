@@ -1678,6 +1678,29 @@
                     "type": "registry:component"
                 }
             ]
+        },
+        {
+            "name": "sidebar-entity-list",
+            "type": "registry:component",
+            "title": "Sidebar entity list",
+            "description": "Optional pattern sidebar-entities: SidebarEntityList (Pinned and Needs attention under a nav item, View all), SidebarEntityFlyout for the icon-only sidebar, PinToggleButton, and the sidebar filter (SidebarFilterProvider, SidebarFilterInput, useSidebarFilter).",
+            "dependencies": [
+                "@inertiajs/react",
+                "lucide-react",
+                "react-i18next"
+            ],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/dropdown-menu",
+                "@qiick/sidebar",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/sidebar-entity-list.tsx",
+                    "type": "registry:component"
+                }
+            ]
         }
     ]
 }

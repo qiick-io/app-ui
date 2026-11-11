@@ -10,6 +10,12 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Added
 
+- Optional pattern `sidebar-entities` (#92): the `sidebar-entity-list` item.
+  - `SidebarEntityList` lists records under a nav item: Pinned first, in a stable order, then Needs attention, worst first and hidden when empty. "View all" ends it. Status shows as an icon with a label.
+  - `SidebarEntityFlyout` opens the same blocks from the icon-only sidebar. `PinToggleButton` is the star that pins a record.
+  - The optional sidebar filter: `SidebarFilterProvider`, `SidebarFilterInput`, `useSidebarFilter`.
+  - Page: `docs/optional/sidebar-entities.md`, with the backend rules (pins table, deferred and cached shared prop, scoped by visibility), linked from `shell.md`. New `sidebarEntities.*` locale keys.
+
 - Optional pattern `command-palette` (#91): the `command-palette` item.
   - `CommandPalette` is a ⌘K / Ctrl+K dialog. It filters local `groups` (navigation, actions) as you type, and calls a debounced, abortable server `search` for records. It keeps recent results per browser, and ⌘ / Ctrl+Enter opens a link in a new tab.
   - `CommandPaletteTrigger` is the header control.
