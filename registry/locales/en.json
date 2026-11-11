@@ -111,6 +111,15 @@
             "system": "System"
         }
     },
+    "shortcuts": {
+        "description": "Shortcuts active on this screen.",
+        "groupGeneral": "General",
+        "groupList": "List",
+        "groupNavigation": "Navigation",
+        "showHelp": "Show keyboard shortcuts",
+        "singleKeyOff": "Single-key shortcuts are off in your settings; ⌘ / Ctrl shortcuts still work.",
+        "title": "Keyboard shortcuts"
+    },
     "userMenu": {
         "accessibility": "Accessibility",
         "accessibilityOff": "Off",

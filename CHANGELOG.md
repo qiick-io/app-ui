@@ -10,6 +10,13 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Added
 
+- Optional pattern `keyboard-shortcuts` (#95): the `keyboard-shortcuts` item.
+  - `ShortcutsProvider` runs one document listener for every shortcut a mounted component registers with `useShortcut`; the latest registration of a key wins.
+  - Single-key shortcuts never fire while typing, and turn off with the user's setting (WCAG 2.1.4). ⌘ / Ctrl shortcuts never fire inside a rich-text editor, and a key another handler already took is left alone.
+  - `?` opens the help dialog. `ShortcutHint` shows platform key caps.
+  - `lib/shortcut-keys.ts` has the `mod+k` definitions and `RESERVED_SHORTCUTS` (⌘K palette, ⌘J Assistant, `?` help).
+  - Page: `docs/optional/keyboard-shortcuts.md`. New `shortcuts.*` locale keys.
+
 - Optional patterns (#90): `docs/` splits into **core** patterns, which every app follows, and **optional** patterns in `docs/optional/`, which an app adopts only when they fit. `standards/patterns.json` is the catalogue. An app lists the ones it adopts in `qiick-standards.json` `"patterns"` (`"name"` or `"name:variant"`), and the sync names them in its agent files. An unknown name or a missing variant fails the sync and `--check`. The UI rule now says: ask to adopt an optional pattern instead of building a variant, and propose a new solution in app-ui instead of designing it inside one app. Upgrade: re-sync; add `patterns` only when adopting one.
 
 ### Changed

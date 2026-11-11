@@ -111,6 +111,15 @@
             "system": "Sistema"
         }
     },
+    "shortcuts": {
+        "description": "Scorciatoie attive in questa schermata.",
+        "groupGeneral": "Generale",
+        "groupList": "Lista",
+        "groupNavigation": "Navigazione",
+        "showHelp": "Mostra le scorciatoie da tastiera",
+        "singleKeyOff": "Le scorciatoie a un tasto sono disattivate nelle tue impostazioni; quelle con ⌘ / Ctrl funzionano ancora.",
+        "title": "Scorciatoie da tastiera"
+    },
     "userMenu": {
         "accessibility": "Accessibilità",
         "accessibilityOff": "Off",

@@ -222,18 +222,43 @@ function renderCatalogueTable(catalogue) {
         return 'No optional pattern is published yet.';
     }
 
-    return [
-        '| Optional pattern | Name in `patterns` | Page |',
-        '| --- | --- | --- |',
-        ...entries.map(([name, pattern]) => {
-            const variants = pattern.variants ?? [];
-            const declarations =
-                variants.length === 0
-                    ? [name]
-                    : variants.map((variant) => `${name}:${variant}`);
+    const rows = entries.map(([name, pattern]) => {
+        const variants = pattern.variants ?? [];
+        const declarations =
+            variants.length === 0
+                ? [name]
+                : variants.map((variant) => `${name}:${variant}`);
 
-            return `| ${pattern.title} | ${declarations.map((declaration) => `\`${declaration}\``).join(', ')} | ${DOCS_URL}/${pattern.page} |`;
-        }),
+        return [
+            pattern.title,
+            declarations.map((declaration) => `\`${declaration}\``).join(', '),
+            `${DOCS_URL}/${pattern.page}`,
+        ];
+    });
+
+    return markdownTable(
+        ['Optional pattern', 'Name in `patterns`', 'Page'],
+        rows,
+    );
+}
+
+/**
+ * A Markdown table with padded columns, as Prettier writes it, so a repo that
+ * formats its Markdown never rewrites the managed files.
+ * @param {string[]} header
+ * @param {string[][]} rows
+ */
+function markdownTable(header, rows) {
+    const widths = header.map((cell, column) =>
+        Math.max(cell.length, ...rows.map((row) => row[column].length)),
+    );
+    const line = (cells) =>
+        `| ${cells.map((cell, column) => cell.padEnd(widths[column])).join(' | ')} |`;
+
+    return [
+        line(header),
+        `| ${widths.map((width) => '-'.repeat(width)).join(' | ')} |`,
+        ...rows.map(line),
     ].join('\n');
 }
 

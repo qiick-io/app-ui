@@ -1616,6 +1616,25 @@
                     "type": "registry:component"
                 }
             ]
+        },
+        {
+            "name": "keyboard-shortcuts",
+            "type": "registry:component",
+            "title": "Keyboard shortcuts",
+            "description": "Optional pattern keyboard-shortcuts: ShortcutsProvider (one document listener, single-key shortcuts off while typing or by user setting), useShortcut, ShortcutHint, the ? help dialog, and lib/shortcut-keys.ts (mod+k definitions, reserved keys).",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": ["@qiick/dialog", "@qiick/kbd"],
+            "files": [
+                {
+                    "path": "src/components/keyboard-shortcuts.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/lib/shortcut-keys.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/shortcut-keys.ts"
+                }
+            ]
         }
     ]
 }
