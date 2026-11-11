@@ -141,5 +141,11 @@
         "logOut": "Abmelden",
         "reduceMotion": "Bewegung reduzieren",
         "settings": "Einstellungen"
+    },
+    "viewTabs": {
+        "severity": {
+            "critical": "Hat kritische Probleme",
+            "warning": "Hat Warnungen"
+        }
     }
 }

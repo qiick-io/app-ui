@@ -5,6 +5,11 @@
             "title": "Command palette and global search (⌘K)",
             "page": "docs/optional/command-palette.md"
         },
+        "grouped-tabs": {
+            "title": "Grouped view tabs with counts",
+            "page": "docs/optional/grouped-tabs.md",
+            "variants": ["sub-menu", "two-rows"]
+        },
         "keyboard-shortcuts": {
             "title": "Keyboard shortcuts and the ? help dialog",
             "page": "docs/optional/keyboard-shortcuts.md"
