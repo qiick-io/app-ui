@@ -57,6 +57,17 @@
         "reactionToggle": "Reazione {{emoji}}: {{names}}",
         "removePendingFile": "Rimuovi file"
     },
+    "commandPalette": {
+        "description": "Cerca pagine, record e azioni.",
+        "empty": "Nessun risultato.",
+        "open": "Apri la palette dei comandi",
+        "placeholder": "Cerca o vai a…",
+        "recent": "Recenti",
+        "searchFailed": "Ricerca non riuscita. Mostro solo i risultati locali.",
+        "searching": "Ricerca in corso…",
+        "title": "Palette dei comandi",
+        "trigger": "Cerca"
+    },
     "common": {
         "cancel": "Annulla",
         "clearFilters": "Cancella filtri",

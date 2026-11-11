@@ -1,6 +1,10 @@
 {
     "$comment": "Optional UI patterns an app may adopt by listing them in qiick-standards.json \"patterns\" (\"name\" or \"name:variant\"). Each entry has its page in docs/optional/. See docs/optional/README.md.",
     "patterns": {
+        "command-palette": {
+            "title": "Command palette and global search (⌘K)",
+            "page": "docs/optional/command-palette.md"
+        },
         "keyboard-shortcuts": {
             "title": "Keyboard shortcuts and the ? help dialog",
             "page": "docs/optional/keyboard-shortcuts.md"
