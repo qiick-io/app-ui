@@ -102,6 +102,12 @@
         "endTime": "Endzeit",
         "apply": "Anwenden"
     },
+    "inbox": {
+        "detailDescription": "Details und Aktionen des Eintrags.",
+        "nextStep": "Was zu tun ist",
+        "openFullPage": "Ganze Seite öffnen",
+        "savedViews": "Gespeicherte Ansichten"
+    },
     "picker": {
         "clearSelection": "Auswahl aufheben",
         "loading": "Wird geladen…",

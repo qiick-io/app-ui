@@ -102,6 +102,12 @@
         "endTime": "End time",
         "apply": "Apply"
     },
+    "inbox": {
+        "detailDescription": "Item details and actions.",
+        "nextStep": "What to do",
+        "openFullPage": "Open full page",
+        "savedViews": "Saved views"
+    },
     "picker": {
         "clearSelection": "Clear selection",
         "loading": "Loading…",

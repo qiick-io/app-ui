@@ -102,6 +102,12 @@
         "endTime": "Ora di fine",
         "apply": "Applica"
     },
+    "inbox": {
+        "detailDescription": "Dettagli e azioni dell'elemento.",
+        "nextStep": "Cosa fare",
+        "openFullPage": "Apri a pagina intera",
+        "savedViews": "Viste salvate"
+    },
     "picker": {
         "clearSelection": "Cancella selezione",
         "loading": "Caricamento…",

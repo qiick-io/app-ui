@@ -6,6 +6,8 @@ Admin lists: Users, Groups, Roles, API keys, Activity log.
 
 **Copy from externa-core:** `pages/admin/users/index.tsx` (reference list), `components/admin/data-table.tsx`, `components/admin/data-table-toolbar.tsx`, `components/layout/page-layout.tsx`, `components/admin/files/files-selection-toolbar.tsx`, `lib/pagination.ts`.
 
+A list people triage (issues, alerts, tickets) rather than browse: the optional [inbox list](optional/inbox-list.md) pattern adds saved views, a fixed filter order and the item beside the list.
+
 ## Toolbar
 
 - `filters={<DataTableToolbar …/>}`: search (and filters) on the **left**.

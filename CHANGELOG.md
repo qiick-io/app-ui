@@ -10,6 +10,12 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Added
 
+- Optional pattern `inbox-list` (#94): the `inbox-list` item.
+  - `InboxSavedViews`: preset filter sets as URL links with counts, above the toolbar.
+  - `InboxDetailSheet`: the item beside the list. Status, title, description and actions; then "What to do"; then collapsed sections; and "Open full page".
+  - Variants: `inbox-list:side-panel` and `inbox-list:full-page`.
+  - Page: `docs/optional/inbox-list.md` covers the fixed filter order, bulk actions authorized and logged per item, the item layout, empty views and one vocabulary per app. It is linked from `list-page.md`. New `inbox.*` locale keys.
+
 - Optional pattern `sidebar-entities` (#92): the `sidebar-entity-list` item.
   - `SidebarEntityList` lists records under a nav item: Pinned first, in a stable order, then Needs attention, worst first and hidden when empty. "View all" ends it. Status shows as an icon with a label.
   - `SidebarEntityFlyout` opens the same blocks from the icon-only sidebar. `PinToggleButton` is the star that pins a record.
