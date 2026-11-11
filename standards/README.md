@@ -33,7 +33,8 @@ The rules themselves are in [`rules/`](rules): [stack](rules/stack.md) (only in 
 The reusable [`drift-check.yml`](../.github/workflows/drift-check.yml) with `standards: true` runs `scripts/sync-standards.mjs --check` from the app-ui ref pinned in the repo's `qiick-standards.json`. It fails when:
 
 - a managed file differs, or a managed block in `AGENTS.md` / `CLAUDE.md` / `.github/copilot-instructions.md` differs or is missing;
-- a file or directory under `frontendRoots` is not kebab-case.
+- a file or directory under `frontendRoots` is not kebab-case;
+- `patterns` names an optional pattern that does not exist, or a pattern with variants without one of them.
 
 The repo's own CI runs the rest, each one a step in its workflow:
 
@@ -82,7 +83,7 @@ A new product: [`docs/new-product.md`](../docs/new-product.md) and `scripts/new-
     }
     ```
 
-    `ref` is the app-ui tag (or branch) CI checks against; omit `uiPreset` in repos without a UI; `oxlint: true` writes the Oxlint configs for Vite+ apps (the default; add the `lint:standards` and `lint:i18n` scripts as excubia-app has them); `eslint: true` writes `qiick-standards.eslint.js` for repos still on ESLint until they move to Vite+ (add `qiickStandards(['resources/js/**/*.{ts,tsx}'])` and `...qiickRatchetedRules(['resources/js/**/*.{ts,tsx}'])` to `eslint.config.js`, then write the first `qiick-lint-baseline.json` with the ratchet's `--update`); `app: true` adds the self-hosted distribution rules (apps, not Composer packages).
+    `ref` is the app-ui tag (or branch) CI checks against; omit `uiPreset` in repos without a UI; `oxlint: true` writes the Oxlint configs for Vite+ apps (the default; add the `lint:standards` and `lint:i18n` scripts as excubia-app has them); `eslint: true` writes `qiick-standards.eslint.js` for repos still on ESLint until they move to Vite+ (add `qiickStandards(['resources/js/**/*.{ts,tsx}'])` and `...qiickRatchetedRules(['resources/js/**/*.{ts,tsx}'])` to `eslint.config.js`, then write the first `qiick-lint-baseline.json` with the ratchet's `--update`); `app: true` adds the self-hosted distribution rules (apps, not Composer packages); `patterns` lists the optional UI patterns the app adopts (`"name"` or `"name:variant"`, from [`patterns.json`](patterns.json); see [`docs/optional/`](../docs/optional/README.md)), and the agent files name them.
 
 2. Sync from an app-ui checkout at that ref:
 

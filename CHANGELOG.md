@@ -8,6 +8,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Added
+
+- Optional patterns (#90): `docs/` splits into **core** patterns, which every app follows, and **optional** patterns in `docs/optional/`, which an app adopts only when they fit. `standards/patterns.json` is the catalogue. An app lists the ones it adopts in `qiick-standards.json` `"patterns"` (`"name"` or `"name:variant"`), and the sync names them in its agent files. An unknown name or a missing variant fails the sync and `--check`. The UI rule now says: ask to adopt an optional pattern instead of building a variant, and propose a new solution in app-ui instead of designing it inside one app. Upgrade: re-sync; add `patterns` only when adopting one.
+
 ### Changed
 
 - `reasoning`: opens while the model thinks and closes when it finishes, as shadcn's AI Elements Reasoning does; once the person opens or closes it, their choice wins (#85). It used to stay collapsed. Upgrade: re-pull `reasoning`.
