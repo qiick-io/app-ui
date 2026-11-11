@@ -128,14 +128,17 @@ No agent invents a layout, a component, a colour or a component position in a qi
 
 ### Before any UI change
 
-1. Find the pattern in the table in the details and read its page: each one names the registry item and the exact externa-core `develop` files to copy.
+Patterns come in two tiers. **Core** patterns bind every qiick app. **Optional** patterns are accepted solutions that bind only the apps that adopt them, by listing them in `qiick-standards.json` `patterns`. Optional patterns adopted in this repo: none.
+
+1. Find the pattern in the tables in the details and read its page: each one names the registry items, and the reference app files where they are not in the registry yet.
 2. Install it from the `@qiick` registry with `npx shadcn add @qiick/<name>`; do not rewrite it. The registry list: https://github.com/qiick-io/app-ui/blob/develop/registry/README.md
-3. If the registry does not have it yet, copy it from **externa-core `develop`**, file by file.
-4. If externa-core has no equivalent, **stop and ask the maintainer**. Do not design one.
+3. If the registry does not have it yet, copy it from the reference app the page names, file by file.
+4. When a screen needs what an optional pattern solves and this app has not adopted it, ask the maintainer to adopt it (add it to `patterns`). Do not build a variant of your own.
+5. If no core or optional pattern fits, **stop and ask the maintainer**. A new solution is proposed in app-ui as an optional pattern, never designed inside one app.
 
 ### Hard rules
 
-1. **Source of truth.** The `@qiick` registry; until an item ships there, externa-core `develop`. Copy, never redesign.
+1. **Source of truth.** The `@qiick` registry; until an item ships there, the reference app its pattern page names. Copy, never redesign.
 2. **Overrides.** An intentional difference from the registry is listed in the app's `app-ui.overrides.json` with a reason per file. Any other difference fails the drift check in CI.
 3. **Primitives.** shadcn components only (the registry `ui` items). Icons: `lucide-react` only. No Headless UI or other component libraries.
 4. **Colours.** Theme tokens only (`bg-primary`, `text-muted-foreground`, `border-sidebar-border`, …). No hex and no raw palette classes (`bg-teal-600`, `text-neutral-500`) in `className`; no arbitrary font sizes (`text-[11px]`).
@@ -158,7 +161,8 @@ Tokens come from the `@qiick/theme` registry item: one shared base (surfaces, th
 
 Rules for working in `qiick-io/app-ui` itself, on top of the qiick standards above.
 
-- This repo is the **source** of the UI rules and of the standards pack. Every deliberate change from externa-core is listed in [`registry/README.md`](registry/README.md); copy code from externa-core `develop`, do not redesign.
+- This repo is the **source** of the UI rules and of the standards pack. Every deliberate change from the reference app is listed in [`registry/README.md`](registry/README.md); copy code from the reference app a pattern page names, do not redesign.
+- A new shared solution becomes an **optional pattern** ([`docs/optional/`](docs/optional/README.md)): registry items, a playground route, an entry in `standards/patterns.json` and a page from the template.
 - Pattern pages: [`docs/`](docs/README.md). Theme: [`docs/theme.md`](docs/theme.md).
 - An item from an upstream registry (shadcn, AI Elements) records its source page, style and date in [`registry/README.md`](registry/README.md). Before adding, re-pulling or changing one, read the current upstream page and say in the PR what changed upstream.
 - Commit `public/r` with the registry sources (`npm run build`); CI fails when it is stale.

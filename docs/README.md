@@ -2,6 +2,8 @@
 
 New product? Start with [new-product.md](new-product.md).
 
+These are the **core** patterns: every qiick app follows them. **Optional** patterns, which an app adopts only when they fit the product, are in [`optional/`](optional/README.md).
+
 One page per pattern. Each names the registry item (when it exists) and the exact externa-core `develop` files to copy (paths under `resources/js/` unless noted). The playground renders the full screens: `npm run dev`, then `#/users`, `#/settings`, `#/assistant`, `#/chat`, `#/files` (add `/dark`).
 
 | Pattern                                                          | Page                                             |
@@ -21,6 +23,8 @@ One page per pattern. Each names the registry item (when it exists) and the exac
 | Chat and Assistant                                               | [chat-and-assistant.md](chat-and-assistant.md)   |
 | Files grid                                                       | [files-grid.md](files-grid.md)                   |
 | Theme: tokens, presets, control scale                            | [theme.md](theme.md)                             |
+
+Optional patterns: [`optional/README.md`](optional/README.md) explains adopting one (`patterns` in `qiick-standards.json`) and the page template; the list is in [`standards/patterns.json`](../standards/patterns.json).
 
 Backend conventions (with the summary in [`standards/rules/backend.md`](../standards/rules/backend.md)): [roles and permissions](roles-and-permissions.md), [API](api.md), [realtime](realtime.md), [security headers](security-headers.md), [logging and activity log](logging-and-audit.md), [AI backend](ai-backend.md).
 

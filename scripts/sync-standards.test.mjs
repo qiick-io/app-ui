@@ -251,3 +251,69 @@ test('Vite+ apps get the shared Oxlint configs, ESLint repos the ESLint one', ()
     );
     assert.deepEqual(syncStandards(viteApp, { isCheck: true }), []);
 });
+
+/** A catalogue with one plain pattern and one with variants, for the `patterns` tests. */
+const testCatalogue = {
+    'command-palette': {
+        title: 'Command palette',
+        page: 'docs/optional/command-palette.md',
+    },
+    'grouped-tabs': {
+        title: 'Grouped view tabs',
+        page: 'docs/optional/grouped-tabs.md',
+        variants: ['sub-menu', 'two-rows'],
+    },
+};
+
+test('adopted optional patterns are named in the UI rules', () => {
+    const root = makeRepo({
+        uiPreset: 'Blue',
+        patterns: ['command-palette', 'grouped-tabs:two-rows'],
+    });
+
+    syncStandards(root, { isCheck: false, catalogue: testCatalogue });
+
+    assert.deepEqual(
+        syncStandards(root, { isCheck: true, catalogue: testCatalogue }),
+        [],
+    );
+    assert.match(
+        read(root, 'AGENTS.md'),
+        /Optional patterns adopted in this repo: \[command-palette\]\(.+command-palette\.md\), \[grouped-tabs \(two-rows\)\]/,
+    );
+    assert.match(
+        read(root, '.qiick/standards/ui.md'),
+        /\| Grouped view tabs \| `grouped-tabs:sub-menu`, `grouped-tabs:two-rows` \|/,
+    );
+});
+
+test('a UI repo without patterns says it adopted none', () => {
+    const root = makeRepo({ uiPreset: 'Teal' });
+
+    syncStandards(root, { isCheck: false, catalogue: testCatalogue });
+
+    assert.match(
+        read(root, 'AGENTS.md'),
+        /Optional patterns adopted in this repo: none\./,
+    );
+});
+
+test('unknown patterns and missing variants fail the sync and the check', () => {
+    const root = makeRepo({
+        uiPreset: 'Teal',
+        patterns: ['sidebar-search', 'grouped-tabs', 'command-palette:big'],
+    });
+    const errors = syncStandards(root, {
+        isCheck: true,
+        catalogue: testCatalogue,
+    });
+
+    assert.equal(errors.length, 3);
+    assert.match(errors[0], /"sidebar-search" is not an optional pattern/);
+    assert.match(errors[1], /"grouped-tabs" needs one of its variants/);
+    assert.match(errors[2], /"command-palette" has no variants/);
+    assert.throws(
+        () => syncStandards(root, { isCheck: false, catalogue: testCatalogue }),
+        /is not an optional pattern/,
+    );
+});
