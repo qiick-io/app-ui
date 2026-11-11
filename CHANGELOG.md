@@ -8,36 +8,46 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-11
+
+### Upgrade notes
+
+- **Every repo with a `uiPreset` (excubia-app, externa-core):** re-sync. The UI block gains the two tiers of patterns: core, which every app follows, and optional, which an app adopts only through `"patterns"` in `qiick-standards.json`. It also gains the line "Optional patterns adopted in this repo". Without `patterns` nothing else changes, and no new check can fail.
+- **Adopting optional patterns** is a choice per app, not part of the upgrade:
+  1. add the names to `patterns` (`grouped-tabs` and `inbox-list` need a variant: `grouped-tabs:sub-menu` or `:two-rows`, `inbox-list:side-panel` or `:full-page`);
+  2. re-sync;
+  3. `npx shadcn add @qiick/<item>` for the items each page names.
+  `command-palette`, `sidebar-entity-list` and `inbox-list` need the backend each page describes.
+- **`theme`:** re-pull. The only change is the additive `[data-density='compact']` table rules, so nothing moves until an app sets the attribute.
+- **`confirmation`:** re-pull it, and pass `isDestructive` for tool calls that delete. Apps that carry it as an `app-ui.overrides.json` entry (externa-core) drop the override.
+- **`reasoning`:** re-pull it. It now opens while it streams. Drop any override for it.
+
 ### Added
 
-- Optional pattern `inbox-list` (#94): the `inbox-list` item.
-  - `InboxSavedViews`: preset filter sets as URL links with counts, above the toolbar.
-  - `InboxDetailSheet`: the item beside the list. Status, title, description and actions; then "What to do"; then collapsed sections; and "Open full page".
-  - Variants: `inbox-list:side-panel` and `inbox-list:full-page`.
-  - Page: `docs/optional/inbox-list.md` covers the fixed filter order, bulk actions authorized and logged per item, the item layout, empty views and one vocabulary per app. It is linked from `list-page.md`. New `inbox.*` locale keys.
-
-- Optional pattern `sidebar-entities` (#92): the `sidebar-entity-list` item.
-  - `SidebarEntityList` lists records under a nav item: Pinned first, in a stable order, then Needs attention, worst first and hidden when empty. "View all" ends it. Status shows as an icon with a label.
-  - `SidebarEntityFlyout` opens the same blocks from the icon-only sidebar. `PinToggleButton` is the star that pins a record.
-  - The optional sidebar filter: `SidebarFilterProvider`, `SidebarFilterInput`, `useSidebarFilter`.
-  - Page: `docs/optional/sidebar-entities.md`, with the backend rules (pins table, deferred and cached shared prop, scoped by visibility), linked from `shell.md`. New `sidebarEntities.*` locale keys.
-- Optional pattern `table-density` (#96): the `table-density-toggle` item (`TableDensityToggle`, `applyTableDensity`). The `theme` tightens table rows by 8px (a text row from 37px to 29px) under `[data-density='compact']`; controls keep their size. Page: `docs/optional/table-density.md`. New `tableDensity.*` locale keys. Upgrade: re-pull `theme` (additive rules only).
-
-- Optional pattern `command-palette` (#91): the `command-palette` item.
-  - `CommandPalette` is a ⌘K / Ctrl+K dialog. It filters local `groups` (navigation, actions) as you type, and calls a debounced, abortable server `search` for records. It keeps recent results per browser, and ⌘ / Ctrl+Enter opens a link in a new tab.
-  - `CommandPaletteTrigger` is the header control.
-  - It builds on `keyboard-shortcuts`.
-  - Page: `docs/optional/command-palette.md`, including the backend rules: one throttled endpoint, scoped by policy. New `commandPalette.*` locale keys.
-- Optional pattern `grouped-tabs` (#93): the `grouped-view-tabs` item. `GroupedViewTabs` groups a record's views by the question they answer, with open-item counts and a severity marker (icon and label) per view and per group. It comes in two variants, declared as `grouped-tabs:sub-menu` or `grouped-tabs:two-rows`. Below `sm` it is one select. Page: `docs/optional/grouped-tabs.md`, linked from the view rules in `page.md`. New `viewTabs.severity.*` locale keys.
-
+- Optional patterns (#90): `docs/` splits into **core** patterns, which every app follows, and **optional** patterns in `docs/optional/`, which an app adopts only when they fit. `standards/patterns.json` is the catalogue. An app lists the ones it adopts in `qiick-standards.json` `"patterns"` (`"name"` or `"name:variant"`), and the sync names them in its agent files. An unknown name or a missing variant fails the sync and `--check`. The UI rule now says: ask to adopt an optional pattern instead of building a variant, and propose a new solution in app-ui instead of designing it inside one app. Upgrade: re-sync; add `patterns` only when adopting one.
 - Optional pattern `keyboard-shortcuts` (#95): the `keyboard-shortcuts` item.
   - `ShortcutsProvider` runs one document listener for every shortcut a mounted component registers with `useShortcut`; the latest registration of a key wins.
   - Single-key shortcuts never fire while typing, and turn off with the user's setting (WCAG 2.1.4). ⌘ / Ctrl shortcuts never fire inside a rich-text editor, and a key another handler already took is left alone.
   - `?` opens the help dialog. `ShortcutHint` shows platform key caps.
   - `lib/shortcut-keys.ts` has the `mod+k` definitions and `RESERVED_SHORTCUTS` (⌘K palette, ⌘J Assistant, `?` help).
   - Page: `docs/optional/keyboard-shortcuts.md`. New `shortcuts.*` locale keys.
-
-- Optional patterns (#90): `docs/` splits into **core** patterns, which every app follows, and **optional** patterns in `docs/optional/`, which an app adopts only when they fit. `standards/patterns.json` is the catalogue. An app lists the ones it adopts in `qiick-standards.json` `"patterns"` (`"name"` or `"name:variant"`), and the sync names them in its agent files. An unknown name or a missing variant fails the sync and `--check`. The UI rule now says: ask to adopt an optional pattern instead of building a variant, and propose a new solution in app-ui instead of designing it inside one app. Upgrade: re-sync; add `patterns` only when adopting one.
+- Optional pattern `command-palette` (#91): the `command-palette` item.
+  - `CommandPalette` is a ⌘K / Ctrl+K dialog. It filters local `groups` (navigation, actions) as you type, and calls a debounced, abortable server `search` for records. It keeps recent results per browser, and ⌘ / Ctrl+Enter opens a link in a new tab.
+  - `CommandPaletteTrigger` is the header control.
+  - It builds on `keyboard-shortcuts`.
+  - Page: `docs/optional/command-palette.md`, including the backend rules: one throttled endpoint, scoped by policy. New `commandPalette.*` locale keys.
+- Optional pattern `grouped-tabs` (#93): the `grouped-view-tabs` item. `GroupedViewTabs` groups a record's views by the question they answer, with open-item counts and a severity marker (icon and label) per view and per group. It comes in two variants, declared as `grouped-tabs:sub-menu` or `grouped-tabs:two-rows`. Below `sm` it is one select. Page: `docs/optional/grouped-tabs.md`, linked from the view rules in `page.md`. New `viewTabs.severity.*` locale keys.
+- Optional pattern `sidebar-entities` (#92): the `sidebar-entity-list` item.
+  - `SidebarEntityList` lists records under a nav item: Pinned first, in a stable order, then Needs attention, worst first and hidden when empty. "View all" ends it. Status shows as an icon with a label.
+  - `SidebarEntityFlyout` opens the same blocks from the icon-only sidebar. `PinToggleButton` is the star that pins a record.
+  - The optional sidebar filter: `SidebarFilterProvider`, `SidebarFilterInput`, `useSidebarFilter`.
+  - Page: `docs/optional/sidebar-entities.md`, with the backend rules (pins table, deferred and cached shared prop, scoped by visibility), linked from `shell.md`. New `sidebarEntities.*` locale keys.
+- Optional pattern `table-density` (#96): the `table-density-toggle` item (`TableDensityToggle`, `applyTableDensity`). The `theme` tightens table rows by 8px (a text row from 37px to 29px) under `[data-density='compact']`; controls keep their size. Page: `docs/optional/table-density.md`. New `tableDensity.*` locale keys. Upgrade: re-pull `theme` (additive rules only).
+- Optional pattern `inbox-list` (#94): the `inbox-list` item.
+  - `InboxSavedViews`: preset filter sets as URL links with counts, above the toolbar.
+  - `InboxDetailSheet`: the item beside the list. Status, title, description and actions; then "What to do"; then collapsed sections; and "Open full page".
+  - Variants: `inbox-list:side-panel` and `inbox-list:full-page`.
+  - Page: `docs/optional/inbox-list.md` covers the fixed filter order, bulk actions authorized and logged per item, the item layout, empty views and one vocabulary per app. It is linked from `list-page.md`. New `inbox.*` locale keys.
 
 ### Changed
 
@@ -162,7 +172,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/qiick-io/app-ui/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/qiick-io/app-ui/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/qiick-io/app-ui/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/qiick-io/app-ui/compare/v0.1.0...v0.2.0
