@@ -13,6 +13,10 @@
         "keyboard-shortcuts": {
             "title": "Keyboard shortcuts and the ? help dialog",
             "page": "docs/optional/keyboard-shortcuts.md"
+        },
+        "sidebar-entities": {
+            "title": "Sidebar filter, pinned and needs-attention entity lists",
+            "page": "docs/optional/sidebar-entities.md"
         }
     }
 }

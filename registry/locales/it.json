@@ -131,6 +131,21 @@
         "singleKeyOff": "Le scorciatoie a un tasto sono disattivate nelle tue impostazioni; quelle con ⌘ / Ctrl funzionano ancora.",
         "title": "Scorciatoie da tastiera"
     },
+    "sidebarEntities": {
+        "filter": "Filtra la navigazione",
+        "filterPlaceholder": "Filtra…",
+        "needsAttention": "Da controllare",
+        "pin": "Fissa {{name}}",
+        "pinHint": "Fissa un progetto con la stella per tenerlo qui.",
+        "pinned": "Fissati",
+        "status": {
+            "good": "In salute",
+            "warning": "Ha avvisi",
+            "critical": "Ha problemi critici"
+        },
+        "unpin": "Togli {{name}} dai fissati",
+        "viewAll": "Vedi tutti"
+    },
     "userMenu": {
         "accessibility": "Accessibilità",
         "accessibilityOff": "Off",
