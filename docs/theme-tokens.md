@@ -77,7 +77,7 @@ Each `--x` also has a `--color-x` mapping, so `bg-x` / `text-x` utilities exist.
 | `--primary-hover`                                                     | primary + 12% black                           | primary + 12% white                          | Primary hover; moves away from the foreground so contrast only grows (#449) |
 | `--secondary`, `--muted`, `--accent` (+ `-foreground`)                | ink-100                                       | ink-800                                      | Quiet surfaces                                                              |
 | `--muted-foreground`                                                  | ink-600                                       | ink-300                                      | Secondary text, placeholders                                                |
-| `--destructive`, `--success`, `--warning`, `--info` (+ `-foreground`) | destructive 600, others 700 / white           | 300–400 step / ink-950                       | Status                                                                      |
+| `--destructive`, `--success`, `--warning`, `--info` (+ `-foreground`) | destructive 600, others 700 / white           | 300 step / ink-950                           | Status                                                                      |
 | `--warning-text`, `--folder`, `--favorite`                            | amber 700 / 600 / 500 (≥ 3:1 icons, 7:1 text) | amber 400                                    | Warning text, folder icon, favourite star (high contrast: amber 700 / 300)  |
 | `--overlay`                                                           | ink-950 60%                                   | ink-950 70%                                  | Dialog backdrop                                                             |
 | `--border`                                                            | ink-200                                       | ink-800                                      | Dividers                                                                    |
@@ -129,3 +129,24 @@ The registry `cn()` knows these keys, so `cn('h-control', 'h-8')` keeps `h-8`.
 ## Contrast check
 
 `npm run a11y:contrast` (repo root) resolves every token to a hex and checks the text pairs at 4.5:1 and the UI pairs (input, ring, active bar, Assistant border) at 3:1, in light, dark, high contrast and high contrast dark, for teal and every preset. CI runs it on every PR.
+
+It also checks the status badges (`destructive`, `success`, `warning`, `info`) as they render, at rest and hovered as a link: the text on the variant's tint, composited over the page, card, sidebar, popover and muted surfaces, with the classes read from `registry/src/components/ui/badge.tsx`. The status variants use one tint, `/15`, in light and dark (the dark `/20` tint put `success` at 4.42:1 on the card, #77), and the dark status colours are the 300 steps so that tint holds 4.5:1 up to ink-800 (#122). A link badge's hover moves the tint away from the text, so contrast only grows: `/10` for the status variants, and `/50` instead of `/90` for the dark `destructive` fill under white text.
+
+### The axe smoke test must prove `color-contrast` ran
+
+The token check covers the theme; the app's axe smoke test (`ui-quality.yml`, `axe-test`) covers the rendered pages. axe-core before 4.11.1 cannot parse a colour with a `none` channel, which is how Tailwind v4 defines its zero-chroma palette (`--color-neutral-600: oklch(43.9% 0 none)`). One such colour on the page and axe puts the whole `color-contrast` rule in `incomplete` with an error, so it reports no contrast violation at all. Pest's browser plugin (v5.2) bundles axe 4.10.3, and `assertNoAccessibilityIssues()` reads only `violations`, so the smoke test stays green while it checks no contrast (#77: excubia-app's `nav-footer.tsx` with `text-neutral-*` hid the `success` badge failure).
+
+Two guards keep it visible:
+
+- `check-ui-tokens.mjs` already fails on raw palette classes such as `text-neutral-600`; an entry in `ui-token-baseline.txt` is also a page where axe may skip contrast, so pay those first.
+- After `assertNoAccessibilityIssues()`, the smoke test asserts that the rule ran (axe is already on the page):
+
+```php
+$page->assertNoAccessibilityIssues(1);
+
+expect($page->script(<<<'JS'
+    async () => (await window.axe.run({ runOnly: ['color-contrast'] }))
+        .incomplete.filter((result) => result.error)
+        .map((result) => result.error.message ?? String(result.error))
+JS))->toBe([]);
+```

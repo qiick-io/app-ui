@@ -51,6 +51,7 @@ test('scaffolds a starter-kit app into a synced qiick product pinned to one ref'
     );
 
     assert.match(workflow, /drift-check\.yml@v1\.2\.3/);
+    assert.match(workflow, /php-quality\.yml@v1\.2\.3/);
     assert.match(workflow, /package: qiick\/acme/);
     assert.doesNotMatch(workflow, /@develop/);
     assert.deepEqual(syncStandards(root, { isCheck: true }), []);

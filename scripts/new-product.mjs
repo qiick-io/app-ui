@@ -75,6 +75,9 @@ jobs:
     with:
       standards: true
 
+  php-quality:
+    uses: qiick-io/app-ui/.github/workflows/php-quality.yml@${ref}
+
   ui-quality:
     uses: qiick-io/app-ui/.github/workflows/ui-quality.yml@${ref}
 
