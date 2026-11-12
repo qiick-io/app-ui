@@ -8,6 +8,11 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Fixed
+
+- `ui-quality.yml`: the contrast step failed in every app since v0.6.0 (`ENOENT … registry/src/components/ui/badge.tsx`), because the workflow checked out only `scripts/` from app-ui while `a11y-contrast.mjs` now reads the badge. It now passes the app's own badge (new input `badge-file`, default `resources/js/components/ui/badge.tsx`) and falls back to the registry's copy, which the sparse checkout now includes. Upgrade: bump the `uses:` pin; nothing else.
+- `sidebar-entity-list`: the "Pinned" / "Needs attention" headings and the empty hint used `text-sidebar-foreground/70`, 3.15:1 on the light sidebar (below AA); they use the `text-sidebar-muted-foreground` token now. Upgrade: re-pull `sidebar-entity-list` (apps with an override: apply the same class change).
+
 ## [0.6.0] - 2026-11-12
 
 ### Upgrade notes
