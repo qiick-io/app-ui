@@ -1082,6 +1082,52 @@
             ]
         },
         {
+            "name": "notifications",
+            "type": "registry:component",
+            "title": "Notifications",
+            "description": "Core notification centre: NotificationsBell (sidebar bell with the unread badge, live through an optional subscribe) and NotificationsDrawer (right-side list, mark as read, mark all as read), createNotificationsSource() for the Laravel database notifications contract, SidebarUnreadBadge and the opt-in notification sound.",
+            "dependencies": [
+                "@inertiajs/react",
+                "lucide-react",
+                "react-i18next"
+            ],
+            "registryDependencies": [
+                "@qiick/badge",
+                "@qiick/button",
+                "@qiick/item",
+                "@qiick/scroll-area",
+                "@qiick/sheet",
+                "@qiick/sidebar",
+                "@qiick/spinner",
+                "@qiick/toast",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/notifications/notifications-bell.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/notifications/notifications-drawer.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/sidebar-unread-badge.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/lib/notifications-api.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/notifications-api.ts"
+                },
+                {
+                    "path": "src/lib/notification-sound.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/notification-sound.ts"
+                }
+            ]
+        },
+        {
             "name": "item",
             "type": "registry:ui",
             "title": "Item",

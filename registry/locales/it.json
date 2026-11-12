@@ -4,9 +4,12 @@
         "close": "Chiudi",
         "loading": "Caricamento",
         "moreActions": "Altre azioni",
+        "notifications": "Notifiche",
+        "notificationsUnread": "Notifiche, {{count}} non lette",
         "saving": "Salvataggio",
         "search": "Cerca",
-        "toggleSidebar": "Attiva/disattiva barra laterale"
+        "toggleSidebar": "Attiva/disattiva barra laterale",
+        "unreadCount": "{{count}} non lette"
     },
     "ai": {
         "fabDescription": "Drawer rapido dell'assistente. Apri la pagina completa per la cronologia.",
@@ -173,5 +176,17 @@
         "comfortable": "Comoda",
         "compact": "Compatta",
         "label": "Densità delle tabelle"
+    },
+    "notifications": {
+        "title": "Notifiche",
+        "description": "Aggiornamenti per te, dal più recente.",
+        "loading": "Caricamento…",
+        "empty": "Nessuna notifica.",
+        "loadFailed": "Impossibile caricare le notifiche. Riprova più tardi.",
+        "updateFailed": "Impossibile aggiornare la notifica.",
+        "untitled": "Notifica",
+        "markAllRead": "Segna tutte come lette",
+        "markRead": "Segna come letta",
+        "markUnread": "Segna come non letta"
     }
 }
