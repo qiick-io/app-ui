@@ -8,6 +8,8 @@ Admin lists: Users, Groups, Roles, API keys, Activity log.
 
 A list people triage (issues, alerts, tickets) rather than browse: the optional [inbox list](optional/inbox-list.md) pattern adds saved views, a fixed filter order and the item beside the list.
 
+A cell that holds several items (the largest tables, the packages blocking an upgrade): the optional [table cell details](optional/table-cell-details.md) pattern keeps it on one line and opens the full list in a popover.
+
 ## Toolbar
 
 - `filters={<DataTableToolbar …/>}`: search (and filters) on the **left**.

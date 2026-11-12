@@ -1742,6 +1742,31 @@
                     "type": "registry:component"
                 }
             ]
+        },
+        {
+            "name": "table-cell-details",
+            "type": "registry:component",
+            "title": "Table cell details",
+            "description": "Optional pattern table-cell-details: TableCellDetails keeps a list-holding table cell on one line (a summary and a ghost button) and opens the full detail in a narrow popover (a bottom drawer on mobile), as a list of names or as bars with visible value labels; lib/table-cell-details.ts scales the bars.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/drawer",
+                "@qiick/popover",
+                "@qiick/use-mobile",
+                "@qiick/use-scroll-region"
+            ],
+            "files": [
+                {
+                    "path": "src/components/table-cell-details.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/lib/table-cell-details.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/table-cell-details.ts"
+                }
+            ]
         }
     ]
 }
