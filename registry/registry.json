@@ -21,7 +21,7 @@
             "name": "theme",
             "type": "registry:item",
             "title": "Theme",
-            "description": "Design tokens of the qiick apps (shared base, teal brand): colours for light, dark and high contrast, AI accent, control-size scale, focus ring, base and reduced-motion rules.",
+            "description": "Design tokens of the qiick apps (shared base, teal brand): colours for light, dark and high contrast, AI accent, control-size scale, focus ring, base and reduced-motion rules, and the scroll cue of wide tables.",
             "files": [
                 {
                     "path": "src/css/qiick-theme.css",
@@ -445,8 +445,12 @@
             "name": "table",
             "type": "registry:ui",
             "title": "Table",
-            "description": "Table primitives (shadcn new-york-v4) used by the flat list panels.",
-            "registryDependencies": ["@qiick/utils"],
+            "description": "Table primitives (shadcn new-york-v4) used by the flat list panels; the container is a keyboard-scrollable region with the scroll cue when the table is wider than its card.",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": [
+                "@qiick/use-scroll-region",
+                "@qiick/utils"
+            ],
             "files": [
                 {
                     "path": "src/components/ui/table.tsx",
@@ -539,7 +543,7 @@
             "name": "use-scroll-region",
             "type": "registry:hook",
             "title": "useScrollRegion",
-            "description": "Puts a scroll container in the tab order while its content overflows, so the keyboard can scroll it (used by TablePanel).",
+            "description": "Puts a scroll container in the tab order (a named region when given a name) while its content overflows, so the keyboard can scroll it, and marks the sides that hide content for the theme's scroll cue (used by Table and TablePanel).",
             "files": [
                 {
                     "path": "src/hooks/use-scroll-region.ts",

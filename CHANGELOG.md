@@ -8,6 +8,18 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Upgrade notes
+
+- **Every app with tables (excubia-app#206, externa-core):** re-pull `npx shadcn add @qiick/theme @qiick/use-scroll-region @qiick/table @qiick/page-layout --overwrite` (`data-table` itself is unchanged; it gets the cue through `table` and `page-layout`). Merge the new `a11y.scrollableTable` key from `registry/locales/{en,de,it}.json` into the app's locale files. Nothing else: no props, wrappers or classes to add per page. Review `app-ui.overrides.json` entries for `table.tsx`, `page-layout.tsx` or `qiick-theme.css`, if any. An app whose axe test snapshots the DOM sees `role="region"` and `aria-label` on table scrollers that overflow.
+
+### Added
+
+- Scroll cue for wide tables on small screens (#118, for excubia-app#206): a table wider than its card fades out over the last 2rem on each side that hides columns, so phone users see that it scrolls.
+    - Applies to every `Table` (its container) and every `TablePanel` (so every `DataTable`); a table that fits shows nothing, so desktop tables are unchanged.
+    - `useScrollRegion` marks the hidden sides (`data-scroll-cue-left` / `-right`) on scroll, resize and content changes; the `theme` draws the fade as a mask, so it needs no colour and holds in light, dark and high contrast. The fade animates only without reduced motion and gives way to the focus ring on keyboard focus.
+    - While it overflows, the scroller is a focusable region named "Scrollable table" (`a11y.scrollableTable`), so the keyboard can scroll it (WCAG 2.1.1, axe `scrollable-region-focusable`); standalone `Table`s in cards had no keyboard access before.
+    - `useScrollRegion(accessibleName?)` takes an optional name and ignores containers whose own `overflow` is `visible`. Documented in `docs/list-page.md` ("Wide tables on small screens"); the playground `table` demo has a wide table in a phone-width card.
+
 ## [0.5.0] - 2026-11-12
 
 ### Upgrade notes

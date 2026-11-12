@@ -1,17 +1,70 @@
 import { useEffect, useState } from 'react';
 
+/** Horizontal scroll position of a scroll container, in CSS pixels. */
+export type HorizontalScrollMetrics = {
+    scrollLeft: number;
+    scrollWidth: number;
+    clientWidth: number;
+    isRightToLeft: boolean;
+};
+
 /**
- * Keyboard access for a scroll container (WCAG 2.1.1, axe
- * `scrollable-region-focusable`): while its content overflows, the container
- * has `tabindex="0"` so arrow keys and Page Up / Down scroll it; when nothing
- * overflows it stays out of the tab order. The hook sets the attribute on the
- * node itself each time it measures, so do not pass `tabIndex` as well.
+ * Which physical sides of a horizontal scroller hide content. In right-to-left
+ * containers `scrollLeft` starts at 0 on the right and goes negative, so the
+ * hidden width on the left is measured from the other end.
  *
+ * @returns {{ hasHiddenLeft: boolean, hasHiddenRight: boolean }} One pixel of slack absorbs sub-pixel rounding.
+ */
+export function hiddenScrollSides({
+    scrollLeft,
+    scrollWidth,
+    clientWidth,
+    isRightToLeft,
+}: HorizontalScrollMetrics): {
+    hasHiddenLeft: boolean;
+    hasHiddenRight: boolean;
+} {
+    const maximumScroll = Math.max(0, scrollWidth - clientWidth);
+    const hiddenLeftWidth = isRightToLeft
+        ? maximumScroll + scrollLeft
+        : scrollLeft;
+    const hiddenRightWidth = maximumScroll - hiddenLeftWidth;
+
+    return {
+        hasHiddenLeft: hiddenLeftWidth > 1,
+        hasHiddenRight: hiddenRightWidth > 1,
+    };
+}
+
+function canScroll(overflow: string): boolean {
+    return overflow === 'auto' || overflow === 'scroll';
+}
+
+/**
+ * Keyboard access and a visible cue for a scroll container.
+ *
+ * - WCAG 2.1.1, axe `scrollable-region-focusable`: while its content
+ *   overflows, the container has `tabindex="0"` so arrow keys and Page Up /
+ *   Down scroll it; with `accessibleName` it is also a named
+ *   `role="region"`. When nothing overflows it stays out of the tab order and
+ *   the attributes it added are removed.
+ * - Scroll cue (`docs/list-page.md`): `data-scroll-cue-left` /
+ *   `data-scroll-cue-right` mark the sides that hide content, and
+ *   `--scroll-cue-scrollbar` holds the vertical scrollbar width; the theme
+ *   fades the content out on those sides. Updated on scroll, resize and
+ *   content changes.
+ *
+ * The hook sets the attributes on the node itself each time it measures, so
+ * do not pass `tabIndex`, `role` or `aria-label` as well. A container whose
+ * own `overflow` is `visible` (a table inside a `TablePanel`) never counts as
+ * scrollable: its parent scrolls instead.
+ *
+ * @param {string} [accessibleName] - Translated name of the region while it scrolls ("Scrollable table").
  * @returns {(element: TElement | null) => void} Callback ref for the scroll container.
  */
-export function useScrollRegion<TElement extends HTMLElement>(): (
-    element: TElement | null,
-) => void {
+export function useScrollRegion<TElement extends HTMLElement>(
+    accessibleName?: string,
+): (element: TElement | null) => void {
     const [element, setElement] = useState<TElement | null>(null);
 
     useEffect(() => {
@@ -20,18 +73,57 @@ export function useScrollRegion<TElement extends HTMLElement>(): (
         }
 
         const update = (): void => {
-            const isScrollable =
-                element.scrollHeight > element.clientHeight + 1 ||
+            const style = getComputedStyle(element);
+            const isScrollableX =
+                canScroll(style.overflowX) &&
                 element.scrollWidth > element.clientWidth + 1;
+            const isScrollableY =
+                canScroll(style.overflowY) &&
+                element.scrollHeight > element.clientHeight + 1;
+            const { hasHiddenLeft, hasHiddenRight } = isScrollableX
+                ? hiddenScrollSides({
+                      scrollLeft: element.scrollLeft,
+                      scrollWidth: element.scrollWidth,
+                      clientWidth: element.clientWidth,
+                      isRightToLeft: style.direction === 'rtl',
+                  })
+                : { hasHiddenLeft: false, hasHiddenRight: false };
+            const verticalScrollbarWidth =
+                element.offsetWidth -
+                element.clientWidth -
+                parseFloat(style.borderLeftWidth) -
+                parseFloat(style.borderRightWidth);
 
-            if (isScrollable) {
+            if (isScrollableX || isScrollableY) {
                 element.tabIndex = 0;
+
+                if (accessibleName) {
+                    element.setAttribute('role', 'region');
+                    element.setAttribute('aria-label', accessibleName);
+                }
             } else {
                 element.removeAttribute('tabindex');
+
+                if (accessibleName) {
+                    element.removeAttribute('role');
+                    element.removeAttribute('aria-label');
+                }
+            }
+
+            element.toggleAttribute('data-scroll-cue-left', hasHiddenLeft);
+            element.toggleAttribute('data-scroll-cue-right', hasHiddenRight);
+
+            if (verticalScrollbarWidth > 0) {
+                element.style.setProperty(
+                    '--scroll-cue-scrollbar',
+                    `${verticalScrollbarWidth}px`,
+                );
+            } else {
+                element.style.removeProperty('--scroll-cue-scrollbar');
             }
         };
         // Absent in jsdom (unit tests) and very old browsers: fall back to
-        // measuring on content changes only.
+        // measuring on content changes and scroll only.
         const resizeObserver =
             typeof ResizeObserver === 'undefined'
                 ? undefined
@@ -62,12 +154,15 @@ export function useScrollRegion<TElement extends HTMLElement>(): (
             subtree: true,
             characterData: true,
         });
+        // The cue follows the scroll position.
+        element.addEventListener('scroll', update, { passive: true });
 
         return () => {
             resizeObserver?.disconnect();
             mutationObserver.disconnect();
+            element.removeEventListener('scroll', update);
         };
-    }, [element]);
+    }, [element, accessibleName]);
 
     return setElement;
 }
