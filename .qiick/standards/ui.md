@@ -62,4 +62,5 @@ Adopt one by adding its name (with its variant when it has variants) to `pattern
 | Inbox list: saved views, bulk actions, item detail      | `inbox-list:side-panel`, `inbox-list:full-page`  | https://github.com/qiick-io/app-ui/blob/develop/docs/optional/inbox-list.md         |
 | Keyboard shortcuts and the ? help dialog                | `keyboard-shortcuts`                             | https://github.com/qiick-io/app-ui/blob/develop/docs/optional/keyboard-shortcuts.md |
 | Sidebar filter, pinned and needs-attention entity lists | `sidebar-entities`                               | https://github.com/qiick-io/app-ui/blob/develop/docs/optional/sidebar-entities.md   |
+| Table cell details: lists inside table cells            | `table-cell-details`                             | https://github.com/qiick-io/app-ui/blob/develop/docs/optional/table-cell-details.md |
 | Table density preference                                | `table-density`                                  | https://github.com/qiick-io/app-ui/blob/develop/docs/optional/table-density.md      |
