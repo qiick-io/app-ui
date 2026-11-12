@@ -8,6 +8,14 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Added
+
+- Optional pattern `table-cell-details` (#109): the `table-cell-details` item.
+  - `TableCellDetails` keeps a table cell that holds a list on one line: a summary (a total, a count, or the first item and "+N"), then a ghost `icon-sm` button that opens the full detail in a popover at most 20rem wide, scrolling past about ten rows, and in a bottom drawer on mobile.
+  - Two content variants per cell: `list` for names, `bar` for sizes or shares (bars on theme tokens, scaled against the largest value by `lib/table-cell-details.ts`, each with a visible value label).
+  - The app passes the summary, title, accessible name ("Show 5 largest tables") and item labels translated; focus returns to the button on close.
+  - Page: `docs/optional/table-cell-details.md`, linked from `list-page.md`. Listed in `standards/patterns.json`.
+
 ## [0.4.0] - 2026-11-11
 
 ### Upgrade notes

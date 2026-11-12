@@ -23,6 +23,10 @@
             "title": "Sidebar filter, pinned and needs-attention entity lists",
             "page": "docs/optional/sidebar-entities.md"
         },
+        "table-cell-details": {
+            "title": "Table cell details: lists inside table cells",
+            "page": "docs/optional/table-cell-details.md"
+        },
         "table-density": {
             "title": "Table density preference",
             "page": "docs/optional/table-density.md"
