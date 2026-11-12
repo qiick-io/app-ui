@@ -8,8 +8,11 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-12
+
 ### Upgrade notes
 
+- **Every repo:** bump the three pins to `v0.6.0` (`qiick-standards.json` `ref`, the `@qiick` URL in `components.json`, every `uses: qiick-io/app-ui/.github/workflows/<workflow>.yml@…`) and re-sync the standards.
 - **Every app:** after bumping the pins, `npx shadcn add @qiick/theme @qiick/badge --overwrite` (the theme changes for the dark status colours, #122, and the table scroll cue below). The `success`, `warning` and `info` badges keep their `/15` tint in dark mode too. Then make the axe smoke test assert that `color-contrast` ran (`docs/theme-tokens.md`, "Contrast check"), and pay the raw `neutral-*` entries in `ui-token-baseline.txt` (excubia-app: `nav-footer.tsx`, `text-sidebar-foreground hover:text-foreground`).
 - **Every PHP repo:** re-sync. The automated-checks rule gains the PHP quality floor (PHPStan level 8 in apps, `max` in packages, the coverage ratchet) and `release.md` gains the required checks per repo. `scripts/qiick-ratchet.mjs` gains `phpstan --min-level` and a `coverage` mode; `phpstan` now also fails when `level:` is lower than on the base branch. Nothing fails until a repo calls `php-quality.yml` or passes `--min-level`.
 - **excubia-app** (level 8, baseline 0 already):
@@ -233,7 +236,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/qiick-io/app-ui/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/qiick-io/app-ui/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/qiick-io/app-ui/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/qiick-io/app-ui/compare/v0.2.1...v0.3.0
