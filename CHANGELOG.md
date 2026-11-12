@@ -15,6 +15,7 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
   - Two content variants per cell: `list` for names, `bar` for sizes or shares (bars on theme tokens, scaled against the largest value by `lib/table-cell-details.ts`, each with a visible value label).
   - The app passes the summary, title, accessible name ("Show 5 largest tables") and item labels translated; focus returns to the button on close.
   - Page: `docs/optional/table-cell-details.md`, linked from `list-page.md`. Listed in `standards/patterns.json`.
+- `sidebar-entity-list` (#110): pin and unpin from the sidebar rows. `onTogglePin(entity)` on `SidebarEntityList` and `SidebarEntityFlyout` adds a star inside each row, aligned right (shown on hover and focus, always on touch screens), the same action in the row's right-click menu, and a star next to each record in the icon-only flyout. Pinned rows say "Unpin {name}", Needs attention rows "Pin {name}". After a toggle, focus follows the row into its new block. `shouldShowPinHint={false}` hides the empty-Pinned hint. Without `onTogglePin` nothing changes. The item now depends on `@qiick/context-menu`; no new locale keys.
 
 ## [0.4.0] - 2026-11-11
 

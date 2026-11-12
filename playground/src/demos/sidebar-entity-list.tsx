@@ -18,7 +18,7 @@ import {
     SidebarProvider,
 } from '@/components/ui/sidebar';
 
-const PINNED: SidebarEntity[] = [
+const PROJECTS: SidebarEntity[] = [
     {
         id: 'billing',
         label: 'Billing API',
@@ -27,12 +27,12 @@ const PINNED: SidebarEntity[] = [
         isActive: true,
     },
     { id: 'checkout', label: 'Checkout', href: '#', status: 'critical' },
+    { id: 'mobile', label: 'Mobile backend', href: '#', status: 'warning' },
+    { id: 'marketing', label: 'Marketing site', href: '#', status: 'good' },
 ];
 
-const NEEDS_ATTENTION: SidebarEntity[] = [
-    { id: 'checkout', label: 'Checkout', href: '#', status: 'critical' },
-    { id: 'mobile', label: 'Mobile backend', href: '#', status: 'warning' },
-];
+/** Worst first, as the app's shared prop would rank them. */
+const NEEDS_ATTENTION_IDS = ['checkout', 'mobile'];
 
 function DashboardItem() {
     const isVisible = useSidebarFilter('Dashboard');
@@ -47,20 +47,36 @@ function DashboardItem() {
     ) : null;
 }
 
-/** Static sidebar with the filter field, Pinned and Needs attention under Projects. */
+/**
+ * Static sidebar with the filter field, Pinned and Needs attention under
+ * Projects, and the pin action on every row. Keyboard path: Tab from a
+ * record reaches its star, Enter (or Space) toggles it, and focus follows
+ * the row into its new block. Shift+F10 on a record opens its menu.
+ */
 export default function SidebarEntityListDemo() {
-    const [isMarketingPinned, setIsMarketingPinned] = useState(false);
-    const pinned = isMarketingPinned
-        ? [
-              ...PINNED,
-              {
-                  id: 'marketing',
-                  label: 'Marketing site',
-                  href: '#',
-                  status: 'good' as const,
-              },
-          ]
-        : PINNED;
+    const [pinnedIds, setPinnedIds] = useState(['billing', 'checkout']);
+    const pinned = pinnedIds.flatMap((pinnedId) =>
+        PROJECTS.filter((project) => project.id === pinnedId),
+    );
+    const needsAttention = NEEDS_ATTENTION_IDS.flatMap((attentionId) =>
+        PROJECTS.filter((project) => project.id === attentionId),
+    );
+    // The app posts the change and reloads the shared prop; here the toggle
+    // lands after a short delay, so focus handling sees the same remount.
+    const togglePin = (entity: SidebarEntity) =>
+        window.setTimeout(
+            () =>
+                setPinnedIds((currentIds) =>
+                    currentIds.includes(entity.id)
+                        ? currentIds.filter(
+                              (pinnedId) => pinnedId !== entity.id,
+                          )
+                        : [...currentIds, entity.id],
+                ),
+            150,
+        );
+    const marketingSite = PROJECTS[3];
+    const isMarketingPinned = pinnedIds.includes(marketingSite.id);
 
     return (
         <div className="flex flex-wrap items-start gap-6">
@@ -81,8 +97,9 @@ export default function SidebarEntityListDemo() {
                                         </SidebarMenuButton>
                                         <SidebarEntityList
                                             pinned={pinned}
-                                            needsAttention={NEEDS_ATTENTION}
+                                            needsAttention={needsAttention}
                                             viewAllHref="#"
+                                            onTogglePin={togglePin}
                                         />
                                     </SidebarMenuItem>
                                 </SidebarMenu>
@@ -94,12 +111,10 @@ export default function SidebarEntityListDemo() {
             <div className="flex items-center gap-2 text-sm">
                 <PinToggleButton
                     isPinned={isMarketingPinned}
-                    onToggle={() =>
-                        setIsMarketingPinned((isPinned) => !isPinned)
-                    }
-                    entityLabel="Marketing site"
+                    onToggle={() => togglePin(marketingSite)}
+                    entityLabel={marketingSite.label}
                 />
-                Marketing site
+                {marketingSite.label}
             </div>
         </div>
     );
