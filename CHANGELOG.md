@@ -11,6 +11,27 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 ### Upgrade notes
 
 - **Every app:** after bumping the pins, `npx shadcn add @qiick/theme @qiick/badge --overwrite` (#122 changes the dark status colours; #77 alone needed only the badge). The `success`, `warning` and `info` badges keep their `/15` tint in dark mode too. Then make the axe smoke test assert that `color-contrast` ran (`docs/theme-tokens.md`, "Contrast check"), and pay the raw `neutral-*` entries in `ui-token-baseline.txt` (excubia-app: `nav-footer.tsx`, `text-sidebar-foreground hover:text-foreground`).
+- **Every PHP repo:** re-sync. The automated-checks rule gains the PHP quality floor (PHPStan level 8 in apps, `max` in packages, the coverage ratchet) and `release.md` gains the required checks per repo. `scripts/qiick-ratchet.mjs` gains `phpstan --min-level` and a `coverage` mode; `phpstan` now also fails when `level:` is lower than on the base branch. Nothing fails until a repo calls `php-quality.yml` or passes `--min-level`.
+- **excubia-app** (level 8, baseline 0 already):
+  1. In `ci.yml`, add the job `php-quality: uses: qiick-io/app-ui/.github/workflows/php-quality.yml@v0.6.0` (defaults: level 8, build with `npm ci && npm run build`, floor in `coverage-floor.txt`), and drop the `PHPStan` and `Larastan baseline only shrinks` steps from the `tests` job.
+  2. Commit `coverage-floor.txt`: the first run fails and prints the number, or locally with pcov / Xdebug `vendor/bin/pest --coverage-clover=build/qiick-coverage.xml && node scripts/qiick-ratchet.mjs coverage --clover build/qiick-coverage.xml --update`.
+  3. Remove the local `migrations-frozen` job and `scripts/migrations-frozen.sh`, and rename the job `shared-migrations-frozen` to `migrations-frozen`, so the shared check is `migrations-frozen / migrations-frozen`.
+  4. Ask the maintainer to make the required checks match `release.md`: add `php-quality / php-quality`, `pr-title / commitlint`, `app-ui-drift / drift`, `ui-quality / ui-quality` and `migrations-frozen / migrations-frozen`; drop `Migrations frozen`.
+- **externa-core** (level 6, 51 baseline entries / 63 errors on `develop` on 2026-11-12): a ratchet, not a jump to 8.
+  1. Add the job `php-quality` calling `php-quality.yml@v0.6.0` with `phpstan-min-level: ''` (the level may not drop and the baseline may not grow, but 6 passes), commit `coverage-floor.txt` as above, and drop the non-blocking `coverage` job of `tests.yml` (#288) and the PHPStan and ratchet steps of `quality`.
+  2. One PR per level: raise `level:` to 7 and baseline its new errors (the ratchet allows it once, in that PR); pay the baseline down in later PRs; then the same for 8.
+  3. At level 8, remove `phpstan-min-level: ''` so the default floor 8 applies.
+  4. Ask the maintainer to make the required checks match `release.md`: add `php-quality / php-quality`, `pr-title / commitlint`, `app-ui-drift / standards`, `app-ui-drift / drift`; call `ui-quality.yml` and `migrations-frozen.yml`, rename the job `smoke` in `distribution.yml` to `distribution-smoke`, then require `ui-quality / ui-quality`, `migrations-frozen / migrations-frozen` and `distribution-smoke / smoke`.
+- **excubia-core** (`max`, baseline 0, coverage gate already): optionally replace its own PHPStan, Pest coverage and `.github/assert-coverage.php` steps with `php-quality.yml` (`phpstan-min-level: max`, `coverage-thresholds: src/Checks=90 src=90`, `build-command: ''`); its lowest / stable matrix stays its own. Add the `pr-title.yml` caller, rename the job `standards` to `app-ui-drift`, and pin a release tag instead of `develop`.
+
+### Added
+
+- PHP quality floor (#63):
+  - **Rule:** PHPStan level 8 at least in apps and `max` in packages; the level never drops and the baseline only shrinks. Apps fail CI below a committed line coverage floor (`coverage-floor.txt`, only rises); packages keep a fixed minimum per path (`standards/rules/checks.md`).
+  - **Ratchet:** `qiick-ratchet.mjs phpstan --min-level <8|max>` and `qiick-ratchet.mjs coverage --clover <report>` (the floor file, `--update`, or `<path>=<percent>` minimums), from excubia-core's `assert-coverage.php`, with tests.
+  - **Reusable workflow** `php-quality.yml`: PHPStan, the level floor and baseline ratchet, Pest with pcov coverage and the coverage ratchet, with the repo's synced script. Check name `php-quality / php-quality`. `scripts/new-product.mjs` adds it to `qiick.yml`.
+  - **New products** start at level 8, baseline 0 and a coverage floor (`docs/new-product.md`).
+  - **Required checks per repo** on `develop` and `main` in `standards/rules/release.md` (details).
 
 ### Fixed
 

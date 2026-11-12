@@ -150,3 +150,160 @@ test('several rules keep a baseline per rule', () => {
         1,
     );
 });
+
+/**
+ * A throwaway git repo with one commit, for the ratchets that compare with a base ref.
+ * @param {Record<string, string>} files - Committed as the base
+ */
+function makeRepoWithBase(files) {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'qiick-ratchet-'));
+    const git = (...gitArguments) =>
+        spawnSync('git', gitArguments, { cwd: directory, encoding: 'utf8' });
+
+    git('init', '-q');
+
+    for (const [file, content] of Object.entries(files)) {
+        fs.mkdirSync(path.dirname(path.join(directory, file)), {
+            recursive: true,
+        });
+        fs.writeFileSync(path.join(directory, file), content);
+    }
+
+    git('add', '.');
+    git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'base');
+
+    return directory;
+}
+
+/**
+ * @param {string} directory
+ * @param {string[]} ratchetArguments
+ */
+const runRatchet = (directory, ratchetArguments) =>
+    spawnSync(
+        process.execPath,
+        [script, ...ratchetArguments, '--base', 'HEAD'],
+        {
+            cwd: directory,
+            encoding: 'utf8',
+        },
+    );
+
+const phpstanConfig = (level) => `parameters:\n    level: ${level}\n`;
+
+test('the phpstan ratchet enforces the level floor and never lets the level drop', () => {
+    const directory = makeRepoWithBase({ 'phpstan.neon': phpstanConfig(6) });
+
+    assert.equal(runRatchet(directory, ['phpstan']).status, 0);
+    assert.match(
+        runRatchet(directory, ['phpstan', '--min-level', '8']).stderr,
+        /level 6; the qiick floor here is 8/,
+    );
+
+    fs.writeFileSync(path.join(directory, 'phpstan.neon'), phpstanConfig(5));
+    assert.match(runRatchet(directory, ['phpstan']).stderr, /level dropped/);
+
+    fs.writeFileSync(
+        path.join(directory, 'phpstan.neon'),
+        phpstanConfig('max'),
+    );
+    assert.equal(
+        runRatchet(directory, ['phpstan', '--min-level', 'max']).status,
+        0,
+    );
+});
+
+/**
+ * A Clover report: per file, `[covered, executable]` statement lines, plus a
+ * method line that must not count.
+ * @param {Record<string, [number, number]>} lineCountsByFile
+ */
+function clover(lineCountsByFile) {
+    const files = Object.entries(lineCountsByFile).map(
+        ([file, [covered, executable]]) => {
+            const lines = Array.from(
+                { length: executable },
+                (_, lineIndex) =>
+                    `<line num="${lineIndex + 2}" type="stmt" count="${lineIndex < covered ? 1 : 0}"/>`,
+            );
+
+            return `<file name="/build/app/${file}"><line num="1" type="method" name="run" count="0"/>${lines.join('')}</file>`;
+        },
+    );
+
+    return `<?xml version="1.0"?><coverage><project><package name="App">${files.join('')}</package></project></coverage>`;
+}
+
+test('the coverage ratchet fails below the floor and when the floor is lowered', () => {
+    const directory = makeRepoWithBase({ 'coverage-floor.txt': '70.0\n' });
+    const coverage = (covered) => {
+        fs.writeFileSync(
+            path.join(directory, 'clover.xml'),
+            clover({ 'src/A.php': [covered, 100] }),
+        );
+
+        return runRatchet(directory, ['coverage', '--clover', 'clover.xml']);
+    };
+
+    assert.equal(coverage(70).status, 0);
+    assert.match(coverage(69).stderr, /69\.0% is below the floor 70%/);
+    assert.match(coverage(80).stdout, /raise it in this PR with --update/);
+
+    fs.writeFileSync(path.join(directory, 'coverage-floor.txt'), '60\n');
+    assert.match(coverage(80).stderr, /lowered \(70 -> 60\)/);
+
+    assert.equal(
+        runRatchet(directory, [
+            'coverage',
+            '--clover',
+            'clover.xml',
+            '--update',
+        ]).status,
+        0,
+    );
+    assert.equal(
+        fs.readFileSync(path.join(directory, 'coverage-floor.txt'), 'utf8'),
+        '80.0\n',
+    );
+});
+
+test('the coverage ratchet asks for a floor file when there is none', () => {
+    const directory = makeRepoWithBase({ 'README.md': '' });
+
+    fs.writeFileSync(
+        path.join(directory, 'clover.xml'),
+        clover({ 'A.php': [3, 4] }),
+    );
+    assert.match(
+        runRatchet(directory, ['coverage', '--clover', 'clover.xml']).stderr,
+        /coverage-floor\.txt is missing: commit the current coverage \(75\.0\)/,
+    );
+});
+
+test('package coverage applies a fixed minimum per path and skips paths without PHP files', () => {
+    const directory = makeRepoWithBase({
+        'src/Checks/Check.php': '<?php',
+        'src/Kernel.php': '<?php',
+    });
+
+    fs.writeFileSync(
+        path.join(directory, 'clover.xml'),
+        clover({ 'src/Checks/Check.php': [9, 10], 'src/Kernel.php': [5, 10] }),
+    );
+
+    const run = (...thresholds) =>
+        runRatchet(directory, [
+            'coverage',
+            '--clover',
+            'clover.xml',
+            ...thresholds,
+        ]);
+
+    assert.equal(run('src/Checks=90', 'src/Future=90').status, 0);
+    assert.match(
+        run('src/Future=90').stdout,
+        /src\/Future has no PHP files yet/,
+    );
+    // `src` counts `src/Checks` too: 14 of 20 lines.
+    assert.match(run('src=90').stderr, /src coverage 70\.0% \(14\/20 lines\)/);
+});
