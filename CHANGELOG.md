@@ -8,6 +8,17 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-11-12
+
+### Upgrade notes
+
+- **Every app on v0.6.0:** bump the three pins to `v0.6.1`; the `ui-quality / ui-quality` check works again. Apps using `sidebar-entities`: re-pull `sidebar-entity-list`, or apply the class change to an overridden copy.
+
+### Fixed
+
+- `ui-quality.yml`: the contrast step failed in every app since v0.6.0 (`ENOENT … registry/src/components/ui/badge.tsx`), because the workflow checked out only `scripts/` from app-ui while `a11y-contrast.mjs` now reads the badge. It now passes the app's own badge (new input `badge-file`, default `resources/js/components/ui/badge.tsx`) and falls back to the registry's copy, which the sparse checkout now includes. Upgrade: bump the `uses:` pin; nothing else.
+- `sidebar-entity-list`: the "Pinned" / "Needs attention" headings and the empty hint used `text-sidebar-foreground/70`, 3.15:1 on the light sidebar (below AA); they use the `text-sidebar-muted-foreground` token now. Upgrade: re-pull `sidebar-entity-list` (apps with an override: apply the same class change).
+
 ## [0.6.0] - 2026-11-12
 
 ### Upgrade notes
@@ -236,7 +247,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/qiick-io/app-ui/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/qiick-io/app-ui/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/qiick-io/app-ui/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/qiick-io/app-ui/compare/v0.3.0...v0.4.0
