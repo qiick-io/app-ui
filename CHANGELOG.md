@@ -8,6 +8,15 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-12
+
+### Upgrade notes
+
+- **Every app:** bump the three pins to `v0.5.0` (`qiick-standards.json` `ref`, the `@qiick` URL in `components.json`, every `uses: qiick-io/app-ui/.github/workflows/<workflow>.yml@…`) and re-sync the standards. The core pattern table renames the row "Notifications: toasts, bell and drawer", and the optional catalogue gains `table-cell-details`. Nothing else changes for an app that adopts neither.
+- **Apps using `sidebar-entities` (excubia-app):** `npx shadcn add @qiick/sidebar-entity-list --overwrite`, which also pulls `@qiick/context-menu`. Pass `onTogglePin` to get the star action in the rows; pass `shouldShowPinHint={false}` to hide the empty-Pinned hint.
+- **Adopting `table-cell-details`:** add it to `patterns` in `qiick-standards.json`, re-sync, then `npx shadcn add @qiick/table-cell-details`.
+- **`notifications` (core):** excubia-app installs it with its in-app alerts (excubia-app#296). externa-core keeps its own copy until a follow-up moves it to the item. That move is a visible change, because the registry puts the bell in the sidebar header while Externa has it in the footer today: either move it, or list it as an override.
+
 ### Added
 
 - Core pattern notification centre (#111): the `notifications` item, the persistent counterpart of toasts (`docs/notifications.md`, with the backend contract).
@@ -186,7 +195,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/qiick-io/app-ui/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/qiick-io/app-ui/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/qiick-io/app-ui/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/qiick-io/app-ui/compare/v0.2.0...v0.2.1
