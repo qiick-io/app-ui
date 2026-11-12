@@ -6,7 +6,10 @@
  * checks every foreground/background pair below in light, dark,
  * high-contrast and high-contrast dark, for the default brand (teal) and for
  * every preset (registry/src/css/qiick-theme-*.css). A custom `--brand-primary`
- * set by an app is the app's to check.
+ * set by an app is the app's to check. It also checks the status badges
+ * (`destructive`, `success`, `warning`, `info`) as they render: the text on
+ * the variant's tint over the page, card and sidebar surfaces, with the tint
+ * read from registry/src/components/ui/badge.tsx (or `--badge <file>`).
  *
  * Apps run the same script on their installed copy of `@qiick/theme` (the
  * reusable `ui-quality.yml` does it), so no app keeps its own copy:
@@ -15,7 +18,8 @@
  *
  * Thresholds: text ≥4.5:1, UI/border/focus ≥3:1.
  *
- * Usage: node scripts/a11y-contrast.mjs [--theme-dir <dir, relative to the working directory>]
+ * Usage: node scripts/a11y-contrast.mjs [--theme-dir <dir>] [--badge <file>]
+ * (both relative to the working directory)
  */
 
 import fs from 'node:fs';
@@ -511,7 +515,118 @@ const colourPairs = [
     })),
 ];
 
-/** @type {Record<string, Record<string, string>>} */
+/*
+ * Status badges as they render (#77): the variant's text colour on its tint,
+ * with the tint composited over each surface a badge sits on. The classes are
+ * read from the badge source, so a changed tint is checked here; a token pair
+ * alone missed the dark `bg-success/20` tint (4.42:1 on the card).
+ *
+ * ponytail: popovers and muted rows (ink-800 in dark) are not checked as badge
+ * surfaces; the dark success and warning tints fall below 4.5:1 there. Add
+ * them here, with lighter dark status steps, once a pattern puts a status
+ * badge on one.
+ */
+const badgeFlag = process.argv.indexOf('--badge');
+const badgePath =
+    badgeFlag === -1
+        ? path.join(root, 'registry/src/components/ui/badge.tsx')
+        : path.resolve(process.cwd(), process.argv[badgeFlag + 1]);
+const badgeSource = fs.readFileSync(badgePath, 'utf8');
+const badgeStatusVariants = ['destructive', 'success', 'warning', 'info'];
+const badgeSurfaces = ['--background', '--card', '--sidebar'];
+
+/**
+ * The class list of one `badgeVariants` variant (`success: "bg-success/15 …"`).
+ * @param {string} variant
+ */
+function readBadgeVariantClasses(variant) {
+    const match = badgeSource.match(
+        new RegExp(`(?<![\\w:-])${variant}:\\s*["'\`]([^"'\`]+)["'\`]`),
+    );
+
+    if (!match) {
+        throw new Error(`Missing badge variant ${variant} in ${badgePath}`);
+    }
+
+    return match[1].split(/\s+/);
+}
+
+/**
+ * Text colour and tint of a badge variant in light or dark mode. Unprefixed
+ * `bg-*` / `text-*` classes are the light look; in dark mode a `dark:` class
+ * replaces its light counterpart. State classes (`hover:`, `[a&]:…`) are not
+ * the resting look and are skipped.
+ * @param {string[]} classNames
+ * @param {boolean} isDark
+ * @returns {{ text?: string, tint?: string, tintAlpha: number }}
+ */
+function readBadgeLook(classNames, isDark) {
+    /** @type {{ text?: string, tint?: string, tintAlpha: number }} */
+    const look = { tintAlpha: 1 };
+
+    for (const layer of isDark ? ['', 'dark:'] : ['']) {
+        for (const className of classNames) {
+            if (!className.startsWith(layer)) {
+                continue;
+            }
+
+            const utility = className.slice(layer.length);
+
+            if (utility.includes(':')) {
+                continue;
+            }
+
+            const background = utility.match(/^bg-([a-z-]+?)(?:\/(\d+))?$/);
+            const text = utility.match(/^text-([a-z-]+)$/);
+
+            if (background) {
+                look.tint = colourUtilityValue(background[1]);
+                look.tintAlpha = background[2]
+                    ? Number(background[2]) / 100
+                    : 1;
+            } else if (text) {
+                look.text = colourUtilityValue(text[1]);
+            }
+        }
+    }
+
+    return look;
+}
+
+/**
+ * @param {string} colourName - `white`, `black` or a theme token (`success`)
+ */
+function colourUtilityValue(colourName) {
+    return colourName === 'white' || colourName === 'black'
+        ? namedColor(colourName)
+        : `var(--${colourName})`;
+}
+
+/**
+ * Alpha-blend a colour over an opaque one in sRGB, as the browser paints a
+ * `bg-<token>/<alpha>` tint.
+ * @param {string} foregroundHex
+ * @param {number} alpha - 0…1
+ * @param {string} backgroundHex
+ */
+function compositeOver(foregroundHex, alpha, backgroundHex) {
+    const background = hexToRgb(backgroundHex);
+
+    return (
+        '#' +
+        hexToRgb(foregroundHex)
+            .map((channel, index) =>
+                Math.round(
+                    (channel * alpha + background[index] * (1 - alpha)) * 255,
+                )
+                    .toString(16)
+                    .padStart(2, '0'),
+            )
+            .join('')
+    );
+}
+
+/** @type {Record<string, { tokens: Record<string, string>, isDark: boolean }>} */
 const modes = {};
 
 for (const brand of brands) {
@@ -519,21 +634,48 @@ for (const brand of brands) {
     const dark = { ...light, ...baseDark, ...brand.dark };
 
     // html.high-contrast outranks :root / .dark, so it wins over a preset too.
-    modes[`${brand.name} / light`] = light;
-    modes[`${brand.name} / dark`] = dark;
+    modes[`${brand.name} / light`] = { tokens: light, isDark: false };
+    modes[`${brand.name} / dark`] = { tokens: dark, isDark: true };
     modes[`${brand.name} / high-contrast`] = {
-        ...light,
-        ...highContrastTokens,
+        tokens: { ...light, ...highContrastTokens },
+        isDark: false,
     };
     modes[`${brand.name} / high-contrast-dark`] = {
-        ...dark,
-        ...highContrastDarkTokens,
+        tokens: { ...dark, ...highContrastDarkTokens },
+        isDark: true,
     };
 }
 
 let failures = 0;
 
-for (const [mode, tokens] of Object.entries(modes)) {
+/**
+ * Print one pair and count it when it is below the threshold or unresolvable.
+ * @param {string} name
+ * @param {() => [string, string]} resolveColours - foreground and background hex
+ * @param {number} need
+ */
+function checkPair(name, resolveColours, need) {
+    try {
+        const [fgHex, bgHex] = resolveColours();
+        const ratio = contrastRatio(fgHex, bgHex);
+        const ok = ratio + 1e-9 >= need;
+        const line = `  ${ok ? 'PASS' : 'FAIL'}  ${name}: ${ratio.toFixed(2)}:1 (need ${need}:1) [${fgHex} on ${bgHex}]`;
+
+        if (ok) {
+            console.log(line);
+        } else {
+            console.error(line);
+            failures += 1;
+        }
+    } catch (error) {
+        console.error(
+            `  FAIL  ${name}: ${error instanceof Error ? error.message : error}`,
+        );
+        failures += 1;
+    }
+}
+
+for (const [mode, { tokens, isDark }] of Object.entries(modes)) {
     console.log(`\n[${mode}]`);
 
     for (const pair of colourPairs) {
@@ -548,24 +690,40 @@ for (const [mode, tokens] of Object.entries(modes)) {
             continue;
         }
 
-        try {
-            const fgHex = resolveHex(fgValue, tokens);
-            const bgHex = resolveHex(bgValue, tokens);
-            const ratio = contrastRatio(fgHex, bgHex);
-            const ok = ratio + 1e-9 >= pair.need;
-            const line = `  ${ok ? 'PASS' : 'FAIL'}  ${pair.name}: ${ratio.toFixed(2)}:1 (need ${pair.need}:1) [${fgHex} on ${bgHex}]`;
+        checkPair(
+            pair.name,
+            () => [resolveHex(fgValue, tokens), resolveHex(bgValue, tokens)],
+            pair.need,
+        );
+    }
 
-            if (ok) {
-                console.log(line);
-            } else {
-                console.error(line);
-                failures += 1;
-            }
-        } catch (error) {
-            console.error(
-                `  FAIL  ${pair.name}: ${error instanceof Error ? error.message : error}`,
+    for (const variant of badgeStatusVariants) {
+        for (const surface of badgeSurfaces) {
+            checkPair(
+                `badge ${variant} / ${surface.slice(2)}`,
+                () => {
+                    const look = readBadgeLook(
+                        readBadgeVariantClasses(variant),
+                        isDark,
+                    );
+
+                    if (!look.text || !look.tint) {
+                        throw new Error(
+                            `badge ${variant} needs a text-* and a bg-* class`,
+                        );
+                    }
+
+                    return [
+                        resolveHex(look.text, tokens),
+                        compositeOver(
+                            resolveHex(look.tint, tokens),
+                            look.tintAlpha,
+                            resolveHex(tokens[surface], tokens),
+                        ),
+                    ];
+                },
+                4.5,
             );
-            failures += 1;
         }
     }
 }
