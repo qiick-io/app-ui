@@ -4,9 +4,12 @@
         "close": "Close",
         "loading": "Loading",
         "moreActions": "More actions",
+        "notifications": "Notifications",
+        "notificationsUnread": "Notifications, {{count}} unread",
         "saving": "Saving",
         "search": "Search",
-        "toggleSidebar": "Toggle sidebar"
+        "toggleSidebar": "Toggle sidebar",
+        "unreadCount": "{{count}} unread"
     },
     "ai": {
         "fabDescription": "Quick assistant drawer. Open the full page for history.",
@@ -173,5 +176,17 @@
         "comfortable": "Comfortable",
         "compact": "Compact",
         "label": "Table density"
+    },
+    "notifications": {
+        "title": "Notifications",
+        "description": "Updates for you, newest first.",
+        "loading": "Loading…",
+        "empty": "No notifications yet.",
+        "loadFailed": "The notifications could not be loaded. Try again later.",
+        "updateFailed": "The notification could not be updated.",
+        "untitled": "Notification",
+        "markAllRead": "Mark all as read",
+        "markRead": "Mark as read",
+        "markUnread": "Mark as unread"
     }
 }

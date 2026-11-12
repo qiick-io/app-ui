@@ -52,7 +52,7 @@ Tokens come from the `@qiick/theme` registry item: one shared base (surfaces, th
 | Empty states                                                     | https://github.com/qiick-io/app-ui/blob/develop/docs/empty-states.md        |
 | Destructive actions                                              | https://github.com/qiick-io/app-ui/blob/develop/docs/destructive-actions.md |
 | Dashboard cards                                                  | https://github.com/qiick-io/app-ui/blob/develop/docs/dashboard.md           |
-| Notifications and messages (toasts)                              | https://github.com/qiick-io/app-ui/blob/develop/docs/notifications.md       |
+| Notifications: toasts, bell and drawer                           | https://github.com/qiick-io/app-ui/blob/develop/docs/notifications.md       |
 | Chat and Assistant                                               | https://github.com/qiick-io/app-ui/blob/develop/docs/chat-and-assistant.md  |
 | Files grid                                                       | https://github.com/qiick-io/app-ui/blob/develop/docs/files-grid.md          |
 | Theme: tokens, presets, control scale                            | https://github.com/qiick-io/app-ui/blob/develop/docs/theme.md               |

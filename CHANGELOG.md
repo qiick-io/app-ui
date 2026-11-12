@@ -10,6 +10,11 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Added
 
+- Core pattern notification centre (#111): the `notifications` item, the persistent counterpart of toasts (`docs/notifications.md`, with the backend contract).
+    - `NotificationsBell` sits in the sidebar header with the unread badge; `NotificationsDrawer` opens on the right with "Mark as read" per item and "Mark all as read". Clicking a notification marks it read and opens its link.
+    - App-agnostic: the app maps its notification types to `{ icon, title, body, link, time }` and passes its routes to `createNotificationsSource()` (URLs or Wayfinder routes).
+    - Works without realtime (the badge follows the shared prop on every visit) and live with an optional `subscribe` (Reverb). The sound is off by default, a user preference.
+    - Upgrade: externa-core moves from its own copy to the item (follow-up there); re-sync the standards for the renamed row in the core pattern table.
 - Optional pattern `table-cell-details` (#109): the `table-cell-details` item.
   - `TableCellDetails` keeps a table cell that holds a list on one line: a summary (a total, a count, or the first item and "+N"), then a ghost `icon-sm` button that opens the full detail in a popover at most 20rem wide, scrolling past about ten rows, and in a bottom drawer on mobile.
   - Two content variants per cell: `list` for names, `bar` for sizes or shares (bars on theme tokens, scaled against the largest value by `lib/table-cell-details.ts`, each with a visible value label).
