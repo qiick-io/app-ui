@@ -8,6 +8,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Added
+
+- `sidebar-entity-list` (#110): pin and unpin from the sidebar rows. `onTogglePin(entity)` on `SidebarEntityList` and `SidebarEntityFlyout` adds a star inside each row, aligned right (shown on hover and focus, always on touch screens), the same action in the row's right-click menu, and a star next to each record in the icon-only flyout. Pinned rows say "Unpin {name}", Needs attention rows "Pin {name}". After a toggle, focus follows the row into its new block. `shouldShowPinHint={false}` hides the empty-Pinned hint. Without `onTogglePin` nothing changes. The item now depends on `@qiick/context-menu`; no new locale keys.
+
 ## [0.4.0] - 2026-11-11
 
 ### Upgrade notes
