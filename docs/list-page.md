@@ -39,6 +39,15 @@ Actions spill into a ⋯ menu **only when space runs out**, measured with `Resiz
 - Status as `Badge` (`success` / `muted` / `warning` / `destructive`).
 - Row actions in the **last column** (`meta: { headerClassName: 'w-[1%] text-right', cellClassName: 'text-right', isRowClickIgnored: true }`): a `ButtonGroup` (`aria-label` = the column name, `className="ml-auto"`) of outline `size="icon-sm"` `HeaderIconButton`s (24px, the only place `sm` is the norm), delete last with `className="text-destructive hover:text-destructive"`. Text actions (Restore, Delete forever) are outline `size="sm"` buttons in the same group. The playground `#/users` screen has it.
 
+### Wide tables on small screens
+
+On a phone most tables are wider than their card. They keep every column and scroll sideways; the **scroll cue** tells the user that columns are hidden:
+
+- The content fades out over the last 2rem on each side that hides columns (right at rest, both sides mid-scroll, left at the end). A table that fits shows nothing, so desktop tables are unchanged.
+- Built in: the `table` container and the `TablePanel` scroller both use `useScrollRegion`, which sets `data-scroll-cue-left` / `data-scroll-cue-right` on scroll, resize and content changes; the `theme` draws the fade as a mask (no colour, so it is right in light, dark and high contrast) and animates it only without reduced motion.
+- While it scrolls, the scroller is a focusable region named "Scrollable table" (`a11y.scrollableTable`): Tab reaches it and the arrow keys scroll it. On keyboard focus the fade gives way to the focus ring.
+- Nothing to add per page: no wrapper, no extra classes. Do not stack rows below `sm` or hide columns to avoid the scroll; keep the 41px row and put the row actions last as usual. The playground `table` demo has a wide table in a phone-width card.
+
 ## Pagination
 
 `TablePaginationFooter` in the `TablePanel` footer, under the table, inside the panel:

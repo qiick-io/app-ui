@@ -10,7 +10,7 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Upgrade notes
 
-- **Every app:** after bumping the pins, `npx shadcn add @qiick/badge --overwrite` (the theme is unchanged). The `success`, `warning` and `info` badges keep their `/15` tint in dark mode too. Then make the axe smoke test assert that `color-contrast` ran (`docs/theme-tokens.md`, "Contrast check"), and pay the raw `neutral-*` entries in `ui-token-baseline.txt` (excubia-app: `nav-footer.tsx`, `text-sidebar-foreground hover:text-foreground`).
+- **Every app:** after bumping the pins, `npx shadcn add @qiick/badge --overwrite` (the theme changes only for the table scroll cue below). The `success`, `warning` and `info` badges keep their `/15` tint in dark mode too. Then make the axe smoke test assert that `color-contrast` ran (`docs/theme-tokens.md`, "Contrast check"), and pay the raw `neutral-*` entries in `ui-token-baseline.txt` (excubia-app: `nav-footer.tsx`, `text-sidebar-foreground hover:text-foreground`).
 - **Every PHP repo:** re-sync. The automated-checks rule gains the PHP quality floor (PHPStan level 8 in apps, `max` in packages, the coverage ratchet) and `release.md` gains the required checks per repo. `scripts/qiick-ratchet.mjs` gains `phpstan --min-level` and a `coverage` mode; `phpstan` now also fails when `level:` is lower than on the base branch. Nothing fails until a repo calls `php-quality.yml` or passes `--min-level`.
 - **excubia-app** (level 8, baseline 0 already):
   1. In `ci.yml`, add the job `php-quality: uses: qiick-io/app-ui/.github/workflows/php-quality.yml@v0.6.0` (defaults: level 8, build with `npm ci && npm run build`, floor in `coverage-floor.txt`), and drop the `PHPStan` and `Larastan baseline only shrinks` steps from the `tests` job.
@@ -23,6 +23,7 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
   3. At level 8, remove `phpstan-min-level: ''` so the default floor 8 applies.
   4. Ask the maintainer to make the required checks match `release.md`: add `php-quality / php-quality`, `pr-title / commitlint`, `app-ui-drift / standards`, `app-ui-drift / drift`; call `ui-quality.yml` and `migrations-frozen.yml`, rename the job `smoke` in `distribution.yml` to `distribution-smoke`, then require `ui-quality / ui-quality`, `migrations-frozen / migrations-frozen` and `distribution-smoke / smoke`.
 - **excubia-core** (`max`, baseline 0, coverage gate already): optionally replace its own PHPStan, Pest coverage and `.github/assert-coverage.php` steps with `php-quality.yml` (`phpstan-min-level: max`, `coverage-thresholds: src/Checks=90 src=90`, `build-command: ''`); its lowest / stable matrix stays its own. Add the `pr-title.yml` caller, rename the job `standards` to `app-ui-drift`, and pin a release tag instead of `develop`.
+- **Every app with tables (excubia-app#206, externa-core):** re-pull `npx shadcn add @qiick/theme @qiick/use-scroll-region @qiick/table @qiick/page-layout --overwrite` (`data-table` itself is unchanged; it gets the cue through `table` and `page-layout`). Merge the new `a11y.scrollableTable` key from `registry/locales/{en,de,it}.json` into the app's locale files. Nothing else: no props, wrappers or classes to add per page. Review `app-ui.overrides.json` entries for `table.tsx`, `page-layout.tsx` or `qiick-theme.css`, if any. An app whose axe test snapshots the DOM sees `role="region"` and `aria-label` on table scrollers that overflow.
 
 ### Added
 
@@ -32,6 +33,11 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
   - **Reusable workflow** `php-quality.yml`: PHPStan, the level floor and baseline ratchet, Pest with pcov coverage and the coverage ratchet, with the repo's synced script. Check name `php-quality / php-quality`. `scripts/new-product.mjs` adds it to `qiick.yml`.
   - **New products** start at level 8, baseline 0 and a coverage floor (`docs/new-product.md`).
   - **Required checks per repo** on `develop` and `main` in `standards/rules/release.md` (details).
+- Scroll cue for wide tables on small screens (#118, for excubia-app#206): a table wider than its card fades out over the last 2rem on each side that hides columns, so phone users see that it scrolls.
+    - Applies to every `Table` (its container) and every `TablePanel` (so every `DataTable`); a table that fits shows nothing, so desktop tables are unchanged.
+    - `useScrollRegion` marks the hidden sides (`data-scroll-cue-left` / `-right`) on scroll, resize and content changes; the `theme` draws the fade as a mask, so it needs no colour and holds in light, dark and high contrast. The fade animates only without reduced motion and gives way to the focus ring on keyboard focus.
+    - While it overflows, the scroller is a focusable region named "Scrollable table" (`a11y.scrollableTable`), so the keyboard can scroll it (WCAG 2.1.1, axe `scrollable-region-focusable`); standalone `Table`s in cards had no keyboard access before.
+    - `useScrollRegion(accessibleName?)` takes an optional name and ignores containers whose own `overflow` is `visible`. Documented in `docs/list-page.md` ("Wide tables on small screens"); the playground `table` demo has a wide table in a phone-width card.
 
 ### Fixed
 
