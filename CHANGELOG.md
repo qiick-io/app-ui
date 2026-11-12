@@ -8,6 +8,16 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Upgrade notes
+
+- **Every app:** after bumping the pins, `npx shadcn add @qiick/badge --overwrite` (the theme is unchanged). The `success`, `warning` and `info` badges keep their `/15` tint in dark mode too. Then make the axe smoke test assert that `color-contrast` ran (`docs/theme-tokens.md`, "Contrast check"), and pay the raw `neutral-*` entries in `ui-token-baseline.txt` (excubia-app: `nav-footer.tsx`, `text-sidebar-foreground hover:text-foreground`).
+
+### Fixed
+
+- `badge`: the `success` variant met only 4.42:1 in dark mode on the card and sidebar (green-400 on the `/20` tint), below WCAG AA (#77). The status variants drop `dark:bg-*/20` and use the `/15` tint in both modes: dark `success` 4.90:1, `warning` 5.47:1, `info` 6.10:1 on the card (5.62, 6.27 and 7.13:1 on the page). Light mode is unchanged.
+- `a11y-contrast.mjs` checks the status badges as they render: the variant's text on its tint, read from `badge.tsx` (or `--badge <file>`) and composited over the page, card and sidebar, in every mode and preset. The token pairs alone missed the dark tint.
+- `docs/theme-tokens.md`: axe-core before 4.11.1 errors on `oklch(… none)` colours (Tailwind v4 `neutral-*`) and drops the whole `color-contrast` rule into `incomplete`; Pest's browser plugin bundles axe 4.10.3 and reads only `violations`. The page documents the assertion that keeps the rule visible.
+
 ## [0.5.0] - 2026-11-12
 
 ### Upgrade notes

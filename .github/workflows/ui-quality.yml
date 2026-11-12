@@ -8,6 +8,9 @@
 # - accessibility (when `axe-test` is set): the Pest browser axe smoke test, in
 #   light, dark and high contrast. The test file is the app's own (its routes);
 #   excubia-app `tests/Browser/A11ySmokeBrowserTest.php` is the reference.
+#   The test must also assert that axe's `color-contrast` rule ran: before
+#   axe-core 4.11.1 one `oklch(… none)` colour (Tailwind v4 `neutral-*`) makes
+#   the rule error silently (docs/theme-tokens.md, "Contrast check").
 #
 # In the app:
 #
