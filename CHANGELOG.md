@@ -8,6 +8,29 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-12
+
+### Upgrade notes
+
+- **Every app:** bump the three pins to `v0.5.0` (`qiick-standards.json` `ref`, the `@qiick` URL in `components.json`, every `uses: qiick-io/app-ui/.github/workflows/<workflow>.yml@…`) and re-sync the standards. The core pattern table renames the row "Notifications: toasts, bell and drawer", and the optional catalogue gains `table-cell-details`. Nothing else changes for an app that adopts neither.
+- **Apps using `sidebar-entities` (excubia-app):** `npx shadcn add @qiick/sidebar-entity-list --overwrite`, which also pulls `@qiick/context-menu`. Pass `onTogglePin` to get the star action in the rows; pass `shouldShowPinHint={false}` to hide the empty-Pinned hint.
+- **Adopting `table-cell-details`:** add it to `patterns` in `qiick-standards.json`, re-sync, then `npx shadcn add @qiick/table-cell-details`.
+- **`notifications` (core):** excubia-app installs it with its in-app alerts (excubia-app#296). externa-core keeps its own copy until a follow-up moves it to the item. That move is a visible change, because the registry puts the bell in the sidebar header while Externa has it in the footer today: either move it, or list it as an override.
+
+### Added
+
+- Core pattern notification centre (#111): the `notifications` item, the persistent counterpart of toasts (`docs/notifications.md`, with the backend contract).
+    - `NotificationsBell` sits in the sidebar header with the unread badge; `NotificationsDrawer` opens on the right with "Mark as read" per item and "Mark all as read". Clicking a notification marks it read and opens its link.
+    - App-agnostic: the app maps its notification types to `{ icon, title, body, link, time }` and passes its routes to `createNotificationsSource()` (URLs or Wayfinder routes).
+    - Works without realtime (the badge follows the shared prop on every visit) and live with an optional `subscribe` (Reverb). The sound is off by default, a user preference.
+    - Upgrade: externa-core moves from its own copy to the item (follow-up there); re-sync the standards for the renamed row in the core pattern table.
+- Optional pattern `table-cell-details` (#109): the `table-cell-details` item.
+  - `TableCellDetails` keeps a table cell that holds a list on one line: a summary (a total, a count, or the first item and "+N"), then a ghost `icon-sm` button that opens the full detail in a popover at most 20rem wide, scrolling past about ten rows, and in a bottom drawer on mobile.
+  - Two content variants per cell: `list` for names, `bar` for sizes or shares (bars on theme tokens, scaled against the largest value by `lib/table-cell-details.ts`, each with a visible value label).
+  - The app passes the summary, title, accessible name ("Show 5 largest tables") and item labels translated; focus returns to the button on close.
+  - Page: `docs/optional/table-cell-details.md`, linked from `list-page.md`. Listed in `standards/patterns.json`.
+- `sidebar-entity-list` (#110): pin and unpin from the sidebar rows. `onTogglePin(entity)` on `SidebarEntityList` and `SidebarEntityFlyout` adds a star inside each row, aligned right (shown on hover and focus, always on touch screens), the same action in the row's right-click menu, and a star next to each record in the icon-only flyout. Pinned rows say "Unpin {name}", Needs attention rows "Pin {name}". After a toggle, focus follows the row into its new block. `shouldShowPinHint={false}` hides the empty-Pinned hint. Without `onTogglePin` nothing changes. The item now depends on `@qiick/context-menu`; no new locale keys.
+
 ## [0.4.0] - 2026-11-11
 
 ### Upgrade notes
@@ -172,7 +195,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/qiick-io/app-ui/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/qiick-io/app-ui/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/qiick-io/app-ui/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/qiick-io/app-ui/compare/v0.2.0...v0.2.1

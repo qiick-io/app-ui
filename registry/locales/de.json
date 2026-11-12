@@ -4,9 +4,12 @@
         "close": "Schließen",
         "loading": "Wird geladen",
         "moreActions": "Weitere Aktionen",
+        "notifications": "Benachrichtigungen",
+        "notificationsUnread": "Benachrichtigungen, {{count}} ungelesen",
         "saving": "Wird gespeichert",
         "search": "Suchen",
-        "toggleSidebar": "Seitenleiste umschalten"
+        "toggleSidebar": "Seitenleiste umschalten",
+        "unreadCount": "{{count}} ungelesen"
     },
     "ai": {
         "fabDescription": "Schnelle Assistenten-Schublade. Öffnen Sie die Vollseite für den Verlauf.",
@@ -173,5 +176,17 @@
         "comfortable": "Bequem",
         "compact": "Kompakt",
         "label": "Tabellendichte"
+    },
+    "notifications": {
+        "title": "Benachrichtigungen",
+        "description": "Neuigkeiten für Sie, die neuesten zuerst.",
+        "loading": "Laden…",
+        "empty": "Noch keine Benachrichtigungen.",
+        "loadFailed": "Die Benachrichtigungen konnten nicht geladen werden. Versuchen Sie es später erneut.",
+        "updateFailed": "Die Benachrichtigung konnte nicht aktualisiert werden.",
+        "untitled": "Benachrichtigung",
+        "markAllRead": "Alle als gelesen markieren",
+        "markRead": "Als gelesen markieren",
+        "markUnread": "Als ungelesen markieren"
     }
 }

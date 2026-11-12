@@ -1082,6 +1082,52 @@
             ]
         },
         {
+            "name": "notifications",
+            "type": "registry:component",
+            "title": "Notifications",
+            "description": "Core notification centre: NotificationsBell (sidebar bell with the unread badge, live through an optional subscribe) and NotificationsDrawer (right-side list, mark as read, mark all as read), createNotificationsSource() for the Laravel database notifications contract, SidebarUnreadBadge and the opt-in notification sound.",
+            "dependencies": [
+                "@inertiajs/react",
+                "lucide-react",
+                "react-i18next"
+            ],
+            "registryDependencies": [
+                "@qiick/badge",
+                "@qiick/button",
+                "@qiick/item",
+                "@qiick/scroll-area",
+                "@qiick/sheet",
+                "@qiick/sidebar",
+                "@qiick/spinner",
+                "@qiick/toast",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/notifications/notifications-bell.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/notifications/notifications-drawer.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/components/sidebar-unread-badge.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/lib/notifications-api.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/notifications-api.ts"
+                },
+                {
+                    "path": "src/lib/notification-sound.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/notification-sound.ts"
+                }
+            ]
+        },
+        {
             "name": "item",
             "type": "registry:ui",
             "title": "Item",
@@ -1683,14 +1729,16 @@
             "name": "sidebar-entity-list",
             "type": "registry:component",
             "title": "Sidebar entity list",
-            "description": "Optional pattern sidebar-entities: SidebarEntityList (Pinned and Needs attention under a nav item, View all), SidebarEntityFlyout for the icon-only sidebar, PinToggleButton, and the sidebar filter (SidebarFilterProvider, SidebarFilterInput, useSidebarFilter).",
+            "description": "Optional pattern sidebar-entities: SidebarEntityList (Pinned and Needs attention under a nav item, View all, an optional pin action on every row: star and right-click menu), SidebarEntityFlyout for the icon-only sidebar, PinToggleButton, and the sidebar filter (SidebarFilterProvider, SidebarFilterInput, useSidebarFilter).",
             "dependencies": [
                 "@inertiajs/react",
+                "i18next",
                 "lucide-react",
                 "react-i18next"
             ],
             "registryDependencies": [
                 "@qiick/button",
+                "@qiick/context-menu",
                 "@qiick/dropdown-menu",
                 "@qiick/sidebar",
                 "@qiick/utils"
@@ -1738,6 +1786,31 @@
                 {
                     "path": "src/components/inbox-list.tsx",
                     "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "table-cell-details",
+            "type": "registry:component",
+            "title": "Table cell details",
+            "description": "Optional pattern table-cell-details: TableCellDetails keeps a list-holding table cell on one line (a summary and a ghost button) and opens the full detail in a narrow popover (a bottom drawer on mobile), as a list of names or as bars with visible value labels; lib/table-cell-details.ts scales the bars.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/drawer",
+                "@qiick/popover",
+                "@qiick/use-mobile",
+                "@qiick/use-scroll-region"
+            ],
+            "files": [
+                {
+                    "path": "src/components/table-cell-details.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/lib/table-cell-details.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/table-cell-details.ts"
                 }
             ]
         }

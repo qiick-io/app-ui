@@ -19,7 +19,7 @@ One page per pattern. Each names the registry item (when it exists) and the exac
 | Empty states                                                     | [empty-states.md](empty-states.md)               |
 | Destructive actions                                              | [destructive-actions.md](destructive-actions.md) |
 | Dashboard cards                                                  | [dashboard.md](dashboard.md)                     |
-| Notifications and messages (toasts)                              | [notifications.md](notifications.md)             |
+| Notifications: toasts, bell and drawer                           | [notifications.md](notifications.md)             |
 | Chat and Assistant                                               | [chat-and-assistant.md](chat-and-assistant.md)   |
 | Files grid                                                       | [files-grid.md](files-grid.md)                   |
 | Theme: tokens, presets, control scale                            | [theme.md](theme.md)                             |
