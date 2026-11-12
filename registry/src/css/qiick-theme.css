@@ -343,9 +343,13 @@
         /* red-300 on ink-900 = 6.38:1 (red-400 fails AA) */
         --destructive: var(--color-red-300);
         --destructive-foreground: var(--color-ink-950);
-        --success: var(--color-green-400);
+        /*
+         * Status 300 steps: text on the badge tint (X/15) ≥ 4.85:1 on every
+         * surface up to ink-800 (popover, muted); the 400 steps fell to 3.87:1 (#122).
+         */
+        --success: var(--color-green-300);
         --success-foreground: var(--color-ink-950);
-        --warning: var(--color-amber-400);
+        --warning: var(--color-amber-300);
         --warning-foreground: var(--color-ink-950);
         /* amber-400 ≥ 5.61:1 on ink-950…ink-800 */
         --warning-text: var(--color-amber-400);

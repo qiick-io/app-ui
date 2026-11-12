@@ -10,11 +10,12 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Upgrade notes
 
-- **Every app:** after bumping the pins, `npx shadcn add @qiick/badge --overwrite` (the theme is unchanged). The `success`, `warning` and `info` badges keep their `/15` tint in dark mode too. Then make the axe smoke test assert that `color-contrast` ran (`docs/theme-tokens.md`, "Contrast check"), and pay the raw `neutral-*` entries in `ui-token-baseline.txt` (excubia-app: `nav-footer.tsx`, `text-sidebar-foreground hover:text-foreground`).
+- **Every app:** after bumping the pins, `npx shadcn add @qiick/theme @qiick/badge --overwrite` (#122 changes the dark status colours; #77 alone needed only the badge). The `success`, `warning` and `info` badges keep their `/15` tint in dark mode too. Then make the axe smoke test assert that `color-contrast` ran (`docs/theme-tokens.md`, "Contrast check"), and pay the raw `neutral-*` entries in `ui-token-baseline.txt` (excubia-app: `nav-footer.tsx`, `text-sidebar-foreground hover:text-foreground`).
 
 ### Fixed
 
 - `badge`: the `success` variant met only 4.42:1 in dark mode on the card and sidebar (green-400 on the `/20` tint), below WCAG AA (#77). The status variants drop `dark:bg-*/20` and use the `/15` tint in both modes: dark `success` 4.90:1, `warning` 5.47:1, `info` 6.10:1 on the card (5.62, 6.27 and 7.13:1 on the page). Light mode is unchanged.
+- Status badges below AA on hover and on raised surfaces (#122). Dark `--success` and `--warning` move one step lighter (green-300, amber-300, like `--destructive` and `--info`), so the `/15` tint passes on popovers and muted rows (ink-800): dark `success` 3.87 → 5.02:1, `warning` 4.38 → 5.21:1 there. A link badge's hover now lowers the tint instead of raising it (`/25` → `/10`; dark `destructive` `/90` → `/50` under white text), so hovering only adds contrast: worst case `success` 4.32 → 5.49:1 light and 3.26 → 5.61:1 dark, `warning` 4.27 → 5.43 / 3.64 → 5.83, `info` 4.06 → 5.15 / 3.91 → 5.42, dark `destructive` 2.89 → 5.45:1. Light mode at rest is unchanged. `a11y-contrast.mjs` checks the hover state and the popover and muted surfaces too.
 - `a11y-contrast.mjs` checks the status badges as they render: the variant's text on its tint, read from `badge.tsx` (or `--badge <file>`) and composited over the page, card and sidebar, in every mode and preset. The token pairs alone missed the dark tint.
 - `docs/theme-tokens.md`: axe-core before 4.11.1 errors on `oklch(… none)` colours (Tailwind v4 `neutral-*`) and drops the whole `color-contrast` rule into `incomplete`; Pest's browser plugin bundles axe 4.10.3 and reads only `violations`. The page documents the assertion that keeps the rule visible.
 

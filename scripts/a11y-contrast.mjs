@@ -516,15 +516,12 @@ const colourPairs = [
 ];
 
 /*
- * Status badges as they render (#77): the variant's text colour on its tint,
- * with the tint composited over each surface a badge sits on. The classes are
- * read from the badge source, so a changed tint is checked here; a token pair
- * alone missed the dark `bg-success/20` tint (4.42:1 on the card).
- *
- * ponytail: popovers and muted rows (ink-800 in dark) are not checked as badge
- * surfaces; the dark success and warning tints fall below 4.5:1 there. Add
- * them here, with lighter dark status steps, once a pattern puts a status
- * badge on one.
+ * Status badges as they render (#77, #122): the variant's text colour on its
+ * tint, at rest and on hover (a badge rendered as a link), with the tint
+ * composited over each surface a badge sits on, from the page up to popovers
+ * and muted rows. The classes are read from the badge source, so a changed
+ * tint is checked here; a token pair alone missed the dark `bg-success/20`
+ * tint (4.42:1 on the card) and the `/25` hover tints.
  */
 const badgeFlag = process.argv.indexOf('--badge');
 const badgePath =
@@ -533,7 +530,17 @@ const badgePath =
         : path.resolve(process.cwd(), process.argv[badgeFlag + 1]);
 const badgeSource = fs.readFileSync(badgePath, 'utf8');
 const badgeStatusVariants = ['destructive', 'success', 'warning', 'info'];
-const badgeSurfaces = ['--background', '--card', '--sidebar'];
+const badgeSurfaces = [
+    '--background',
+    '--card',
+    '--sidebar',
+    '--popover',
+    '--muted',
+];
+const badgeStates = [
+    { name: 'rest', isHovered: false },
+    { name: 'hover', isHovered: true },
+];
 
 /**
  * The class list of one `badgeVariants` variant (`success: "bg-success/15 …"`).
@@ -552,19 +559,28 @@ function readBadgeVariantClasses(variant) {
 }
 
 /**
- * Text colour and tint of a badge variant in light or dark mode. Unprefixed
- * `bg-*` / `text-*` classes are the light look; in dark mode a `dark:` class
- * replaces its light counterpart. State classes (`hover:`, `[a&]:…`) are not
- * the resting look and are skipped.
+ * Text colour and tint of a badge variant in light or dark mode, at rest or
+ * hovered as a link. Unprefixed `bg-*` / `text-*` classes are the light rest
+ * look. The layers then apply in CSS specificity order, each replacing what it
+ * sets: `dark:`, then the link hover `[a&]:hover:` (an `a` element plus a
+ * pseudo-class outranks `dark:`), then `dark:[a&]:hover:`. Other variant
+ * prefixes (`focus-visible:`, …) are skipped.
  * @param {string[]} classNames
  * @param {boolean} isDark
+ * @param {boolean} isHovered
  * @returns {{ text?: string, tint?: string, tintAlpha: number }}
  */
-function readBadgeLook(classNames, isDark) {
+function readBadgeLook(classNames, isDark, isHovered) {
     /** @type {{ text?: string, tint?: string, tintAlpha: number }} */
     const look = { tintAlpha: 1 };
+    const layers = [
+        '',
+        ...(isDark ? ['dark:'] : []),
+        ...(isHovered ? ['[a&]:hover:'] : []),
+        ...(isDark && isHovered ? ['dark:[a&]:hover:'] : []),
+    ];
 
-    for (const layer of isDark ? ['', 'dark:'] : ['']) {
+    for (const layer of layers) {
         for (const className of classNames) {
             if (!className.startsWith(layer)) {
                 continue;
@@ -698,32 +714,35 @@ for (const [mode, { tokens, isDark }] of Object.entries(modes)) {
     }
 
     for (const variant of badgeStatusVariants) {
-        for (const surface of badgeSurfaces) {
-            checkPair(
-                `badge ${variant} / ${surface.slice(2)}`,
-                () => {
-                    const look = readBadgeLook(
-                        readBadgeVariantClasses(variant),
-                        isDark,
-                    );
-
-                    if (!look.text || !look.tint) {
-                        throw new Error(
-                            `badge ${variant} needs a text-* and a bg-* class`,
+        for (const { name: stateName, isHovered } of badgeStates) {
+            for (const surface of badgeSurfaces) {
+                checkPair(
+                    `badge ${variant}${isHovered ? ` ${stateName}` : ''} / ${surface.slice(2)}`,
+                    () => {
+                        const look = readBadgeLook(
+                            readBadgeVariantClasses(variant),
+                            isDark,
+                            isHovered,
                         );
-                    }
 
-                    return [
-                        resolveHex(look.text, tokens),
-                        compositeOver(
-                            resolveHex(look.tint, tokens),
-                            look.tintAlpha,
-                            resolveHex(tokens[surface], tokens),
-                        ),
-                    ];
-                },
-                4.5,
-            );
+                        if (!look.text || !look.tint) {
+                            throw new Error(
+                                `badge ${variant} needs a text-* and a bg-* class`,
+                            );
+                        }
+
+                        return [
+                            resolveHex(look.text, tokens),
+                            compositeOver(
+                                resolveHex(look.tint, tokens),
+                                look.tintAlpha,
+                                resolveHex(tokens[surface], tokens),
+                            ),
+                        ];
+                    },
+                    4.5,
+                );
+            }
         }
     }
 }
