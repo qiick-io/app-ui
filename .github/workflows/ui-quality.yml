@@ -34,6 +34,10 @@ on:
         description: Directory with the installed qiick-theme*.css files
         type: string
         default: resources/css
+      badge-file:
+        description: The app's installed badge component, whose status tints the contrast check measures (the registry's copy when the file is missing)
+        type: string
+        default: resources/js/components/ui/badge.tsx
       axe-test:
         description: Pest browser test with the axe smoke (empty to skip)
         type: string
@@ -68,7 +72,11 @@ jobs:
           repository: qiick-io/app-ui
           ref: ${{ steps.pin.outputs.ref }}
           path: .app-ui
-          sparse-checkout: scripts
+          # The contrast check falls back to the registry's badge when the app has none.
+          sparse-checkout: |
+            scripts
+            registry/src/components/ui/badge.tsx
+          sparse-checkout-cone-mode: false
 
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
@@ -85,7 +93,11 @@ jobs:
             echo "::warning::${{ inputs.theme-dir }}/qiick-theme.css not found: install @qiick/theme (npx shadcn add @qiick/theme) to check its contrast here."
             exit 0
           fi
-          node "$GITHUB_WORKSPACE/.app-ui/scripts/a11y-contrast.mjs" --theme-dir "${{ inputs.theme-dir }}"
+          badge_argument=()
+          if [ -f "${{ inputs.badge-file }}" ]; then
+            badge_argument=(--badge "${{ inputs.badge-file }}")
+          fi
+          node "$GITHUB_WORKSPACE/.app-ui/scripts/a11y-contrast.mjs" --theme-dir "${{ inputs.theme-dir }}" "${badge_argument[@]}"
 
   accessibility:
     if: inputs.axe-test != ''
