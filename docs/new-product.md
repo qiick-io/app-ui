@@ -37,7 +37,7 @@ It writes, all pinned to the same `vX.Y.Z`:
 | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `qiick-standards.json`        | `ref`, `uiPreset`, `php`, `frontendRoots`, `oxlint: true`, `app: true`, and later `patterns` (the [optional patterns](optional/README.md) it adopts)                   |
 | `components.json`             | the `@qiick` registry at `https://raw.githubusercontent.com/qiick-io/app-ui/vX.Y.Z/public/r/{name}.json`                                                               |
-| `.github/workflows/qiick.yml` | the reusable checks: PR title, drift (standards + registry), UI quality, frozen migrations, distribution smoke                                                         |
+| `.github/workflows/qiick.yml` | the reusable checks: PR title, drift (standards + registry), PHP quality (PHPStan floor, coverage floor), UI quality, frozen migrations, distribution smoke            |
 | the standards sync            | `AGENTS.md` / `CLAUDE.md` / copilot blocks, `.cursor/rules`, `tests/Arch`, `.oxlintrc.standards.json`, `.oxlintrc.i18n.json`, `knip.json`, `scripts/qiick-ratchet.mjs` |
 
 The preset is the product's brand colour. A product without a preset of its own uses Teal until the maintainer adds one to the registry (`@qiick/theme-<colour>`).
@@ -73,7 +73,12 @@ API, realtime and AI only when the spec asks for them: [`api.md`](api.md), [`rea
 
 ## 6. CI
 
-The app's own workflow runs the quality gate on every push and PR to `develop` / `main`: `composer install`, `npm ci`, `npm run build`, `pint --test`, `phpstan analyse`, `node scripts/qiick-ratchet.mjs phpstan`, `php artisan test`, `npm run lint`, `format:check`, `types:check`, `knip`, `lint:i18n`, and the axe smoke test (`tests/Browser/A11ySmokeBrowserTest.php`) on PRs. `.github/workflows/qiick.yml` from step 2 adds the shared checks.
+The app's own workflow runs the quality gate on every push and PR to `develop` / `main`: `composer install`, `npm ci`, `npm run build`, `pint --test`, `php artisan test`, `npm run lint`, `format:check`, `types:check`, `knip`, `lint:i18n`, and the axe smoke test (`tests/Browser/A11ySmokeBrowserTest.php`) on PRs. `.github/workflows/qiick.yml` from step 2 adds the shared checks, among them `php-quality` (PHPStan, its ratchet and Pest with coverage).
+
+A new product starts at the quality floor and never goes below it ([automated checks](../standards/rules/checks.md)):
+
+- **PHPStan level 8, baseline 0:** `level: 8` in `phpstan.neon` and no `phpstan-baseline.neon`. Fix every error from the first commit; the ratchet fails on a lower level and on any baselined error.
+- **A coverage floor:** after the first green test run with coverage, commit the total as `coverage-floor.txt`. Locally, with pcov or Xdebug: `vendor/bin/pest --coverage-clover=build/qiick-coverage.xml && node scripts/qiick-ratchet.mjs coverage --clover build/qiick-coverage.xml --update`. Without the file the `php-quality` job fails and prints the number to commit. Raise it with `--update` whenever coverage grows by a point or more.
 
 Push the bootstrap to `develop`, open a PR for the first feature, and get every check green.
 
@@ -83,7 +88,7 @@ Agents never change repository settings. Ask the maintainer to:
 
 - require these checks on `develop` and `main` (names as GitHub shows them):
     - the app's own jobs (tests on SQLite, lint / types / format, the accessibility smoke);
-    - `pr-title / commitlint`, `app-ui-drift / standards`, `app-ui-drift / drift`, `ui-quality / ui-quality`, `migrations-frozen / migrations-frozen`, `distribution-smoke / smoke`;
+    - `pr-title / commitlint`, `app-ui-drift / standards`, `app-ui-drift / drift`, `php-quality / php-quality`, `ui-quality / ui-quality`, `migrations-frozen / migrations-frozen`, `distribution-smoke / smoke`;
 - allow squash merges only, and delete branches after merge;
 - add Renovate (or keep Dependabot) with the app-ui preset from [`RELEASING.md`](../RELEASING.md#how-apps-pin-and-upgrade), so app-ui releases arrive as PRs;
 - create the Packagist package and the GHCR package once the first release is tagged.
