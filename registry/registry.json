@@ -548,6 +548,11 @@
                 {
                     "path": "src/hooks/use-scroll-region.ts",
                     "type": "registry:hook"
+                },
+                {
+                    "path": "src/lib/scroll-cue.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/scroll-cue.ts"
                 }
             ]
         },

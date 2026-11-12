@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-// Node strips the hook's types; only the pure measurement is tested here.
-import { hiddenScrollSides } from '../registry/src/hooks/use-scroll-region.ts';
+// Node strips the types of the registry's TypeScript lib (no imports in it).
+import { hiddenScrollSides } from '../registry/src/lib/scroll-cue.ts';
 
 const wideTable = { scrollWidth: 900, clientWidth: 390, isRightToLeft: false };
 
