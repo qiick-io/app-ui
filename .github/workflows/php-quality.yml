@@ -1,0 +1,130 @@
+# Reusable PHP quality floor for qiick apps and packages (qiick standards,
+# "Automated checks"), so no repo keeps its own copy of the gate:
+#
+# - PHPStan / Larastan at the repo's `level:`, which must reach `phpstan-min-level`
+#   (8 for apps, max for packages) and never drops; the baseline only shrinks
+#   (`scripts/qiick-ratchet.mjs phpstan`, synced by the standards pack).
+# - Pest with line coverage (pcov), then `scripts/qiick-ratchet.mjs coverage`:
+#   apps against the committed floor (`coverage-floor.txt`, only rises),
+#   packages against fixed minimums per path (`coverage-thresholds`).
+#
+# In an app:
+#
+#   jobs:
+#     php-quality:
+#       uses: qiick-io/app-ui/.github/workflows/php-quality.yml@vX.Y.Z
+#
+# In a package (no assets to build, fixed minimum):
+#
+#   jobs:
+#     php-quality:
+#       uses: qiick-io/app-ui/.github/workflows/php-quality.yml@vX.Y.Z
+#       with:
+#         phpstan-min-level: max
+#         coverage-thresholds: src=90
+#         build-command: ''
+#
+# Required check name: `php-quality / php-quality`.
+name: php quality
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: Repo root (where composer.json and phpstan.neon live)
+        type: string
+        default: .
+      php-version:
+        type: string
+        default: '8.4'
+      php-extensions:
+        type: string
+        default: pdo_sqlite, sqlite3
+      composer-command:
+        description: Installs the PHP dependencies
+        type: string
+        default: composer install --no-interaction --prefer-dist --no-progress
+      build-command:
+        description: Builds what the tests need (the Vite manifest, Wayfinder); empty to skip
+        type: string
+        default: npm ci && npm run build
+      phpstan-min-level:
+        description: Lowest accepted PHPStan level (8 for apps, max for packages); empty while an app ratchets up to it
+        type: string
+        default: '8'
+      coverage-thresholds:
+        description: Packages, fixed minimums per path (`src=90 src/Checks=90`); empty for the app floor file
+        type: string
+        default: ''
+      coverage-floor-file:
+        description: Apps, the committed line coverage floor
+        type: string
+        default: coverage-floor.txt
+      pest-arguments:
+        type: string
+        default: --parallel
+
+permissions:
+  contents: read
+
+jobs:
+  php-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          # The ratchets compare the baseline, the level and the floor with the base branch.
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ inputs.php-version }}
+          extensions: ${{ inputs.php-extensions }}
+          coverage: pcov
+          tools: composer:v2
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+
+      - name: Install PHP dependencies
+        run: ${{ inputs.composer-command }}
+
+      - name: Prepare environment
+        run: |
+          if [ -f artisan ] && [ -f .env.example ]; then
+            cp .env.example .env
+            php artisan key:generate --ansi
+          fi
+
+      - name: Build
+        if: inputs.build-command != ''
+        run: ${{ inputs.build-command }}
+
+      - name: PHPStan
+        run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+
+      - name: PHPStan level floor, baseline only shrinks
+        env:
+          MIN_LEVEL: ${{ inputs.phpstan-min-level }}
+        run: node scripts/qiick-ratchet.mjs phpstan ${MIN_LEVEL:+--min-level "$MIN_LEVEL"}
+
+      - name: Pest with line coverage
+        run: vendor/bin/pest ${{ inputs.pest-arguments }} --coverage-clover=build/qiick-coverage.xml
+
+      - name: Coverage floor
+        env:
+          THRESHOLDS: ${{ inputs.coverage-thresholds }}
+          FLOOR_FILE: ${{ inputs.coverage-floor-file }}
+        run: |
+          if [ -n "$THRESHOLDS" ]; then
+            # Word splitting is intended: one `<path>=<percent>` per argument.
+            # shellcheck disable=SC2086
+            node scripts/qiick-ratchet.mjs coverage --clover build/qiick-coverage.xml $THRESHOLDS
+          else
+            node scripts/qiick-ratchet.mjs coverage --clover build/qiick-coverage.xml --floor "$FLOOR_FILE"
+          fi

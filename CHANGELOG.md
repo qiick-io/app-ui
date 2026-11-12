@@ -10,15 +10,40 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Upgrade notes
 
+- **Every app:** after bumping the pins, `npx shadcn add @qiick/badge --overwrite` (the theme changes only for the table scroll cue below). The `success`, `warning` and `info` badges keep their `/15` tint in dark mode too. Then make the axe smoke test assert that `color-contrast` ran (`docs/theme-tokens.md`, "Contrast check"), and pay the raw `neutral-*` entries in `ui-token-baseline.txt` (excubia-app: `nav-footer.tsx`, `text-sidebar-foreground hover:text-foreground`).
+- **Every PHP repo:** re-sync. The automated-checks rule gains the PHP quality floor (PHPStan level 8 in apps, `max` in packages, the coverage ratchet) and `release.md` gains the required checks per repo. `scripts/qiick-ratchet.mjs` gains `phpstan --min-level` and a `coverage` mode; `phpstan` now also fails when `level:` is lower than on the base branch. Nothing fails until a repo calls `php-quality.yml` or passes `--min-level`.
+- **excubia-app** (level 8, baseline 0 already):
+  1. In `ci.yml`, add the job `php-quality: uses: qiick-io/app-ui/.github/workflows/php-quality.yml@v0.6.0` (defaults: level 8, build with `npm ci && npm run build`, floor in `coverage-floor.txt`), and drop the `PHPStan` and `Larastan baseline only shrinks` steps from the `tests` job.
+  2. Commit `coverage-floor.txt`: the first run fails and prints the number, or locally with pcov / Xdebug `vendor/bin/pest --coverage-clover=build/qiick-coverage.xml && node scripts/qiick-ratchet.mjs coverage --clover build/qiick-coverage.xml --update`.
+  3. Remove the local `migrations-frozen` job and `scripts/migrations-frozen.sh`, and rename the job `shared-migrations-frozen` to `migrations-frozen`, so the shared check is `migrations-frozen / migrations-frozen`.
+  4. Ask the maintainer to make the required checks match `release.md`: add `php-quality / php-quality`, `pr-title / commitlint`, `app-ui-drift / drift`, `ui-quality / ui-quality` and `migrations-frozen / migrations-frozen`; drop `Migrations frozen`.
+- **externa-core** (level 6, 51 baseline entries / 63 errors on `develop` on 2026-11-12): a ratchet, not a jump to 8.
+  1. Add the job `php-quality` calling `php-quality.yml@v0.6.0` with `phpstan-min-level: ''` (the level may not drop and the baseline may not grow, but 6 passes), commit `coverage-floor.txt` as above, and drop the non-blocking `coverage` job of `tests.yml` (#288) and the PHPStan and ratchet steps of `quality`.
+  2. One PR per level: raise `level:` to 7 and baseline its new errors (the ratchet allows it once, in that PR); pay the baseline down in later PRs; then the same for 8.
+  3. At level 8, remove `phpstan-min-level: ''` so the default floor 8 applies.
+  4. Ask the maintainer to make the required checks match `release.md`: add `php-quality / php-quality`, `pr-title / commitlint`, `app-ui-drift / standards`, `app-ui-drift / drift`; call `ui-quality.yml` and `migrations-frozen.yml`, rename the job `smoke` in `distribution.yml` to `distribution-smoke`, then require `ui-quality / ui-quality`, `migrations-frozen / migrations-frozen` and `distribution-smoke / smoke`.
+- **excubia-core** (`max`, baseline 0, coverage gate already): optionally replace its own PHPStan, Pest coverage and `.github/assert-coverage.php` steps with `php-quality.yml` (`phpstan-min-level: max`, `coverage-thresholds: src/Checks=90 src=90`, `build-command: ''`); its lowest / stable matrix stays its own. Add the `pr-title.yml` caller, rename the job `standards` to `app-ui-drift`, and pin a release tag instead of `develop`.
 - **Every app with tables (excubia-app#206, externa-core):** re-pull `npx shadcn add @qiick/theme @qiick/use-scroll-region @qiick/table @qiick/page-layout --overwrite` (`data-table` itself is unchanged; it gets the cue through `table` and `page-layout`). Merge the new `a11y.scrollableTable` key from `registry/locales/{en,de,it}.json` into the app's locale files. Nothing else: no props, wrappers or classes to add per page. Review `app-ui.overrides.json` entries for `table.tsx`, `page-layout.tsx` or `qiick-theme.css`, if any. An app whose axe test snapshots the DOM sees `role="region"` and `aria-label` on table scrollers that overflow.
 
 ### Added
 
+- PHP quality floor (#63):
+  - **Rule:** PHPStan level 8 at least in apps and `max` in packages; the level never drops and the baseline only shrinks. Apps fail CI below a committed line coverage floor (`coverage-floor.txt`, only rises); packages keep a fixed minimum per path (`standards/rules/checks.md`).
+  - **Ratchet:** `qiick-ratchet.mjs phpstan --min-level <8|max>` and `qiick-ratchet.mjs coverage --clover <report>` (the floor file, `--update`, or `<path>=<percent>` minimums), from excubia-core's `assert-coverage.php`, with tests.
+  - **Reusable workflow** `php-quality.yml`: PHPStan, the level floor and baseline ratchet, Pest with pcov coverage and the coverage ratchet, with the repo's synced script. Check name `php-quality / php-quality`. `scripts/new-product.mjs` adds it to `qiick.yml`.
+  - **New products** start at level 8, baseline 0 and a coverage floor (`docs/new-product.md`).
+  - **Required checks per repo** on `develop` and `main` in `standards/rules/release.md` (details).
 - Scroll cue for wide tables on small screens (#118, for excubia-app#206): a table wider than its card fades out over the last 2rem on each side that hides columns, so phone users see that it scrolls.
     - Applies to every `Table` (its container) and every `TablePanel` (so every `DataTable`); a table that fits shows nothing, so desktop tables are unchanged.
     - `useScrollRegion` marks the hidden sides (`data-scroll-cue-left` / `-right`) on scroll, resize and content changes; the `theme` draws the fade as a mask, so it needs no colour and holds in light, dark and high contrast. The fade animates only without reduced motion and gives way to the focus ring on keyboard focus.
     - While it overflows, the scroller is a focusable region named "Scrollable table" (`a11y.scrollableTable`), so the keyboard can scroll it (WCAG 2.1.1, axe `scrollable-region-focusable`); standalone `Table`s in cards had no keyboard access before.
     - `useScrollRegion(accessibleName?)` takes an optional name and ignores containers whose own `overflow` is `visible`. Documented in `docs/list-page.md` ("Wide tables on small screens"); the playground `table` demo has a wide table in a phone-width card.
+
+### Fixed
+
+- `badge`: the `success` variant met only 4.42:1 in dark mode on the card and sidebar (green-400 on the `/20` tint), below WCAG AA (#77). The status variants drop `dark:bg-*/20` and use the `/15` tint in both modes: dark `success` 4.90:1, `warning` 5.47:1, `info` 6.10:1 on the card (5.62, 6.27 and 7.13:1 on the page). Light mode is unchanged.
+- `a11y-contrast.mjs` checks the status badges as they render: the variant's text on its tint, read from `badge.tsx` (or `--badge <file>`) and composited over the page, card and sidebar, in every mode and preset. The token pairs alone missed the dark tint.
+- `docs/theme-tokens.md`: axe-core before 4.11.1 errors on `oklch(… none)` colours (Tailwind v4 `neutral-*`) and drops the whole `color-contrast` rule into `incomplete`; Pest's browser plugin bundles axe 4.10.3 and reads only `violations`. The page documents the assertion that keeps the rule visible.
 
 ## [0.5.0] - 2026-11-12
 
