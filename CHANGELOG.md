@@ -8,6 +8,24 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-16
+
+### Upgrade notes
+
+- **Every repo:** bump the three pins to `v0.7.0` and re-sync the standards. Only the AI rule changes (see below). Nothing else changes for an app without AI tools.
+- **excubia-app:** already follows it (#320, PR #321); the re-sync only refreshes the AI line of the synced block.
+- **externa-core:** follow it in externa-core#766 (flip the write defaults, split destructive actions, add collection and field tools).
+
+### Changed
+
+- **AI writes are on by default** (maintainer decision, 2026-11-16; `docs/ai-backend.md`, the AI line of `rules/backend.md`).
+  - Reversible write tools now work out of the box: in the in-app assistant with approval, and over MCP for keys with `mcp:write`. `AI_TOOLS_WRITE_ENABLED` and `mcp.write_enabled` now default to `true` and turn writes off when wanted.
+  - Destructive and security tools stay off by default (`AI_TOOLS_DESTRUCTIVE_ENABLED`) and are approved one call at a time. Security actions never reach MCP.
+  - Upgrade notes:
+    - Every repo: re-sync.
+    - externa-core: flip the two defaults, and split destructive actions out of the write switch.
+    - excubia-app: drop its "tools are read-only" repo rule and add the write tools.
+
 ## [0.6.1] - 2026-11-12
 
 ### Upgrade notes
@@ -247,7 +265,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/qiick-io/app-ui/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/qiick-io/app-ui/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/qiick-io/app-ui/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/qiick-io/app-ui/compare/v0.4.0...v0.5.0
