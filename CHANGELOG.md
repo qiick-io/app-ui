@@ -8,6 +8,16 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Changed
+
+- **AI writes are on by default** (maintainer decision, 2026-11-16; `docs/ai-backend.md`, the AI line of `rules/backend.md`).
+  - Reversible write tools now work out of the box: in the in-app assistant with approval, and over MCP for keys with `mcp:write`. `AI_TOOLS_WRITE_ENABLED` and `mcp.write_enabled` now default to `true` and turn writes off when wanted.
+  - Destructive and security tools stay off by default (`AI_TOOLS_DESTRUCTIVE_ENABLED`) and are approved one call at a time. Security actions never reach MCP.
+  - Upgrade notes:
+    - Every repo: re-sync.
+    - externa-core: flip the two defaults, and split destructive actions out of the write switch.
+    - excubia-app: drop its "tools are read-only" repo rule and add the write tools.
+
 ## [0.6.1] - 2026-11-12
 
 ### Upgrade notes
