@@ -570,6 +570,19 @@
             ]
         },
         {
+            "name": "segmented-icon-item",
+            "type": "registry:component",
+            "title": "Segmented icon item",
+            "description": "Icon-only segment of a segmented control (ToggleGroup outline), its name in a tooltip and as the accessible name.",
+            "registryDependencies": ["@qiick/toggle-group", "@qiick/tooltip"],
+            "files": [
+                {
+                    "path": "src/components/admin/segmented-icon-item.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
             "name": "page-header",
             "type": "registry:component",
             "title": "Page header",

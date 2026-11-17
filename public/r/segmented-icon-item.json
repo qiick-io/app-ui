@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "segmented-icon-item",
+  "title": "Segmented icon item",
+  "description": "Icon-only segment of a segmented control (ToggleGroup outline), its name in a tooltip and as the accessible name.",
+  "registryDependencies": [
+    "@qiick/toggle-group",
+    "@qiick/tooltip"
+  ],
+  "files": [
+    {
+      "path": "src/components/admin/segmented-icon-item.tsx",
+      "content": "import type { ReactNode } from 'react';\nimport { ToggleGroupItem } from '@/components/ui/toggle-group';\nimport {\n    Tooltip,\n    TooltipContent,\n    TooltipTrigger,\n} from '@/components/ui/tooltip';\n\n/**\n * One icon item of a segmented control (`ToggleGroup type=\"single\" variant=\"outline\"`), as in\n * Users active / trash: the icon only, its name in a tooltip and as the accessible name,\n * so a row of filters stays compact at every width. Segments without an icon keep their text.\n *\n * The tooltip trigger would otherwise stamp its own `data-state` (closed / delayed-open) over the\n * toggle's `on` / `off`, which drives the selected style; the item passes it explicitly, and the\n * child's props win when Radix merges them.\n *\n * @param props.value - The segment's value in the toggle group.\n * @param props.label - Its name: tooltip text and `aria-label`.\n * @param props.isActive - Whether this segment is the group's current value.\n * @param props.children - The lucide icon.\n */\nexport function SegmentedIconItem({\n    value,\n    label,\n    isActive,\n    children,\n}: {\n    value: string;\n    label: string;\n    isActive: boolean;\n    children: ReactNode;\n}) {\n    return (\n        <Tooltip>\n            <TooltipTrigger asChild>\n                <ToggleGroupItem\n                    value={value}\n                    aria-label={label}\n                    data-state={isActive ? 'on' : 'off'}\n                >\n                    {children}\n                </ToggleGroupItem>\n            </TooltipTrigger>\n            <TooltipContent side=\"bottom\">{label}</TooltipContent>\n        </Tooltip>\n    );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

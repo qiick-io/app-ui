@@ -24,6 +24,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
     - Past `visibleChipCount` (default 6) the chips fold behind a "Show N more" `Collapsible` button with `aria-expanded`; `lib/timeline.ts` decides the fold (never "Show 1 more").
     - Page: `docs/optional/timeline.md`. Listed in `standards/patterns.json`. New `timeline.*` locale keys.
 
+### Added
+
+- Registry item `segmented-icon-item` (`SegmentedIconItem`): an icon-only segment of a segmented control with its name in a tooltip and as the `aria-label`. It sets the toggle's `data-state` from `isActive`, since a tooltip trigger around a `ToggleGroupItem` replaces it and loses the selected style. `docs/page.md` (segmented filters) and the playground Users screen use it.
+
 ### Changed
 
 - `command-palette`: `CommandPaletteTrigger` is a search icon with a tooltip (name and ⌘K) instead of a search-field-shaped button; it goes in the header's `leading` slot right after the sidebar toggle, so the right side stays free for page actions (#157).

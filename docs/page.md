@@ -62,4 +62,4 @@ Source: Excubia `pages/projects/show.tsx` (`ProjectTabs`), `pages/projects/index
 
 ## Segmented filters
 
-A segmented control filters the data of one view; it does not switch views. It sits in the filter row's `filtersRight`: `ToggleGroup type="single" variant="outline"`, with icon + label items or icon-only items with an `aria-label`. Examples are Users active/trash, Chat Collections/Users, a dashboard's period and the status of a list. Sources: externa-core `pages/admin/users/index.tsx`, `pages/chat/index.tsx`.
+A segmented control filters the data of one view; it does not switch views. It sits in the filter row's `filtersRight`: `ToggleGroup type="single" variant="outline"`. Segments with an icon show **the icon only**, each a `SegmentedIconItem` (registry `segmented-icon-item`): its name is the tooltip and the `aria-label`, and it passes `isActive` so the selected style survives the tooltip. Segments without a meaningful icon (a status, a period) keep their text. Examples are Users active/trash, Chat Collections/Users, a dashboard's period and the status of a list. Sources: externa-core `pages/admin/users/index.tsx`, `pages/chat/index.tsx`.
