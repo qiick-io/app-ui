@@ -606,6 +606,11 @@
                     "path": "src/lib/list-per-page.ts",
                     "type": "registry:file",
                     "target": "resources/js/lib/list-per-page.ts"
+                },
+                {
+                    "path": "src/lib/pagination-window.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/pagination-window.ts"
                 }
             ]
         },

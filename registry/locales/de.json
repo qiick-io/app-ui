@@ -79,6 +79,7 @@
         "noResults": "Keine Ergebnisse.",
         "offline": "Offline",
         "online": "Online",
+        "pageOf": "Seite {{page}} von {{total}}",
         "pageRange": "{{from}}–{{to}} von {{total}}",
         "perPageOption": "{{count}} / Seite",
         "rowsPerPage": "Zeilen pro Seite",
