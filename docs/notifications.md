@@ -49,7 +49,7 @@ Source: externa-core `components/ui/sonner.tsx`, `lib/toast.ts`, `lib/live-annou
 
 ### Rules
 
-- **Bell:** a sidebar menu item (bell icon, "Notifications") with the red unread badge (`SidebarUnreadBadge`, capped at 99+). It sits in the **sidebar header**, under the logo, next to the search when the app has one (the sidebar filter or the ⌘K trigger). In the icon-only sidebar it stays an icon with the badge on it.
+- **Bell:** a sidebar menu item (bell icon, "Notifications") with the red unread badge (`SidebarUnreadBadge`, capped at 99+). It sits in the **sidebar footer**, right above the user menu, as externa-core and instituta-core have it. The ⌘K search lives in the page header since v0.9.0, so the sidebar header keeps only the logo. In the icon-only sidebar it stays an icon with the badge on it.
 - **Drawer:** a `Sheet` on the **right**, `sm:max-w-md`: title and description, then "Mark all as read" right-aligned under them, then the list, newest first.
 - **Item:** icon, title, body, time, in an outlined `Item`; unread items have the `bg-muted/40` tint and a "Mark as read" action, read ones "Mark as unread" (when the app has the endpoint). Clicking the item marks it read and opens its link; an item without a link is text only.
 - **Item types are the app's.** The drawer knows only `{ id, icon, title, body, link, time, isRead }`; the app maps each of its notification types to an icon, a title and the page where the user acts (`toItem`). The drawer points elsewhere; it is not a second inbox.

@@ -8,6 +8,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Changed
+
+- Shell: the notifications bell goes in the **sidebar footer**, right above the user menu, instead of the sidebar header. That is where externa-core and instituta-core already have it, and since v0.9.0 the ⌘K search sits in the page header, so nothing is left for the bell to sit next to (`docs/shell.md`, `docs/notifications.md`). Upgrade: apps that have the bell in `SidebarHeader` (excubia-app) move it into `SidebarFooter`, before `NavUser`.
+
 ### Added
 
 - Registry item `segmented-icon-item` (`SegmentedIconItem`): an icon-only segment of a segmented control with its name in a tooltip and as the `aria-label`. It sets the toggle's `data-state` from `isActive`, since a tooltip trigger around a `ToggleGroupItem` replaces it and loses the selected style. `docs/page.md` (segmented filters) and the playground Users screen use it.
