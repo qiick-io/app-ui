@@ -120,11 +120,12 @@ test('fails on a missing file of an installed item, passes once it is overridden
         'app-ui.overrides.json',
         JSON.stringify({
             'resources/js/lib/list-per-page.ts': 'Kept in another module',
+            'resources/js/lib/pagination-window.ts': 'Kept in another module',
         }),
     );
 
     const passed = run(app);
 
     assert.equal(passed.status, 0, passed.stderr);
-    assert.match(passed.stdout, /1 overridden/);
+    assert.match(passed.stdout, /2 overridden/);
 });
