@@ -19,6 +19,11 @@ import { AppContent } from '@/components/app-content';
 import { AppShell } from '@/components/app-shell';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import type { BreadcrumbItemType } from '@/components/breadcrumbs';
+import {
+    CommandPalette,
+    CommandPaletteTrigger,
+} from '@/components/command-palette';
+import { ShortcutsProvider } from '@/components/keyboard-shortcuts';
 import { ChatComposer } from '@/components/layout/chat-layout';
 import {
     Sidebar,
@@ -89,100 +94,136 @@ export function DemoShell({
     children: ReactNode;
 }) {
     return (
-        <AppShell variant="sidebar">
-            <Sidebar collapsible="icon" variant="inset">
-                <nav
-                    aria-label="Main navigation"
-                    className="flex h-full w-full flex-col"
-                >
-                    <SidebarHeader>
-                        <SidebarMenu>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton size="lg" asChild>
-                                    <a href="#/">
-                                        <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
-                                            q
-                                        </div>
-                                        <div className="ml-1 grid flex-1 text-left text-sm">
-                                            <span className="mb-0.5 truncate leading-tight font-semibold">
-                                                qiick app
-                                            </span>
-                                        </div>
-                                    </a>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        </SidebarMenu>
-                    </SidebarHeader>
-                    <SidebarContent>
-                        <SidebarGroup className="px-2 py-0">
+        <ShortcutsProvider>
+            <AppShell variant="sidebar">
+                <Sidebar collapsible="icon" variant="inset">
+                    <nav
+                        aria-label="Main navigation"
+                        className="flex h-full w-full flex-col"
+                    >
+                        <SidebarHeader>
                             <SidebarMenu>
                                 <SidebarMenuItem>
-                                    <SidebarMenuButton
-                                        asChild
-                                        isActive={active === 'assistant'}
-                                        tooltip={{ children: 'Assistant' }}
-                                        className="sidebar-ai-nav"
-                                    >
-                                        <a href="#/assistant">
-                                            <Sparkles />
-                                            <span>Assistant</span>
-                                            {active !== 'assistant' ? (
-                                                <kbd className="ml-auto font-sans text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-                                                    ⌘J
-                                                </kbd>
-                                            ) : null}
+                                    <SidebarMenuButton size="lg" asChild>
+                                        <a href="#/">
+                                            <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
+                                                q
+                                            </div>
+                                            <div className="ml-1 grid flex-1 text-left text-sm">
+                                                <span className="mb-0.5 truncate leading-tight font-semibold">
+                                                    qiick app
+                                                </span>
+                                            </div>
                                         </a>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             </SidebarMenu>
-                        </SidebarGroup>
-                        <SidebarGroup className="px-2 py-0">
-                            <SidebarGroupLabel>Platform</SidebarGroupLabel>
-                            <SidebarMenu>
-                                {PLATFORM.map((entry) => (
-                                    <SidebarMenuItem key={entry.title}>
-                                        <NavLink
-                                            entry={entry}
-                                            active={active}
-                                        />
+                        </SidebarHeader>
+                        <SidebarContent>
+                            <SidebarGroup className="px-2 py-0">
+                                <SidebarMenu>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                            asChild
+                                            isActive={active === 'assistant'}
+                                            tooltip={{ children: 'Assistant' }}
+                                            className="sidebar-ai-nav"
+                                        >
+                                            <a href="#/assistant">
+                                                <Sparkles />
+                                                <span>Assistant</span>
+                                                {active !== 'assistant' ? (
+                                                    <kbd className="ml-auto font-sans text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+                                                        ⌘J
+                                                    </kbd>
+                                                ) : null}
+                                            </a>
+                                        </SidebarMenuButton>
                                     </SidebarMenuItem>
-                                ))}
-                            </SidebarMenu>
-                        </SidebarGroup>
-                    </SidebarContent>
-                    <SidebarFooter>
-                        <SidebarGroup className="mt-auto px-0 group-data-[collapsible=icon]:p-0">
-                            <SidebarMenu>
-                                {FOOTER.map((entry) => (
-                                    <SidebarMenuItem key={entry.title}>
-                                        <NavLink
-                                            entry={entry}
-                                            active={active}
-                                        />
-                                    </SidebarMenuItem>
-                                ))}
-                            </SidebarMenu>
-                        </SidebarGroup>
-                        <DemoUserMenu />
-                    </SidebarFooter>
-                </nav>
-            </Sidebar>
-            <AppContent
-                variant="sidebar"
-                id="main-content"
-                className="overflow-hidden"
-                tabIndex={-1}
-            >
-                <AppSidebarHeader
-                    breadcrumbs={breadcrumbs}
-                    actions={headerActions}
-                />
-                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                    {children}
-                </div>
-            </AppContent>
-            <DemoAssistantPanel enabled={active !== 'assistant'} />
-        </AppShell>
+                                </SidebarMenu>
+                            </SidebarGroup>
+                            <SidebarGroup className="px-2 py-0">
+                                <SidebarGroupLabel>Platform</SidebarGroupLabel>
+                                <SidebarMenu>
+                                    {PLATFORM.map((entry) => (
+                                        <SidebarMenuItem key={entry.title}>
+                                            <NavLink
+                                                entry={entry}
+                                                active={active}
+                                            />
+                                        </SidebarMenuItem>
+                                    ))}
+                                </SidebarMenu>
+                            </SidebarGroup>
+                        </SidebarContent>
+                        <SidebarFooter>
+                            <SidebarGroup className="mt-auto px-0 group-data-[collapsible=icon]:p-0">
+                                <SidebarMenu>
+                                    {FOOTER.map((entry) => (
+                                        <SidebarMenuItem key={entry.title}>
+                                            <NavLink
+                                                entry={entry}
+                                                active={active}
+                                            />
+                                        </SidebarMenuItem>
+                                    ))}
+                                </SidebarMenu>
+                            </SidebarGroup>
+                            <DemoUserMenu />
+                        </SidebarFooter>
+                    </nav>
+                </Sidebar>
+                <AppContent
+                    variant="sidebar"
+                    id="main-content"
+                    className="overflow-hidden"
+                    tabIndex={-1}
+                >
+                    <AppSidebarHeader
+                        breadcrumbs={breadcrumbs}
+                        leading={<DemoSearch />}
+                        actions={headerActions}
+                    />
+                    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                        {children}
+                    </div>
+                </AppContent>
+                <DemoAssistantPanel enabled={active !== 'assistant'} />
+            </AppShell>
+        </ShortcutsProvider>
+    );
+}
+
+/** The search icon after the sidebar toggle, opening the palette over the demo screens (⌘K). */
+function DemoSearch() {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <>
+            <CommandPaletteTrigger onOpen={() => setIsOpen(true)} />
+            <CommandPalette
+                open={isOpen}
+                onOpenChange={setIsOpen}
+                groups={[
+                    {
+                        id: 'navigation',
+                        heading: 'Navigation',
+                        items: PLATFORM.filter((entry) => entry.screen).map(
+                            (entry) => ({
+                                id: `nav:${entry.title}`,
+                                label: entry.title,
+                                icon: entry.icon,
+                                href: `#/${entry.screen}`,
+                            }),
+                        ),
+                    },
+                ]}
+                onNavigate={(href) => {
+                    window.location.hash = href.replace(/^#/, '');
+                }}
+                recentStorageKey="playground.palette.recent"
+            />
+        </>
     );
 }
 

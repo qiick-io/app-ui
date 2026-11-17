@@ -2,6 +2,8 @@
     "a11y": {
         "breadcrumb": "Percorso di navigazione",
         "close": "Chiudi",
+        "collapseSidebar": "Comprimi barra laterale",
+        "expandSidebar": "Espandi barra laterale",
         "loading": "Caricamento",
         "moreActions": "Altre azioni",
         "notifications": "Notifiche",
