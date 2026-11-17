@@ -69,7 +69,7 @@ Follow [`standards/rules/backend.md`](../standards/rules/backend.md) and these p
 6. `php artisan <app>:install` (interactive, plus `--no-interaction --force` for CI) and `php artisan <app>:upgrade` (migrate, `<app>:sync-permissions`, caches, version steps), as externa-core `app/Console/Commands/InstallCommand.php` / `UpgradeCommand.php` (externa still calls its permissions command `permissions:sync`; see [`roles-and-permissions.md`](roles-and-permissions.md)). The rules: [`standards/rules/distribution.md`](../standards/rules/distribution.md).
 7. A `Dockerfile`, `docker-bake.hcl` and `docker-compose.yml` like externa-core (multi-stage on `php:8.4-fpm-bookworm`, Node 24 for the Vite stage, Nginx in the `production` stage, `docker/entrypoint.sh` that runs migrations only when `RUN_MIGRATIONS=true`), and a release workflow job that pushes `ghcr.io/qiick-io/<repo>` for linux/amd64 + arm64 on `v*` tags (externa-core `.github/workflows/docker.yml`, job `ghcr-publish`).
 
-API, realtime and AI only when the spec asks for them: [`api.md`](api.md), [`realtime.md`](realtime.md), [`ai-backend.md`](ai-backend.md).
+API, realtime and AI only when the spec asks for them: [`api.md`](api.md) with [`api-keys.md`](api-keys.md), [`realtime.md`](realtime.md), [`ai-backend.md`](ai-backend.md).
 
 ## 6. CI
 
