@@ -36,6 +36,16 @@ The reusable [`drift-check.yml`](../.github/workflows/drift-check.yml) with `sta
 - a file or directory under `frontendRoots` is not kebab-case;
 - `patterns` names an optional pattern that does not exist, or a pattern with variants without one of them.
 
+With `registry: true` (the default; apps with the `@qiick` registry), it runs `scripts/check-drift.mjs` from the registry tag pinned in `components.json`. Fidelity of what the app installed, file by file, against `app-ui.overrides.json`:
+
+- a file of an installed item differs from the registry, or is missing, and the overrides do not list it with a reason;
+- an override is no longer needed (the file matches again) or is not a file of an installed item.
+
+Coverage of what the app must install, item by item, against `requiredItems` and `divergences` in `qiick-standards.json`. Without it, an app that builds its own screen instead of installing the item stays green, which is how four API key screens grew:
+
+- a required item is not installed and has no divergence;
+- a divergence's item is installed (stale: remove it), is not in `requiredItems`, or has no reason.
+
 The repo's own CI runs the rest, each one a step in its workflow:
 
 | Check                                                                                                | Command                                                                                                                                                                                                                             |
@@ -84,7 +94,7 @@ A new product: [`docs/new-product.md`](../docs/new-product.md) and `scripts/new-
     }
     ```
 
-    `ref` is the app-ui tag (or branch) CI checks against; omit `uiPreset` in repos without a UI; `oxlint: true` writes the Oxlint configs for Vite+ apps (the default; add the `lint:standards` and `lint:i18n` scripts as excubia-app has them); `eslint: true` writes `qiick-standards.eslint.js` for repos still on ESLint until they move to Vite+ (add `qiickStandards(['resources/js/**/*.{ts,tsx}'])` and `...qiickRatchetedRules(['resources/js/**/*.{ts,tsx}'])` to `eslint.config.js`, then write the first `qiick-lint-baseline.json` with the ratchet's `--update`); `app: true` adds the self-hosted distribution rules (apps, not Composer packages); `patterns` lists the optional UI patterns the app adopts (`"name"` or `"name:variant"`, from [`patterns.json`](patterns.json); see [`docs/optional/`](../docs/optional/README.md)), and the agent files name them.
+    `ref` is the app-ui tag (or branch) CI checks against; omit `uiPreset` in repos without a UI; `oxlint: true` writes the Oxlint configs for Vite+ apps (the default; add the `lint:standards` and `lint:i18n` scripts as excubia-app has them); `eslint: true` writes `qiick-standards.eslint.js` for repos still on ESLint until they move to Vite+ (add `qiickStandards(['resources/js/**/*.{ts,tsx}'])` and `...qiickRatchetedRules(['resources/js/**/*.{ts,tsx}'])` to `eslint.config.js`, then write the first `qiick-lint-baseline.json` with the ratchet's `--update`); `app: true` adds the self-hosted distribution rules (apps, not Composer packages); `patterns` lists the optional UI patterns the app adopts (`"name"` or `"name:variant"`, from [`patterns.json`](patterns.json); see [`docs/optional/`](../docs/optional/README.md)), and the agent files name them; `requiredItems` lists the `@qiick` registry items the product must install and `divergences` maps each one it leaves out on purpose to the reason (`{ "api-key-form": "Keys are issued per tenant (#171)" }`), both read by the drift check, not by the sync.
 
 2. Sync from an app-ui checkout at that ref:
 

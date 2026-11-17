@@ -16,7 +16,9 @@
  *         "oxlint": true,                  // Vite+ apps: the shared Oxlint configs
  *         "eslint": true,                  // repos still on ESLint: the shared ESLint config
  *         "app": true,                     // self-hosted app: stack and distribution rules
- *         "patterns": ["command-palette"]  // optional UI patterns it adopts (standards/patterns.json)
+ *         "patterns": ["command-palette"], // optional UI patterns it adopts (standards/patterns.json)
+ *         "requiredItems": ["page-layout"], // registry items it must install (check-drift.mjs)
+ *         "divergences": { "page-layout": "Why" } // required items left out on purpose (check-drift.mjs)
  *     }
  *
  * Managed files are of two kinds:

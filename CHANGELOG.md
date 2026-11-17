@@ -14,6 +14,7 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Added
 
+- Drift check: coverage, not only fidelity (#172). `scripts/check-drift.mjs` reads `requiredItems` and `divergences` from the app's `qiick-standards.json` and fails on a required item that is neither installed nor declared a divergence, and on a divergence whose item is installed, is not required or has no reason. Before, an app that built its own screen instead of installing the item stayed green. Nothing changes for an app without `requiredItems`; the required list per product is still to be decided.
 - Registry item `segmented-icon-item` (`SegmentedIconItem`): an icon-only segment of a segmented control with its name in a tooltip and as the `aria-label`. It sets the toggle's `data-state` from `isActive`, since a tooltip trigger around a `ToggleGroupItem` replaces it and loses the selected style. `docs/page.md` (segmented filters) and the playground Users screen use it.
 
 ### Fixed
