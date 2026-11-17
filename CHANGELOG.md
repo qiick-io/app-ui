@@ -8,6 +8,16 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-17
+
+### Upgrade notes
+
+- **Every repo:** bump the three pins to `v0.8.0` and re-sync the standards. The local-development rule no longer names Herd. Repos then take PHP from `PATH` / `PHP_BINARY` and the Vite HTTPS certificate from `VITE_DEV_SERVER_KEY` / `VITE_DEV_SERVER_CERT`, and run Reverb with `php artisan reverb:start`. Check any script that hard-codes a Herd path.
+- **Apps with list pages** (excubia-app, externa-core, instituta-core): run `npx shadcn add @qiick/page-layout --overwrite`, and merge the new `common.pageOf` key into `en` / `it` / `de`. Pass `currentPage` / `lastPage` to `TablePagination` when the page has them; without them it reads the links as before.
+- **Optional:**
+  - add `menubar`, `navigation-menu` or `resizable` when a screen needs them (`resizable` brings `react-resizable-panels`);
+  - adopt the optional `sidebar-nav` pattern: add it to `patterns` in `qiick-standards.json`, re-sync, then `npx shadcn add @qiick/sidebar-nav`.
+
 ### Added
 
 - Registry: the last shadcn primitives the registry lacked, `menubar`, `navigation-menu` and `resizable` (new dependency `react-resizable-panels` for `resizable`).
@@ -278,7 +288,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/qiick-io/app-ui/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/qiick-io/app-ui/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/qiick-io/app-ui/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/qiick-io/app-ui/compare/v0.5.0...v0.6.0
