@@ -18,6 +18,7 @@ One page per pattern. Each names the registry item (when it exists) and the exac
 | Error pages 403 / 404 / 500 / 503                                | [error-pages.md](error-pages.md)                 |
 | Empty states                                                     | [empty-states.md](empty-states.md)               |
 | Destructive actions                                              | [destructive-actions.md](destructive-actions.md) |
+| API keys: storage, scopes, show-once secret, rotation, key list  | [api-keys.md](api-keys.md)                       |
 | Dashboard cards                                                  | [dashboard.md](dashboard.md)                     |
 | Notifications: toasts, bell and drawer                           | [notifications.md](notifications.md)             |
 | Chat and Assistant                                               | [chat-and-assistant.md](chat-and-assistant.md)   |

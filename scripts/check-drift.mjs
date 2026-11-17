@@ -20,11 +20,24 @@
  * - Fails on any unexplained difference (printing a diff), on a missing file of
  *   an installed item without an override, and on an override that is not
  *   needed (file matches) or not a registry file.
+ *
+ * That half proves the fidelity of what an app took, and is blind to what it
+ * never took: an app that builds its own screen instead of installing the item
+ * stays green. So `qiick-standards.json` also names the items the product must
+ * install, and the ones it leaves out on purpose with a reason, the overrides
+ * idea one level up (an item instead of a file):
+ *
+ *       { "requiredItems": ["page-layout"], "divergences": { "page-layout": "Why" } }
+ *
+ * - Fails on a required item that is not installed and has no divergence, and
+ *   on a divergence whose item is installed (it no longer diverges; a file that
+ *   differs belongs in `app-ui.overrides.json`), not required, or has no reason.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 
 const OVERRIDES_FILE = 'app-ui.overrides.json';
+const STANDARDS_FILE = 'qiick-standards.json';
 const cwdFlag = process.argv.indexOf('--cwd');
 const appRoot = path.resolve(
     cwdFlag === -1 ? process.cwd() : process.argv[cwdFlag + 1],
@@ -142,11 +155,34 @@ const aliasRoot = path.posix.normalize(aliasTarget.replace(/\*$/, ''));
 const overrides = fs.existsSync(path.join(appRoot, OVERRIDES_FILE))
     ? readAppJson(OVERRIDES_FILE)
     : {};
+/** @type {{ requiredItems?: unknown, divergences?: unknown }} */
+const standards = fs.existsSync(path.join(appRoot, STANDARDS_FILE))
+    ? readAppJson(STANDARDS_FILE)
+    : {};
+const requiredItems = standards.requiredItems ?? [];
+const divergences = standards.divergences ?? {};
+
+if (
+    !Array.isArray(requiredItems) ||
+    requiredItems.some((name) => typeof name !== 'string') ||
+    typeof divergences !== 'object' ||
+    Array.isArray(divergences) ||
+    divergences === null
+) {
+    console.error(
+        `check-drift: ${STANDARDS_FILE} needs "requiredItems" as a list of item names and "divergences" as { "<item>": "<reason>" }.`,
+    );
+    process.exit(1);
+}
+
 const index = await fetchRegistryJson(template, 'registry');
 /** @type {string[]} */
 const errors = [];
+/** @type {string[]} */
+const coverageErrors = [];
 const usedOverrides = new Set();
 const registryFiles = new Set();
+const installedItems = new Set();
 let checkedFiles = 0;
 
 for (const [file, reason] of Object.entries(overrides)) {
@@ -168,6 +204,8 @@ for (const { name } of index.items) {
     if (!isInstalled) {
         continue;
     }
+
+    installedItems.add(name);
 
     for (const { appPath, content } of files) {
         registryFiles.add(appPath);
@@ -217,16 +255,72 @@ for (const file of Object.keys(overrides)) {
     }
 }
 
+const registryItems = new Set(index.items.map(({ name }) => name));
+const seenRequiredItems = new Set();
+
+for (const name of requiredItems) {
+    if (seenRequiredItems.has(name)) {
+        coverageErrors.push(
+            `${STANDARDS_FILE}: "${name}" is listed twice in "requiredItems".`,
+        );
+    }
+
+    seenRequiredItems.add(name);
+
+    if (!registryItems.has(name)) {
+        coverageErrors.push(
+            `${STANDARDS_FILE}: "${name}" in "requiredItems" is not an item of the @qiick registry ${version}.`,
+        );
+        continue;
+    }
+
+    const isDeclaredDivergence = name in divergences;
+
+    if (!installedItems.has(name) && !isDeclaredDivergence) {
+        coverageErrors.push(
+            `${name} is a required item and is not installed: run npx shadcn add @qiick/${name}, or list it under "divergences" in ${STANDARDS_FILE} with a reason.`,
+        );
+    }
+
+    // A divergence that outlives its reason turns the map into a list nobody
+    // trusts, so an installed item must leave it, as an unneeded override does.
+    if (installedItems.has(name) && isDeclaredDivergence) {
+        coverageErrors.push(
+            `${name} is installed: remove it from "divergences" in ${STANDARDS_FILE} (a file that differs belongs in ${OVERRIDES_FILE}).`,
+        );
+    }
+}
+
+for (const [name, reason] of Object.entries(divergences)) {
+    if (typeof reason !== 'string' || reason.trim() === '') {
+        coverageErrors.push(
+            `${STANDARDS_FILE}: divergence "${name}" needs a reason.`,
+        );
+    }
+
+    if (!seenRequiredItems.has(name)) {
+        coverageErrors.push(
+            `${STANDARDS_FILE}: divergence "${name}" is not in "requiredItems".`,
+        );
+    }
+}
+
 console.log(`check-drift: @qiick registry ${version}`);
 
-if (errors.length > 0) {
-    console.error(`\n${errors.join('\n\n')}`);
-    console.error(
-        `\nInstall the registry version again (npx shadcn add @qiick/<name> --overwrite) or list the file in ${OVERRIDES_FILE} with a reason.`,
-    );
+if (errors.length > 0 || coverageErrors.length > 0) {
+    console.error(`\n${[...errors, ...coverageErrors].join('\n\n')}`);
+
+    if (errors.length > 0) {
+        console.error(
+            `\nInstall the registry version again (npx shadcn add @qiick/<name> --overwrite) or list the file in ${OVERRIDES_FILE} with a reason.`,
+        );
+    }
+
     process.exit(1);
 }
 
+const divergentCount = Object.keys(divergences).length;
+
 console.log(
-    `check-drift: ok (${checkedFiles} files match, ${usedOverrides.size} overridden)`,
+    `check-drift: ok (${checkedFiles} files match, ${usedOverrides.size} overridden; ${requiredItems.length - divergentCount} required items installed, ${divergentCount} divergent)`,
 );

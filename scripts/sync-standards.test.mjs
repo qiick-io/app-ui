@@ -4,6 +4,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
+import {
+    qiickRatchetedRuleIds,
+    qiickRatchetedRules,
+} from '../standards/eslint/qiick-standards.eslint.js';
 import { syncStandards } from './sync-standards.mjs';
 
 /**
@@ -250,6 +254,40 @@ test('Vite+ apps get the shared Oxlint configs, ESLint repos the ESLint one', ()
         false,
     );
     assert.deepEqual(syncStandards(viteApp, { isCheck: true }), []);
+});
+
+test('Oxlint and ESLint ratchet the same rules with the same size limits', () => {
+    const oxlintRules = JSON.parse(
+        fs.readFileSync(
+            new URL(
+                '../standards/oxlint/oxlintrc.standards.json',
+                import.meta.url,
+            ),
+            'utf8',
+        ),
+    ).rules;
+    const eslintRules = Object.assign(
+        {},
+        ...qiickRatchetedRules(['**/*.ts']).map((config) => config.rules),
+    );
+
+    // Boolean prefixes are type-aware: ESLint only, until Oxlint has an equivalent.
+    assert.deepEqual(
+        Object.keys(oxlintRules),
+        qiickRatchetedRuleIds.filter(
+            (ruleId) => ruleId !== '@typescript-eslint/naming-convention',
+        ),
+    );
+
+    for (const [ruleId, max] of [
+        ['max-lines', 600],
+        ['max-lines-per-function', 300],
+    ]) {
+        const sizeOptions = { max, skipBlankLines: true, skipComments: true };
+
+        assert.deepEqual(oxlintRules[ruleId], ['warn', sizeOptions]);
+        assert.deepEqual(eslintRules[ruleId][1], sizeOptions);
+    }
 });
 
 /** A catalogue with one plain pattern and one with variants, for the `patterns` tests. */
