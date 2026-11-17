@@ -23,7 +23,7 @@
  * findings than its entry in `qiick-lint-baseline.json`:
  *
  *     QIICK_RATCHET=1 eslint resources/js --format json | node scripts/qiick-ratchet.mjs lint \
- *         --rule no-restricted-imports,no-restricted-properties,@typescript-eslint/naming-convention,id-length \
+ *         --rule no-restricted-imports,no-restricted-properties,@typescript-eslint/naming-convention,id-length,max-lines,max-lines-per-function \
  *         --baseline qiick-lint-baseline.json
  */
 
@@ -83,6 +83,8 @@ export const qiickRatchetedRuleIds = [
     'no-restricted-properties',
     '@typescript-eslint/naming-convention',
     'id-length',
+    'max-lines',
+    'max-lines-per-function',
 ];
 
 const booleanPrefixes = ['is', 'has', 'can', 'should'];
@@ -91,7 +93,8 @@ const booleanPrefixes = ['is', 'has', 'can', 'should'];
  * Prose rules of the qiick standards turned into lint rules: only `lucide-react`
  * icons and shadcn primitives, toasts through `@/lib/toast`, the clipboard through
  * `@/lib/clipboard`, boolean names with `is` / `has` / `can` / `should`, no
- * single-letter names (`i`, `j`, `k`, `t` and `_` aside).
+ * single-letter names (`i`, `j`, `k`, `t` and `_` aside), files up to 600 and
+ * functions up to 300 lines of code.
  *
  * Off unless `QIICK_RATCHET=1`: they run through the ratchet, never as plain lint
  * errors, so adopting them never breaks an app. Boolean names need type
@@ -184,6 +187,30 @@ export function qiickRatchetedRules(files) {
                         exceptions: ['i', 'j', 'k', 't', '_'],
                         properties: 'never',
                     },
+                ],
+            },
+        },
+        {
+            files,
+            // Generated Wayfinder output and drift-checked shadcn copies are nobody's code to split.
+            ignores: [
+                '**/*.test.{ts,tsx}',
+                '**/*.spec.{ts,tsx}',
+                '**/components/ui/**',
+                'resources/js/actions/**',
+                'resources/js/routes/**',
+                'resources/js/wayfinder/**',
+            ],
+            rules: {
+                // A tripwire for god components, not a quality score: the
+                // ratchet lists today's outliers and stops new ones.
+                'max-lines': [
+                    severity,
+                    { max: 600, skipBlankLines: true, skipComments: true },
+                ],
+                'max-lines-per-function': [
+                    severity,
+                    { max: 300, skipBlankLines: true, skipComments: true },
                 ],
             },
         },
