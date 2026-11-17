@@ -8,6 +8,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Changed
+
+- Standards, local development: no longer names Laravel Herd as the one tool. Any local PHP environment (Flock, Herd, Valet) serves `<app>.test`; repos take PHP from `PATH` / `PHP_BINARY`, Vite HTTPS from `VITE_DEV_SERVER_KEY` / `VITE_DEV_SERVER_CERT` and run Reverb with `php artisan reverb:start`. Repos pick it up on their next pin bump and standards sync.
+
 ## [0.7.0] - 2026-11-16
 
 ### Upgrade notes
