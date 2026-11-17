@@ -20,5 +20,7 @@
     "id-length": {
         "registry/src/components/admin/data-table-toolbar.tsx": 1,
         "registry/src/components/admin/paginated-multi-select.tsx": 1
-    }
+    },
+    "max-lines": {},
+    "max-lines-per-function": {}
 }
