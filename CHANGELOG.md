@@ -8,6 +8,27 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-17
+
+### Upgrade notes
+
+- **Every repo:** bump the three pins to `v0.9.0`.
+- **Every repo:** re-sync the standards on the next pin bump; the optional catalogue gains `timeline`. Nothing changes for an app that does not adopt it.
+- **Adopting `timeline`** (first: excubia-app's upgrade plan, excubia-app#333): add `"timeline"` to `patterns` in `qiick-standards.json`, re-sync, then `npx shadcn add @qiick/timeline` (it pulls `badge`, `button`, `collapsible` and `separator` when missing) and merge the new `timeline.*` keys into `en` / `it` / `de`. Map each plan step to a `TimelineStep` (title, status, description, chips) instead of rendering it as one sentence.
+- **Apps with the command palette** (excubia-app, instituta-core): `npx shadcn add @qiick/app-shell @qiick/command-palette --overwrite`, merge the new `a11y.collapseSidebar` / `a11y.expandSidebar` keys into `en` / `it` / `de`, and move `CommandPaletteTrigger` from the header actions to `AppSidebarHeader`'s new `leading` prop (in `layouts/app/app-sidebar-layout.tsx`).
+
+### Added
+
+- Optional pattern **timeline** (#156): the `timeline` item.
+    - `Timeline` renders ordered steps as an `<ol>` on a vertical connector line: a number or icon marker, a status badge with icon and text (`done`, `current`, `pending`, `warning`, `blocked`, on the status badge variants), a title, an optional description, optional chips (`label`, `value`, or a change `previousValue → value`) and an optional count. `default` and `compact` density.
+    - Past `visibleChipCount` (default 6) the chips fold behind a "Show N more" `Collapsible` button with `aria-expanded`; `lib/timeline.ts` decides the fold (never "Show 1 more").
+    - Page: `docs/optional/timeline.md`. Listed in `standards/patterns.json`. New `timeline.*` locale keys.
+
+### Changed
+
+- `command-palette`: `CommandPaletteTrigger` is a search icon with a tooltip (name and ⌘K) instead of a search-field-shaped button; it goes in the header's `leading` slot right after the sidebar toggle, so the right side stays free for page actions (#157).
+- `app-shell`: `AppSidebarHeader` takes a `leading` slot for icon controls after the sidebar toggle; the toggle has a tooltip saying "Collapse sidebar" / "Expand sidebar" with ⌘B / Ctrl+B. The playground shell shows both.
+
 ## [0.8.0] - 2026-11-17
 
 ### Upgrade notes
@@ -288,7 +309,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/qiick-io/app-ui/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/qiick-io/app-ui/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/qiick-io/app-ui/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/qiick-io/app-ui/compare/v0.6.0...v0.6.1

@@ -11,7 +11,7 @@ In an app with many records, people know what they want by name: a project, a us
 ## Rules
 
 - Mount `CommandPalette` once in the authenticated layout, inside `ShortcutsProvider` (see [keyboard-shortcuts.md](keyboard-shortcuts.md)). It registers ⌘K / Ctrl+K itself. ⌘K is reserved for it in every qiick app.
-- `CommandPaletteTrigger` sits in the header, as the **first** of the header actions on the right. It looks like a search field with the ⌘K hint from `sm` up, and an icon button below.
+- `CommandPaletteTrigger` is a search **icon** in `AppSidebarHeader`'s `leading` slot, right after the sidebar toggle, at every width. Its tooltip names it and shows ⌘K / Ctrl+K. It takes one icon's width, so the header's right side stays free for the page's actions; ⌘K is the main way in.
 - Groups, in this order:
     1. **Recent**, kept by the palette, shown only before typing;
     2. **Navigation**, the sidebar modules the user can see;

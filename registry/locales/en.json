@@ -2,6 +2,8 @@
     "a11y": {
         "breadcrumb": "Breadcrumb",
         "close": "Close",
+        "collapseSidebar": "Collapse sidebar",
+        "expandSidebar": "Expand sidebar",
         "loading": "Loading",
         "moreActions": "More actions",
         "notifications": "Notifications",
@@ -190,5 +192,19 @@
         "markAllRead": "Mark all as read",
         "markRead": "Mark as read",
         "markUnread": "Mark as unread"
+    },
+    "timeline": {
+        "itemCount_one": "{{count}} item",
+        "itemCount_other": "{{count}} items",
+        "showLess": "Show less",
+        "showMore": "Show {{count}} more",
+        "status": {
+            "done": "Done",
+            "current": "In progress",
+            "pending": "To do",
+            "warning": "Needs attention",
+            "blocked": "Blocked"
+        },
+        "valueChange": "from {{from}} to {{to}}"
     }
 }
