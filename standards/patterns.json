@@ -23,6 +23,10 @@
             "title": "Sidebar filter, pinned and needs-attention entity lists",
             "page": "docs/optional/sidebar-entities.md"
         },
+        "sidebar-nav": {
+            "title": "Sidebar navigation with children: submenus, sections, tree",
+            "page": "docs/optional/sidebar-nav.md"
+        },
         "table-cell-details": {
             "title": "Table cell details: lists inside table cells",
             "page": "docs/optional/table-cell-details.md"

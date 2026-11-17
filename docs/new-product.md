@@ -2,7 +2,7 @@
 
 From an empty repository to a first green CI, in order. The product spec says _what_ to build; everything about _how_ (stack, structure, UI, code, tests, CI, release, distribution) is in this repo, and CI enforces it. Read this page once, then the managed block of the new repo's `AGENTS.md` (written in step 3) before every task.
 
-Throughout: `<app>` is the product's kebab-case name (`externa`, `excubia`), used for the repo `qiick-io/<app>-core` or `<app>-app`, the Composer package `qiick/<app>-…`, the Artisan namespace `<app>:` and the Herd site `<app>.test`. `vX.Y.Z` is the latest app-ui release (https://github.com/qiick-io/app-ui/releases).
+Throughout: `<app>` is the product's kebab-case name (`externa`, `excubia`), used for the repo `qiick-io/<app>-core` or `<app>-app`, the Composer package `qiick/<app>-…`, the Artisan namespace `<app>:` and the local site `<app>.test`. `vX.Y.Z` is the latest app-ui release (https://github.com/qiick-io/app-ui/releases).
 
 ## 1. Create the app from the starter kit
 
@@ -11,7 +11,7 @@ The exact stack and versions: [`standards/rules/stack.md`](../standards/rules/st
 ```bash
 laravel new <app> --react --pest --npm --database=sqlite --git
 cd <app>
-herd link && herd secure
+flock link && flock secure   # or: herd link && herd secure
 ```
 
 Then, in one `chore: bootstrap` commit on `develop` (the default branch for work; `main` holds releases only):

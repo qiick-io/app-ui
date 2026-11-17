@@ -8,6 +8,29 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-17
+
+### Upgrade notes
+
+- **Every repo:** bump the three pins to `v0.8.0` and re-sync the standards. The local-development rule no longer names Herd. Repos then take PHP from `PATH` / `PHP_BINARY` and the Vite HTTPS certificate from `VITE_DEV_SERVER_KEY` / `VITE_DEV_SERVER_CERT`, and run Reverb with `php artisan reverb:start`. Check any script that hard-codes a Herd path.
+- **Apps with list pages** (excubia-app, externa-core, instituta-core): run `npx shadcn add @qiick/page-layout --overwrite`, and merge the new `common.pageOf` key into `en` / `it` / `de`. Pass `currentPage` / `lastPage` to `TablePagination` when the page has them; without them it reads the links as before.
+- **Optional:**
+  - add `menubar`, `navigation-menu` or `resizable` when a screen needs them (`resizable` brings `react-resizable-panels`);
+  - adopt the optional `sidebar-nav` pattern: add it to `patterns` in `qiick-standards.json`, re-sync, then `npx shadcn add @qiick/sidebar-nav`.
+
+### Added
+
+- Registry: the last shadcn primitives the registry lacked, `menubar`, `navigation-menu` and `resizable` (new dependency `react-resizable-panels` for `resizable`).
+- Optional pattern **sidebar-nav** (`docs/optional/sidebar-nav.md`, registry item `sidebar-nav`): nav items with children as a collapsible or always-open submenu, a dropdown beside the icon in the icon-only sidebar, folding sections and a folder tree, from the shadcn sidebar blocks.
+
+### Fixed
+
+- `page-layout`: the list pagination no longer overflows at large page counts (#150). Page numbers come from a compact window (first, last, current ±1, ellipses; at most seven numbers, `paginationWindow` in the new `lib/pagination-window.ts`) instead of Laravel's own window; page buttons widen with longer numbers; numbers and the row counter follow the UI language's number format; below `sm` the numbers give way to "Page 3 of 120" (new key `common.pageOf`). `TablePagination` takes optional `currentPage` / `lastPage`; without them it reads them from the links as before.
+
+### Changed
+
+- Standards, local development: no longer names Laravel Herd as the one tool. Any local PHP environment (Flock, Herd, Valet) serves `<app>.test`; repos take PHP from `PATH` / `PHP_BINARY`, Vite HTTPS from `VITE_DEV_SERVER_KEY` / `VITE_DEV_SERVER_CERT` and run Reverb with `php artisan reverb:start`. Repos pick it up on their next pin bump and standards sync.
+
 ## [0.7.0] - 2026-11-16
 
 ### Upgrade notes
@@ -265,7 +288,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/qiick-io/app-ui/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/qiick-io/app-ui/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/qiick-io/app-ui/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/qiick-io/app-ui/compare/v0.5.0...v0.6.0

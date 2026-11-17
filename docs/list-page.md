@@ -53,6 +53,6 @@ On a phone most tables are wider than their card. They keep every column and scr
 `TablePaginationFooter` in the `TablePanel` footer, under the table, inside the panel:
 
 - **Left:** counter "1–20 of 67".
-- **Centre:** page links (Previous, numbers, Next).
+- **Centre:** page links: Previous, a compact window of page numbers, Next. The window is the first and last page, the current one with a neighbour on each side and an ellipsis for every gap (`1 … 6420 [6421] 6422 … 12854`), at most seven numbers; near an end it keeps five pages (`1 2 3 4 5 … 120`). Below `sm` the numbers give way to "Page 3 of 120". Page buttons are square up to two digits and widen with longer numbers; numbers and the counter use the UI language's number format. Built by `paginationWindow` (`lib/pagination-window.ts`), not taken from Laravel's own window, which overflows at five-digit pages.
 - **Right:** rows-per-page `Select` showing "20 / page", options 10 / 20 / 50 / 100, no label, kept in the `per_page` query param (dropped at the default 20).
 - Shown only when `hasTablePaginationFooter(pagination)`.
