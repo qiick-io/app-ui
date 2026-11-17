@@ -10,6 +10,7 @@ import type { DataTableSort } from '@/components/admin/data-table';
 import { DataTableColumnHeader } from '@/components/admin/data-table-column-header';
 import { DataTableToolbar } from '@/components/admin/data-table-toolbar';
 import { HeaderIconButton } from '@/components/admin/header-icon-button';
+import { SegmentedIconItem } from '@/components/admin/segmented-icon-item';
 import { UserAvatar } from '@/components/admin/user-avatar';
 import { PageLayout } from '@/components/layout/page-layout';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +23,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { ToggleGroup } from '@/components/ui/toggle-group';
 import { DemoShell } from './demo-shell';
 
 const FIRST_NAMES = [
@@ -190,6 +191,7 @@ const COLUMNS: ColumnDef<DemoUser>[] = [
 /** externa-core `/users` (pages/admin/users/index.tsx): the server-driven DataTable. */
 export function UsersScreen() {
     const [search, setSearch] = useState('');
+    const [listView, setListView] = useState('active');
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     const [sort, setSort] = useState<DataTableSort>({
         id: 'name',
@@ -270,20 +272,25 @@ export function UsersScreen() {
                             <ToggleGroup
                                 variant="outline"
                                 type="single"
-                                defaultValue="active"
+                                value={listView}
+                                onValueChange={(value) =>
+                                    value && setListView(value)
+                                }
                             >
-                                <ToggleGroupItem
+                                <SegmentedIconItem
                                     value="active"
-                                    aria-label="Active users"
+                                    label="Active users"
+                                    isActive={listView === 'active'}
                                 >
                                     <Users className="size-4" />
-                                </ToggleGroupItem>
-                                <ToggleGroupItem
+                                </SegmentedIconItem>
+                                <SegmentedIconItem
                                     value="trashed"
-                                    aria-label="Trash"
+                                    label="Trash"
+                                    isActive={listView === 'trashed'}
                                 >
                                     <Trash2 className="size-4" />
-                                </ToggleGroupItem>
+                                </SegmentedIconItem>
                             </ToggleGroup>
                         </div>
                     )
