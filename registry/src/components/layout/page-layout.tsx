@@ -251,7 +251,8 @@ export function TablePagination({
         return null;
     }
 
-    const formatNumber = new Intl.NumberFormat(i18n.language).format;
+    const numberFormat = new Intl.NumberFormat(i18n.language);
+    const formatNumber = (value: number): string => numberFormat.format(value);
     const pageLinks = links.flatMap((link) => {
         const plain = paginationPlainLabel(link.label);
 
@@ -367,7 +368,8 @@ export function TablePaginationFooter({
     pagination: TablePaginationState;
 }) {
     const { t, i18n } = useTranslation();
-    const formatNumber = new Intl.NumberFormat(i18n.language).format;
+    const numberFormat = new Intl.NumberFormat(i18n.language);
+    const formatNumber = (value: number): string => numberFormat.format(value);
     const firstRow = Math.min(
         (pagination.current_page - 1) * pagination.per_page + 1,
         pagination.total,
