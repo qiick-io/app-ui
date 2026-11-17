@@ -1891,6 +1891,30 @@
                     "target": "resources/js/lib/table-cell-details.ts"
                 }
             ]
+        },
+        {
+            "name": "timeline",
+            "type": "registry:component",
+            "title": "Timeline",
+            "description": "Optional pattern timeline: Timeline renders ordered steps (an upgrade plan, a setup checklist) as an <ol> on a vertical connector line, each with a number or icon marker, a status badge (icon and text), a title, an optional description, optional chips (package 1.2.0 → 1.3.0) that fold behind a Show N more Collapsible, and an optional count; default and compact density. lib/timeline.ts folds the chips.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/badge",
+                "@qiick/button",
+                "@qiick/collapsible",
+                "@qiick/separator"
+            ],
+            "files": [
+                {
+                    "path": "src/components/timeline.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/lib/timeline.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/timeline.ts"
+                }
+            ]
         }
     ]
 }

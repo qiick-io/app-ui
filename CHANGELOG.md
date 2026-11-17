@@ -8,6 +8,18 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Upgrade notes
+
+- **Every repo:** re-sync the standards on the next pin bump; the optional catalogue gains `timeline`. Nothing changes for an app that does not adopt it.
+- **Adopting `timeline`** (first: excubia-app's upgrade plan, excubia-app#333): add `"timeline"` to `patterns` in `qiick-standards.json`, re-sync, then `npx shadcn add @qiick/timeline` (it pulls `badge`, `button`, `collapsible` and `separator` when missing) and merge the new `timeline.*` keys into `en` / `it` / `de`. Map each plan step to a `TimelineStep` (title, status, description, chips) instead of rendering it as one sentence.
+
+### Added
+
+- Optional pattern **timeline** (#156): the `timeline` item.
+    - `Timeline` renders ordered steps as an `<ol>` on a vertical connector line: a number or icon marker, a status badge with icon and text (`done`, `current`, `pending`, `warning`, `blocked`, on the status badge variants), a title, an optional description, optional chips (`label`, `value`, or a change `previousValue → value`) and an optional count. `default` and `compact` density.
+    - Past `visibleChipCount` (default 6) the chips fold behind a "Show N more" `Collapsible` button with `aria-expanded`; `lib/timeline.ts` decides the fold (never "Show 1 more").
+    - Page: `docs/optional/timeline.md`. Listed in `standards/patterns.json`. New `timeline.*` locale keys.
+
 ## [0.8.0] - 2026-11-17
 
 ### Upgrade notes

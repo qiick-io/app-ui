@@ -34,6 +34,10 @@
         "table-density": {
             "title": "Table density preference",
             "page": "docs/optional/table-density.md"
+        },
+        "timeline": {
+            "title": "Timeline: ordered steps with status and chips",
+            "page": "docs/optional/timeline.md"
         }
     }
 }
