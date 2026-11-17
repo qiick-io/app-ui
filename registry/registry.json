@@ -1411,6 +1411,52 @@
             ]
         },
         {
+            "name": "menubar",
+            "type": "registry:ui",
+            "title": "Menubar",
+            "description": "Desktop-style menu bar (File, Edit, View …) with submenus, checkbox and radio items, shortcuts.",
+            "dependencies": ["radix-ui", "lucide-react"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/menubar.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "navigation-menu",
+            "type": "registry:ui",
+            "title": "Navigation menu",
+            "description": "Horizontal site navigation with dropdown panels (public pages, docs headers).",
+            "dependencies": [
+                "radix-ui",
+                "class-variance-authority",
+                "lucide-react"
+            ],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/navigation-menu.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
+            "name": "resizable",
+            "type": "registry:ui",
+            "title": "Resizable",
+            "description": "Resizable panel groups and handles (split views) on react-resizable-panels.",
+            "dependencies": ["react-resizable-panels", "lucide-react"],
+            "registryDependencies": ["@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/ui/resizable.tsx",
+                    "type": "registry:ui"
+                }
+            ]
+        },
+        {
             "name": "clipboard",
             "type": "registry:lib",
             "title": "Clipboard",
@@ -1755,6 +1801,24 @@
             "files": [
                 {
                     "path": "src/components/sidebar-entity-list.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "sidebar-nav",
+            "type": "registry:component",
+            "title": "Sidebar navigation with children",
+            "description": "Optional pattern sidebar-nav: SidebarNav (items with children as a collapsible or always-open submenu, a dropdown beside the icon in the icon-only sidebar, badges), SidebarNavSection (a group whose label folds its items) and SidebarNavTree (a folder tree of any depth), from the shadcn sidebar blocks.",
+            "dependencies": ["@inertiajs/react", "lucide-react"],
+            "registryDependencies": [
+                "@qiick/collapsible",
+                "@qiick/dropdown-menu",
+                "@qiick/sidebar"
+            ],
+            "files": [
+                {
+                    "path": "src/components/sidebar-nav.tsx",
                     "type": "registry:component"
                 }
             ]
