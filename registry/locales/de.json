@@ -2,6 +2,8 @@
     "a11y": {
         "breadcrumb": "Brotkrümelnavigation",
         "close": "Schließen",
+        "collapseSidebar": "Seitenleiste einklappen",
+        "expandSidebar": "Seitenleiste ausklappen",
         "loading": "Wird geladen",
         "moreActions": "Weitere Aktionen",
         "notifications": "Benachrichtigungen",

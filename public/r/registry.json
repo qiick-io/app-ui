@@ -791,6 +791,7 @@
             "dependencies": ["@inertiajs/react", "react-i18next"],
             "registryDependencies": [
                 "@qiick/breadcrumb",
+                "@qiick/kbd",
                 "@qiick/sidebar",
                 "@qiick/tooltip",
                 "@qiick/utils"
@@ -1752,6 +1753,7 @@
                 "@qiick/button",
                 "@qiick/command",
                 "@qiick/keyboard-shortcuts",
+                "@qiick/tooltip",
                 "@qiick/utils"
             ],
             "files": [

@@ -2,6 +2,8 @@
     "a11y": {
         "breadcrumb": "Breadcrumb",
         "close": "Close",
+        "collapseSidebar": "Collapse sidebar",
+        "expandSidebar": "Expand sidebar",
         "loading": "Loading",
         "moreActions": "More actions",
         "notifications": "Notifications",
