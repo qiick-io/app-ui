@@ -8,6 +8,15 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Upgrade notes
+
+- **Apps with the command palette** (excubia-app, instituta-core): `npx shadcn add @qiick/app-shell @qiick/command-palette --overwrite`, merge the new `a11y.collapseSidebar` / `a11y.expandSidebar` keys into `en` / `it` / `de`, and move `CommandPaletteTrigger` from the header actions to `AppSidebarHeader`'s new `leading` prop (in `layouts/app/app-sidebar-layout.tsx`).
+
+### Changed
+
+- `command-palette`: `CommandPaletteTrigger` is a search icon with a tooltip (name and ⌘K) instead of a search-field-shaped button; it goes in the header's `leading` slot right after the sidebar toggle, so the right side stays free for page actions (#157).
+- `app-shell`: `AppSidebarHeader` takes a `leading` slot for icon controls after the sidebar toggle; the toggle has a tooltip saying "Collapse sidebar" / "Expand sidebar" with ⌘B / Ctrl+B. The playground shell shows both.
+
 ## [0.8.0] - 2026-11-17
 
 ### Upgrade notes
