@@ -10,7 +10,9 @@
 #         registry: false   # only for repos without the @qiick UI registry
 #
 # - registry: runs scripts/check-drift.mjs from the registry tag pinned in the
-#   app's components.json, against that same tag.
+#   app's components.json, against that same tag: the installed items' files
+#   (app-ui.overrides.json) and the required items (qiick-standards.json
+#   requiredItems / divergences).
 # - standards: runs scripts/sync-standards.mjs --check from the app-ui ref in
 #   the repo's qiick-standards.json: agent files, the Pest architecture test
 #   and kebab-case frontend names must match the pack.

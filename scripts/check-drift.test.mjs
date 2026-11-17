@@ -1,5 +1,5 @@
 /**
- * Behaviour of scripts/check-drift.mjs against the committed public/r (#5).
+ * Behaviour of scripts/check-drift.mjs against the committed public/r (#5, #172).
  *
  * Usage: node --test scripts/
  */
@@ -128,4 +128,93 @@ test('fails on a missing file of an installed item, passes once it is overridden
 
     assert.equal(passed.status, 0, passed.stderr);
     assert.match(passed.stdout, /2 overridden/);
+});
+
+test('passes when every required item is installed', () => {
+    const { app, write } = makeApp();
+
+    write(
+        'qiick-standards.json',
+        JSON.stringify({ requiredItems: ['button', 'utils'] }),
+    );
+
+    const result = run(app);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /2 required items installed, 0 divergent/);
+});
+
+test('fails on a required item that is not installed, passes once it is a divergence', () => {
+    const { app, write } = makeApp();
+
+    write(
+        'qiick-standards.json',
+        JSON.stringify({ requiredItems: ['button', 'page-layout'] }),
+    );
+
+    const failed = run(app);
+
+    assert.equal(failed.status, 1);
+    assert.match(
+        failed.stderr,
+        /page-layout is a required item and is not installed: .*"divergences" in qiick-standards\.json/,
+    );
+
+    write(
+        'qiick-standards.json',
+        JSON.stringify({
+            requiredItems: ['button', 'page-layout'],
+            divergences: { 'page-layout': 'Lists use the old table' },
+        }),
+    );
+
+    const passed = run(app);
+
+    assert.equal(passed.status, 0, passed.stderr);
+    assert.match(passed.stdout, /1 required items installed, 1 divergent/);
+});
+
+test('fails on a divergence whose item is installed', () => {
+    const { app, write } = makeApp();
+
+    write(
+        'qiick-standards.json',
+        JSON.stringify({
+            requiredItems: ['button'],
+            divergences: { button: 'Old reason' },
+        }),
+    );
+
+    const result = run(app);
+
+    assert.equal(result.status, 1);
+    assert.match(
+        result.stderr,
+        /button is installed: remove it from "divergences" in qiick-standards\.json/,
+    );
+});
+
+test('fails on an unknown required item and on a divergence that is not required or has no reason', () => {
+    const { app, write } = makeApp();
+
+    write(
+        'qiick-standards.json',
+        JSON.stringify({
+            requiredItems: ['no-such-item'],
+            divergences: { 'page-layout': ' ' },
+        }),
+    );
+
+    const result = run(app);
+
+    assert.equal(result.status, 1);
+    assert.match(
+        result.stderr,
+        /"no-such-item" in "requiredItems" is not an item/,
+    );
+    assert.match(result.stderr, /divergence "page-layout" needs a reason/);
+    assert.match(
+        result.stderr,
+        /divergence "page-layout" is not in "requiredItems"/,
+    );
 });
