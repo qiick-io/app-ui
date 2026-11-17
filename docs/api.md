@@ -1,6 +1,6 @@
 # API conventions
 
-**Registry:** API key screens use the list, dialog and destructive patterns (`docs/list-page.md`, `docs/forms.md`, `docs/destructive-actions.md`).
+**Registry:** the API key screen and its baseline (storage, scopes, rotation, the show-once secret) are [api-keys.md](api-keys.md).
 
 **Copy from externa-core:** `routes/api.php`, `app/Http/Controllers/Api/V1/*Controller.php`, `app/Http/Resources/Api/V1/FileResource.php`, `app/Models/ApiKey.php`, `app/Http/Middleware/ResolveApiAccessMiddleware.php`, `app/Http/Middleware/ApiRequestCostMiddleware.php`, `app/Enums/ApiKeyScopeEnum.php`, `config/api.php`, `resources/openapi/public-cms-v1.yaml` with `OpenApiController.php` and `tests/Feature/Api/OpenApiExportTest.php` (PHP, repo root); API keys screen `pages/admin/api-keys/index.tsx`.
 
@@ -20,7 +20,7 @@ A hand-written OpenAPI 3.1 file in `resources/openapi/<api>-v1.yaml`, served as 
 ## Authentication
 
 - API keys, not user sessions: `<prefix>_` + 40 random characters, shown once (`flash.plain_text_api_key`), stored as a SHA-256 hash plus a 12-character prefix for display. Sent as `Authorization: Bearer <key>`.
-- Each key has an owner, a role, `read_only`, `scopes` (a `*ScopeEnum`, `resource:read` / `resource:write`), an optional IP allowlist (CIDR), `expires_at` and `revoked_at`; creating, revoking and using keys is in the activity log.
+- Columns, the `<resource>:(read|write)` scope vocabulary, rotation, revocation, expiry and the activity log: [api-keys.md](api-keys.md).
 - No Sanctum or Passport unless the spec needs OAuth for third parties (then Passport, asked first).
 
 ## Limits

@@ -14,6 +14,7 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Added
 
+- Pattern page `docs/api-keys.md`: the API key baseline every product implements (storage columns, the `<resource>:(read|write)` scope vocabulary with `write` implying `read`, show-once secret, rotation with a grace window, immediate revocation, activity log, expiry notice, `last_used_at`, fail-closed errors) and the screen. Registry items `api-key-scopes`, `api-key-scope-picker`, `api-key-form`, `api-key-secret-dialog` and `api-key-list-row`, with `apiKeys.*` keys in `en` / `it` / `de` (#171).
 - Registry item `segmented-icon-item` (`SegmentedIconItem`): an icon-only segment of a segmented control with its name in a tooltip and as the `aria-label`. It sets the toggle's `data-state` from `isActive`, since a tooltip trigger around a `ToggleGroupItem` replaces it and loses the selected style. `docs/page.md` (segmented filters) and the playground Users screen use it.
 
 ### Fixed
