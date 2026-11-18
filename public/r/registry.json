@@ -570,6 +570,19 @@
             ]
         },
         {
+            "name": "segmented-icon-item",
+            "type": "registry:component",
+            "title": "Segmented icon item",
+            "description": "Icon-only segment of a segmented control (ToggleGroup outline), its name in a tooltip and as the accessible name.",
+            "registryDependencies": ["@qiick/toggle-group", "@qiick/tooltip"],
+            "files": [
+                {
+                    "path": "src/components/admin/segmented-icon-item.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
             "name": "page-header",
             "type": "registry:component",
             "title": "Page header",
@@ -1915,6 +1928,102 @@
                     "path": "src/lib/timeline.ts",
                     "type": "registry:file",
                     "target": "resources/js/lib/timeline.ts"
+                }
+            ]
+        },
+        {
+            "name": "api-key-scopes",
+            "type": "registry:lib",
+            "title": "API key scopes",
+            "description": "The API key permission vocabulary (docs/api-keys.md): API_KEY_SCOPE_PATTERN, isApiKeyScope(), apiKeyAccessLevel() and withApiKeyAccessLevel() (write implies read, one scope per resource), apiKeyStatus() (active / expired / revoked).",
+            "files": [
+                {
+                    "path": "src/lib/api-key-scopes.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/api-key-scopes.ts"
+                }
+            ]
+        },
+        {
+            "name": "api-key-scope-picker",
+            "type": "registry:component",
+            "title": "API key scope picker",
+            "description": "ApiKeyScopePicker: one row per resource with a No access / Read / Write segmented control (a radio group), producing <resource>:(read|write) scopes only.",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": [
+                "@qiick/api-key-scopes",
+                "@qiick/field",
+                "@qiick/toggle-group"
+            ],
+            "files": [
+                {
+                    "path": "src/components/api-keys/api-key-scope-picker.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "api-key-form",
+            "type": "registry:component",
+            "title": "API key form",
+            "description": "ApiKeyForm: the issuing form (name, permissions, then expiry, IP allowlist and rate limit), the <form> only, with a slot for the app's own fields; the app places it in a dialog, drawer or page and owns the submit button.",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": [
+                "@qiick/api-key-scope-picker",
+                "@qiick/field",
+                "@qiick/input"
+            ],
+            "files": [
+                {
+                    "path": "src/components/api-keys/api-key-form.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "api-key-secret-dialog",
+            "type": "registry:component",
+            "title": "API key secret dialog",
+            "description": "ApiKeySecretDialog: the show-once secret after create or rotate; read-only selectable field with Copy, announced to screen readers, not dismissible until the user confirms they stored it.",
+            "dependencies": ["lucide-react", "react-i18next"],
+            "registryDependencies": [
+                "@qiick/alert-dialog",
+                "@qiick/checkbox",
+                "@qiick/clipboard",
+                "@qiick/field",
+                "@qiick/input-group",
+                "@qiick/toast"
+            ],
+            "files": [
+                {
+                    "path": "src/components/api-keys/api-key-secret-dialog.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "api-key-list-row",
+            "type": "registry:component",
+            "title": "API key list row",
+            "description": "The key list row: useApiKeyColumns() for DataTable (name, prefix, permissions, last used, expires, status, actions), ApiKeyStatusBadge, ApiKeyRowActions (rotate, revoke) and ApiKeyRevokeDialog.",
+            "dependencies": [
+                "@tanstack/react-table@^8.21.3",
+                "lucide-react",
+                "react-i18next"
+            ],
+            "registryDependencies": [
+                "@qiick/api-key-scopes",
+                "@qiick/badge",
+                "@qiick/button-group",
+                "@qiick/confirm-destructive-dialog",
+                "@qiick/data-table",
+                "@qiick/header-icon-button",
+                "@qiick/tooltip"
+            ],
+            "files": [
+                {
+                    "path": "src/components/api-keys/api-key-list-row.tsx",
+                    "type": "registry:component"
                 }
             ]
         }

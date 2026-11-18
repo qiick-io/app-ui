@@ -8,6 +8,23 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-18
+
+### Changed
+
+- Shell: the notifications bell goes in the **sidebar footer**, right above the user menu, instead of the sidebar header. That is where externa-core and instituta-core already have it, and since v0.9.0 the ⌘K search sits in the page header, so nothing is left for the bell to sit next to (`docs/shell.md`, `docs/notifications.md`). Upgrade: apps that have the bell in `SidebarHeader` (excubia-app) move it into `SidebarFooter`, before `NavUser`.
+
+### Added
+
+- Pattern page `docs/api-keys.md`: the API key baseline every product implements (storage columns, the `<resource>:(read|write)` scope vocabulary with `write` implying `read`, show-once secret, rotation with a grace window, immediate revocation, activity log, expiry notice, `last_used_at`, fail-closed errors) and the screen. Registry items `api-key-scopes`, `api-key-scope-picker`, `api-key-form`, `api-key-secret-dialog` and `api-key-list-row`, with `apiKeys.*` keys in `en` / `it` / `de` (#171).
+- Standards: a size tripwire for god components. `max-lines` (600) and `max-lines-per-function` (300), lines of code without blank lines and comments, join the ratcheted rules in `.oxlintrc.standards.json` and `qiickRatchetedRules()`; generated Wayfinder output and `components/ui` are excluded. The function limit is measured, not guessed: across the four products' 6,922 functions p95 is 122 lines and p99 351, so 150 would baseline 283 functions while 300 baselines 93, 58 of them in files under the file limit. Seeded today: externa-core 18 files and 45 functions, excubia-app 6 and 21, instituta-core 2 and 17, signaculum-core 1 and 10. The code standard gains a Size section (`standards/rules/code.md`). Affects every repo: re-sync (the Size section is in the `AGENTS.md` core). Apps also add `eslint/max-lines,eslint/max-lines-per-function` to the `--rule` list of `lint:standards` (a rule missing there is never checked), then run it once with `--update` to seed `qiick-lint-baseline.json`.
+- Drift check: coverage, not only fidelity (#172). `scripts/check-drift.mjs` reads `requiredItems` and `divergences` from the app's `qiick-standards.json` and fails on a required item that is neither installed nor declared a divergence, and on a divergence whose item is installed, is not required or has no reason. Before, an app that built its own screen instead of installing the item stayed green. Nothing changes for an app without `requiredItems`; the required list per product is still to be decided.
+- Registry item `segmented-icon-item` (`SegmentedIconItem`): an icon-only segment of a segmented control with its name in a tooltip and as the `aria-label`. It sets the toggle's `data-state` from `isActive`, since a tooltip trigger around a `ToggleGroupItem` replaces it and loses the selected style. `docs/page.md` (segmented filters) and the playground Users screen use it.
+
+### Fixed
+
+- `app-shell`: the sidebar toggle's hover background and focus ring were cut at the header's left edge (a `-ml-1` inside an `overflow-hidden` row); only the breadcrumbs clip now. The toggle and the `leading` icons sit flush, spaced by their own padding.
+
 ## [0.9.0] - 2026-11-17
 
 ### Upgrade notes
@@ -309,7 +326,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/qiick-io/app-ui/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/qiick-io/app-ui/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/qiick-io/app-ui/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/qiick-io/app-ui/compare/v0.6.1...v0.7.0
