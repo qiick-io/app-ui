@@ -8,6 +8,8 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-18
+
 ### Changed
 
 - Shell: the notifications bell goes in the **sidebar footer**, right above the user menu, instead of the sidebar header. That is where externa-core and instituta-core already have it, and since v0.9.0 the ⌘K search sits in the page header, so nothing is left for the bell to sit next to (`docs/shell.md`, `docs/notifications.md`). Upgrade: apps that have the bell in `SidebarHeader` (excubia-app) move it into `SidebarFooter`, before `NavUser`.
@@ -324,7 +326,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/qiick-io/app-ui/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/qiick-io/app-ui/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/qiick-io/app-ui/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/qiick-io/app-ui/compare/v0.6.1...v0.7.0
