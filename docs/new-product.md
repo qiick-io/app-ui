@@ -63,11 +63,14 @@ Follow [`standards/rules/backend.md`](../standards/rules/backend.md) and these p
 
 1. Auth pages and SSO through Signaculum ([`auth.md`](auth.md)).
 2. Roles and permissions with `<app>:sync-permissions` ([`roles-and-permissions.md`](roles-and-permissions.md)).
-3. Error pages 403 / 404 / 500 / 503 ([`error-pages.md`](error-pages.md)).
-4. Security headers ([`security-headers.md`](security-headers.md)) and logging / activity log ([`logging-and-audit.md`](logging-and-audit.md)).
-5. `GET /health/live` (process up, no I/O) and `GET /health/ready` (database, and Redis when configured; `503` otherwise), outside auth and rate limits: externa-core `routes/health.php`, `app/Http/Controllers/HealthController.php`, `app/Support/Health/ReadinessChecks.php`.
-6. `php artisan <app>:install` (interactive, plus `--no-interaction --force` for CI) and `php artisan <app>:upgrade` (migrate, `<app>:sync-permissions`, caches, version steps), as externa-core `app/Console/Commands/InstallCommand.php` / `UpgradeCommand.php` (externa still calls its permissions command `permissions:sync`; see [`roles-and-permissions.md`](roles-and-permissions.md)). The rules: [`standards/rules/distribution.md`](../standards/rules/distribution.md).
-7. A `Dockerfile`, `docker-bake.hcl` and `docker-compose.yml` like externa-core (multi-stage on `php:8.4-fpm-bookworm`, Node 24 for the Vite stage, Nginx in the `production` stage, `docker/entrypoint.sh` that runs migrations only when `RUN_MIGRATIONS=true`), and a release workflow job that pushes `ghcr.io/qiick-io/<repo>` for linux/amd64 + arm64 on `v*` tags (externa-core `.github/workflows/docker.yml`, job `ghcr-publish`).
+3. Initial super admin and user groups ([`roles-and-permissions.md`](roles-and-permissions.md)):
+    - `config/super_admin.php`, `database/seeders/CreateSuperAdminSeeder.php`, the four `INITIAL_SUPER_ADMIN_*` keys in `.env.example` (default email `superadmin@example.com`) and the password guard; the seeder runs only in `local` and `testing` and only with `INITIAL_SUPER_ADMIN_PASSWORD`. On a server the first admin comes from `<app>:install` or `<app>:create-user`.
+    - User groups: copy externa-core's instance-level, soft-deleted groups with pivots to users and roles; a product with no use for groups declares a divergence.
+4. Error pages 403 / 404 / 500 / 503 ([`error-pages.md`](error-pages.md)).
+5. Security headers ([`security-headers.md`](security-headers.md)) and logging / activity log ([`logging-and-audit.md`](logging-and-audit.md)).
+6. `GET /health/live` (process up, no I/O) and `GET /health/ready` (database, and Redis when configured; `503` otherwise), outside auth and rate limits: externa-core `routes/health.php`, `app/Http/Controllers/HealthController.php`, `app/Support/Health/ReadinessChecks.php`.
+7. `php artisan <app>:install` (interactive, plus `--no-interaction --force` for CI) and `php artisan <app>:upgrade` (migrate, `<app>:sync-permissions`, caches, version steps), as externa-core `app/Console/Commands/InstallCommand.php` / `UpgradeCommand.php` (externa still calls its permissions command `permissions:sync`; see [`roles-and-permissions.md`](roles-and-permissions.md)). The rules: [`standards/rules/distribution.md`](../standards/rules/distribution.md).
+8. A `Dockerfile`, `docker-bake.hcl` and `docker-compose.yml` like externa-core (multi-stage on `php:8.4-fpm-bookworm`, Node 24 for the Vite stage, Nginx in the `production` stage, `docker/entrypoint.sh` that runs migrations only when `RUN_MIGRATIONS=true`), and a release workflow job that pushes `ghcr.io/qiick-io/<repo>` for linux/amd64 + arm64 on `v*` tags (externa-core `.github/workflows/docker.yml`, job `ghcr-publish`).
 
 API, realtime and AI only when the spec asks for them: [`api.md`](api.md) with [`api-keys.md`](api-keys.md), [`realtime.md`](realtime.md), [`ai-backend.md`](ai-backend.md).
 
