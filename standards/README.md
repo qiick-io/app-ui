@@ -24,7 +24,7 @@ One public source for the rules every qiick repo follows (Externa, Excubia, Sign
 | `scripts/check-legacy-web.mjs`                    | `npm run lint:legacy`, CI       | whole file                       |
 | `legacy-scan-baseline.json`                       | the check above                 | **the repo's own**, written once |
 
-The rules themselves are in [`rules/`](rules): [stack](rules/stack.md) (only in repos with `"app": true`), [code](rules/code.md) (casing, full-word names, boolean prefixes, role suffixes, the five layers, PHPDoc / JSDoc, contracts and refactoring guardrails), [backend](rules/backend.md) (requests, permissions and policies, API, security, logging, realtime, AI, health; only in PHP repos), [testing](rules/testing.md), [git](rules/git.md) (English, Conventional Commits, branches, squash), [releases](rules/release.md) (nothing ships without the maintainer), [automated checks](rules/checks.md) (knip, `noUnused*`, strict models, the PHPStan level floor, the coverage, Larastan, i18n and legacy web platform ratchets), [UI](rules/ui.md) (the app-ui rules, only in repos with a `uiPreset`) and [self-hosted distribution](rules/distribution.md) (only in repos with `"app": true`).
+The rules themselves are in [`rules/`](rules): [stack](rules/stack.md) (only in repos with `"app": true`), [code](rules/code.md) (casing, full-word names, boolean prefixes, role suffixes, the five layers, PHPDoc / JSDoc, contracts and refactoring guardrails), [graphify](rules/graphify.md) (query the local knowledge graph first; `graphify-out/` never in git), [backend](rules/backend.md) (requests, permissions and policies, API, security, logging, realtime, AI, health; only in PHP repos), [testing](rules/testing.md), [git](rules/git.md) (English, Conventional Commits, branches, squash), [releases](rules/release.md) (nothing ships without the maintainer), [automated checks](rules/checks.md) (knip, `noUnused*`, strict models, the PHPStan level floor, the coverage, Larastan, i18n and legacy web platform ratchets), [UI](rules/ui.md) (the app-ui rules, only in repos with a `uiPreset`) and [self-hosted distribution](rules/distribution.md) (only in repos with `"app": true`).
 
 ## Core and details
 
@@ -36,6 +36,7 @@ The reusable [`drift-check.yml`](../.github/workflows/drift-check.yml) with `sta
 
 - a managed file differs, or a managed block in `AGENTS.md` / `CLAUDE.md` / `.github/copilot-instructions.md` differs or is missing;
 - a file or directory under `frontendRoots` is not kebab-case;
+- `.gitignore` does not ignore `graphify-out/`, a `graphify-out/` path is tracked, or `.gitattributes` contains `merge=graphify` (local graph and hook only; never committed);
 - `patterns` names an optional pattern that does not exist, or a pattern with variants without one of them.
 
 With `registry: true` (the default; apps with the `@qiick` registry), it runs `scripts/check-drift.mjs` from the registry tag pinned in `components.json`. Fidelity of what the app installed, file by file, against `app-ui.overrides.json`:

@@ -77,6 +77,18 @@ This replaces the "comment only exceptionally complex logic" default of Laravel 
 
 **Details:** `.qiick/standards/code.md`. Read it before creating or renaming a file, class, enum, job, command or other PHP / TypeScript unit.
 
+## graphify
+
+When this workspace has `graphify-out/graph.json`:
+
+- For codebase or architecture questions, first run `graphify query "<question>"` (or `graphify path "<A>" "<B>"` / `graphify explain "<concept>"`). These return a scoped subgraph, usually much smaller than `GRAPH_REPORT.md` or raw grep.
+- If `graphify-out/wiki/index.md` exists, navigate it instead of reading raw files.
+- Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code files, run `graphify update .` (AST-only, no API cost). Do not run it for doc-only or config-only changes with no code edits.
+- If `graphify-out/graph.json` does not exist, skip the above; do not invent a graph.
+
+`graphify-out/` is local and never committed; the graph is rebuilt by local git hooks (`graphify hook install`), and the merge-driver line that command writes to `.gitattributes` must not be committed.
+
 ## Testing
 
 - Pest for PHP (`*Test.php`), Vitest or `node:test` for TypeScript / scripts. Test behaviour, not private structure.

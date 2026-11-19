@@ -31,8 +31,10 @@
  *   managed; everything outside it (repo rules, Laravel Boost guidelines) is the
  *   repo's own.
  *
- * `--check` fails on a missing or different managed file or block, and on a
- * frontend file or directory name that is not kebab-case.
+ * `--check` fails on a missing or different managed file or block, on a
+ * frontend file or directory name that is not kebab-case, and on graphify git
+ * hygiene: `.gitignore` must ignore `graphify-out/`, no tracked `graphify-out/`
+ * path, and `.gitattributes` must not contain `merge=graphify`.
  */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -189,6 +191,7 @@ function renderRulePages(config, catalogue) {
     const pages = {
         ...(config.app ? { stack: readSource('rules/stack.md') } : {}),
         code: readSource('rules/code.md'),
+        graphify: readSource('rules/graphify.md'),
         ...(config.php ? { backend: readSource('rules/backend.md') } : {}),
         testing: readSource('rules/testing.md'),
         git: readSource('rules/git.md'),
@@ -345,6 +348,7 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
                 [
                     pages.stack,
                     pages.code,
+                    pages.graphify,
                     pages.backend,
                     pages.checks,
                     pages.git,
@@ -603,6 +607,91 @@ function listFrontendFiles(targetRoot, frontendRoots) {
 }
 
 /**
+ * Whether `.gitignore` ignores the local `graphify-out/` directory.
+ * Accepts the usual forms (`graphify-out/`, `/graphify-out/`, `graphify-out`).
+ * @param {string} gitignoreText
+ */
+export function ignoresGraphifyOut(gitignoreText) {
+    for (const rawLine of gitignoreText.split('\n')) {
+        const line = rawLine.replace(/#.*$/, '').trim();
+
+        if (line === '' || line.startsWith('!')) {
+            continue;
+        }
+
+        const pattern = line.replace(/^\//, '').replace(/\/$/, '');
+
+        if (pattern === 'graphify-out' || pattern === '**/graphify-out') {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Graphify must stay local: ignored, untracked, and without a committed
+ * merge-driver line from `graphify hook install`.
+ * @param {string} targetRoot
+ * @returns {string[]} Errors, empty when the repo is clean
+ */
+export function findGraphifyGitViolations(targetRoot) {
+    /** @type {string[]} */
+    const errors = [];
+    const gitignorePath = path.join(targetRoot, '.gitignore');
+
+    if (!fs.existsSync(gitignorePath)) {
+        errors.push(
+            '.gitignore is missing (must ignore graphify-out/; local graph, never committed).',
+        );
+    } else if (
+        !ignoresGraphifyOut(normalize(fs.readFileSync(gitignorePath, 'utf8')))
+    ) {
+        errors.push(
+            '.gitignore must ignore graphify-out/ (local graph, never committed).',
+        );
+    }
+
+    try {
+        const tracked = execFileSync(
+            'git',
+            ['ls-files', '-z', '--', 'graphify-out', 'graphify-out/**'],
+            {
+                cwd: targetRoot,
+                encoding: 'utf8',
+                stdio: ['ignore', 'pipe', 'ignore'],
+            },
+        )
+            .split('\0')
+            .filter(Boolean);
+
+        if (tracked.length > 0) {
+            errors.push(
+                `tracked graphify-out path: ${tracked[0]} (local graph, never committed).`,
+            );
+        }
+    } catch {
+        // Not a git checkout: nothing can be tracked.
+    }
+
+    const gitattributesPath = path.join(targetRoot, '.gitattributes');
+
+    if (fs.existsSync(gitattributesPath)) {
+        const gitattributes = normalize(
+            fs.readFileSync(gitattributesPath, 'utf8'),
+        );
+
+        if (/merge\s*=\s*graphify\b/.test(gitattributes)) {
+            errors.push(
+                '.gitattributes must not contain merge=graphify (from `graphify hook install`; local only, do not commit).',
+            );
+        }
+    }
+
+    return errors;
+}
+
+/**
  * Directory and file names under the frontend roots that are not kebab-case.
  * @param {string} targetRoot
  * @param {string[]} frontendRoots
@@ -735,6 +824,8 @@ export function syncStandards(
                 `${name} is not kebab-case (frontend files and directories are kebab-case on disk).`,
             );
         }
+
+        messages.push(...findGraphifyGitViolations(targetRoot));
     }
 
     return messages;

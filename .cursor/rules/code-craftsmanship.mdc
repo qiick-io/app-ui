@@ -124,6 +124,18 @@ Only Eloquent models use bare domain nouns (`User`, `CollectionItem`). Every oth
 
 Do not invent other role nouns (`...Normalizer`, `...Publisher`, `...Recorder`, `...Writer`) or split domain classes arbitrarily between `app/Services/` and `app/Support/`: a write is an `Action`, an orchestrator or read pipeline is a `Service`. Packages apply the same table to their own namespace (`Qiick\Excubia\...`); a package may add roles of its own (`Parser`, `Renderer`, `Check`), listed in its architecture test config.
 
+## graphify
+
+When this workspace has `graphify-out/graph.json`:
+
+- For codebase or architecture questions, first run `graphify query "<question>"` (or `graphify path "<A>" "<B>"` / `graphify explain "<concept>"`). These return a scoped subgraph, usually much smaller than `GRAPH_REPORT.md` or raw grep.
+- If `graphify-out/wiki/index.md` exists, navigate it instead of reading raw files.
+- Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code files, run `graphify update .` (AST-only, no API cost). Do not run it for doc-only or config-only changes with no code edits.
+- If `graphify-out/graph.json` does not exist, skip the above; do not invent a graph.
+
+`graphify-out/` is local and never committed; the graph is rebuilt by local git hooks (`graphify hook install`), and the merge-driver line that command writes to `.gitattributes` must not be committed.
+
 ## Automated checks
 
 Machines enforce these in CI; keep them green, and never silence one to get green. Fix the new finding; a baseline only shrinks.
@@ -143,6 +155,7 @@ Machines enforce these in CI; keep them green, and never silence one to get gree
 - **Thin controllers.** The architecture test fails on a controller with more than five public methods of its own; controllers that already have more are listed with their count in `tests/Arch/naming-architecture.php` (`controllerPublicMethods`), and the test fails when a count grows or when it shrinks without the entry being lowered.
 - **Legacy web platform patterns (ratchet).** `scripts/check-legacy-web.mjs` runs Google Chrome's `legacy-scan` (`modern-web-guidance`, Apache-2.0, no dependencies) over the repo's frontend roots and ratchets it against `legacy-scan-baseline.json`. The scanner always exits 0, findings or not, so the script is the gate: it fails on a finding in a file the baseline does not list for that rule, on one more finding than it allows, and when a fixed finding is still allowed (lower it with `--update`, so paid debt cannot come back). Findings are keyed by **rule and file, never by line**, so an edit above a finding does not churn the baseline while a new file and a new rule are still caught. The scanner version is pinned in the script and recorded in each baseline; never `@latest`, which would turn every repo red the day Chrome adds a rule. Bumping the pin is its own PR: change it in the pack, sync, re-run with `--update` and review the new findings there. The findings are provisional (deterministic rules for 38 of about 200 guides, a fifth of the corpus), so read the guide with `npx modern-web-guidance retrieve <guideId>` and check the finding against its Keep/Drop criteria before fixing it. It runs as a step in the repo's existing lint job, never a job of its own.
 - **No hard-coded UI strings.** `i18next/no-literal-string` (JSX text only, not attributes such as `className` or `data-*`) flags visible text that bypasses translations: use `t('…')` with keys in every locale file. Existing debt is in `i18n-literal-baseline.json`; `scripts/qiick-ratchet.mjs lint` fails when a file's count grows, and when a count shrinks without the baseline being lowered (`--update`).
+- **graphify stays local.** The standards check (`app-ui-drift / standards`, `scripts/sync-standards.mjs --check`) fails when `.gitignore` does not ignore `graphify-out/`, when any `graphify-out/` path is tracked, or when `.gitattributes` contains `merge=graphify` (that line comes from `graphify hook install` and must stay uncommitted). Rebuild the graph locally; never commit it.
 
 ### CI cost
 
