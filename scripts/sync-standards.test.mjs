@@ -23,6 +23,11 @@ function makeRepo(config, files = {}) {
         JSON.stringify(config),
     );
 
+    // Every product must ignore the local graph; default fixtures pass that check.
+    if (!Object.hasOwn(files, '.gitignore')) {
+        files = { '.gitignore': '/graphify-out/\n', ...files };
+    }
+
     for (const [file, content] of Object.entries(files)) {
         fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
         fs.writeFileSync(path.join(root, file), content);
@@ -154,7 +159,7 @@ test('gitignored output under a frontend root is not checked', () => {
     const root = makeRepo(
         { frontendRoots: ['resources/js'] },
         {
-            '.gitignore': '/resources/js/actions\n',
+            '.gitignore': '/resources/js/actions\n/graphify-out/\n',
             'resources/js/actions/App/UserController.ts': '',
             'resources/js/app.tsx': '',
         },
@@ -354,4 +359,75 @@ test('unknown patterns and missing variants fail the sync and the check', () => 
         () => syncStandards(root, { isCheck: false, catalogue: testCatalogue }),
         /is not an optional pattern/,
     );
+});
+
+test('the agent files include the graphify core rules', () => {
+    const root = makeRepo({});
+
+    syncStandards(root, { isCheck: false });
+
+    const agents = read(root, 'AGENTS.md');
+
+    assert.match(agents, /^## graphify$/m);
+    assert.match(agents, /graphify query/);
+    assert.match(agents, /graphify update \./);
+    assert.match(agents, /AST-only, no API cost/);
+    assert.match(agents, /`graphify-out\/` is local and never committed/);
+    assert.match(agents, /graphify hook install/);
+    assert.match(
+        agents,
+        /merge-driver line that command writes to `\.gitattributes` must not be committed/,
+    );
+    assert.ok(fs.existsSync(path.join(root, '.qiick/standards/graphify.md')));
+    assert.deepEqual(syncStandards(root, { isCheck: true }), []);
+});
+
+test('a repo without graphify-out/ in .gitignore fails the check', () => {
+    const root = makeRepo({}, { '.gitignore': 'node_modules/\n' });
+
+    spawnSync('git', ['init', '-q'], { cwd: root });
+    syncStandards(root, { isCheck: false });
+
+    const errors = syncStandards(root, { isCheck: true });
+
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /\.gitignore must ignore graphify-out\//);
+});
+
+test('a tracked graphify-out/ path fails the check', () => {
+    const root = makeRepo(
+        {},
+        {
+            '.gitignore': '/graphify-out/\n',
+            'graphify-out/graph.json': '{}\n',
+        },
+    );
+
+    spawnSync('git', ['init', '-q'], { cwd: root });
+    // Force-add despite gitignore: simulates a committed graph.
+    spawnSync('git', ['add', '-f', 'graphify-out/graph.json'], { cwd: root });
+    syncStandards(root, { isCheck: false });
+
+    const errors = syncStandards(root, { isCheck: true });
+
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /tracked graphify-out path/);
+});
+
+test('a committed merge=graphify line in .gitattributes fails the check', () => {
+    const root = makeRepo(
+        {},
+        {
+            '.gitignore': '/graphify-out/\n',
+            '.gitattributes': 'graphify-out/** merge=graphify\n',
+        },
+    );
+
+    spawnSync('git', ['init', '-q'], { cwd: root });
+    syncStandards(root, { isCheck: false });
+
+    const errors = syncStandards(root, { isCheck: true });
+
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /\.gitattributes must not contain merge=graphify/);
 });
