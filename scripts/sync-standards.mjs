@@ -441,12 +441,26 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
         content: readSource('scripts/qiick-ratchet.mjs'),
     });
 
+    // Repos with a frontend: the legacy web platform ratchet over Chrome's
+    // `legacy-scan`, with the repo's own measured baseline (rules/checks.md).
     if ((config.frontendRoots ?? []).length > 0) {
-        outputs.push({
-            path: 'knip.json',
-            kind: 'template',
-            content: readSource('templates/knip.json'),
-        });
+        outputs.push(
+            {
+                path: 'knip.json',
+                kind: 'template',
+                content: readSource('templates/knip.json'),
+            },
+            {
+                path: 'scripts/check-legacy-web.mjs',
+                kind: 'file',
+                content: readSource('scripts/check-legacy-web.mjs'),
+            },
+            {
+                path: 'legacy-scan-baseline.json',
+                kind: 'template',
+                content: readSource('templates/legacy-scan-baseline.json'),
+            },
+        );
     }
 
     if (config.eslint) {

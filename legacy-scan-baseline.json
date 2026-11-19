@@ -1,0 +1,16 @@
+{
+    "scanner": "modern-web-guidance@1.0.1",
+    "findings": {
+        "form-fields-automatically-fit-contents": {
+            "registry/src/hooks/use-autosize-textarea.ts": 1
+        },
+        "ime-safe-enter-submit": {
+            "registry/src/components/command-palette.tsx": 1,
+            "registry/src/components/confirm-destructive-dialog.tsx": 1
+        },
+        "js/copying-array-methods": {
+            "playground/src/screens/users.tsx": 1,
+            "registry/src/components/keyboard-shortcuts.tsx": 3
+        }
+    }
+}
