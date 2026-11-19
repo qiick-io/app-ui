@@ -45,6 +45,10 @@ jobs:
         run: npm run lint:i18n
       - name: Restricted imports, boolean names, short names (ratchet)
         run: npm run lint:standards
+      # Chrome's legacy-scan, ratcheted against legacy-scan-baseline.json: a step
+      # here and not a job of its own (rules/checks.md: GitHub bills per job).
+      - name: Legacy web platform patterns (ratchet)
+        run: npm run lint:legacy
 
   types:
     runs-on: ubuntu-latest
