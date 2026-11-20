@@ -8,6 +8,8 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-20
+
 ### Added
 
 - Standards: fleet conformance suite (`standards/php/conformance/`, synced to `tests/Conformance/`). Every core-hardening decision ships with a check id (C1–C37): schema/behaviour/config/file, divergences with `reason` / `decision` / `review_by`, product hooks in repo-owned `hooks.php`, and RED/GREEN proofs in `standards/php/conformance-harness/` (SQLite, PostgreSQL, MySQL). Reusable `.github/workflows/conformance.yml` runs the suite on PostgreSQL 16 and MySQL 8.4. Catalogue: `standards/CONFORMANCE.md`. Binding decision 2026-11-20. Affects every PHP app on the next pin bump: sync, fill `qiick-standards.json` → `conformance`, implement hooks or declare divergences, call the workflow.
@@ -351,7 +353,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/qiick-io/app-ui/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/qiick-io/app-ui/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/qiick-io/app-ui/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/qiick-io/app-ui/compare/v0.8.0...v0.9.0
