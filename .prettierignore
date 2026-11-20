@@ -6,3 +6,7 @@ package-lock.json
 CHANGELOG.md
 .github/assets/
 registry/src/css/shadcn-tailwind.css
+# Local Composer install for the conformance RED/GREEN harness (never committed)
+standards/php/conformance-harness/vendor/
+standards/php/conformance-harness/composer.lock
+standards/php/conformance-harness/.phpunit.cache/

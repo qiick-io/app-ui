@@ -24,6 +24,7 @@
         "standards:check": "node scripts/sync-standards.mjs --check",
         "standards:sync": "node scripts/sync-standards.mjs",
         "test": "node --test scripts/*.test.mjs && vitest run",
+        "test:conformance": "cd standards/php/conformance-harness && composer install --no-interaction && composer test",
         "types:check": "tsc --noEmit"
     },
     "devDependencies": {
