@@ -9,16 +9,17 @@ import {
     ItemMedia,
     ItemTitle,
 } from '@/components/ui/item';
+import type { RecordId } from '@/lib/record-id';
 
 type ChatPinnedBarRow = {
-    id: number;
+    id: RecordId;
     author: string;
     body: ReactNode;
 };
 
 type ChatPinnedBarProps = {
     rows: ChatPinnedBarRow[];
-    onSelect: (id: number) => void;
+    onSelect: (id: RecordId) => void;
 };
 
 /**

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "record-id",
+  "title": "Record id",
+  "description": "RecordId = string | number: the shared record id type of the registry items, so UUIDs and legacy numeric ids are both accepted without coercion.",
+  "files": [
+    {
+      "path": "src/lib/record-id.ts",
+      "content": "/**\n * A record id as it crosses the app boundary. APIs expose UUIDs, so strings are\n * the common case; numbers stay valid for apps that have not migrated their\n * internal ids yet. Both are accepted, never converted into one another.\n *\n * Identity is strict: `'7'` and `7` are different records. Compare ids with\n * `===` / `includes()` on values of the same type, never with `Number()` or\n * `parseInt()`, so a UUID is never truncated and a numeric id never changes.\n */\nexport type RecordId = string | number;\n",
+      "type": "registry:file",
+      "target": "resources/js/lib/record-id.ts"
+    }
+  ],
+  "type": "registry:lib"
+}
