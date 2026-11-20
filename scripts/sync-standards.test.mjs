@@ -50,6 +50,17 @@ test('a synced repo passes the check', () => {
         fs.existsSync(path.join(root, 'tests/Arch/naming-architecture.php')),
     );
     assert.ok(fs.existsSync(path.join(root, 'qiick-standards.eslint.js')));
+    assert.ok(
+        fs.existsSync(
+            path.join(root, 'tests/Conformance/ConformanceSuiteTest.php'),
+        ),
+    );
+    assert.ok(fs.existsSync(path.join(root, 'tests/Conformance/hooks.php')));
+    assert.ok(
+        fs.existsSync(
+            path.join(root, 'tests/Conformance/Support/ConformanceRunner.php'),
+        ),
+    );
 });
 
 test('a repo without UI or PHP gets neither the UI rules nor the arch test', () => {
@@ -125,6 +136,20 @@ test('the repo-owned arch config is written once and never overwritten', () => {
         read(root, 'tests/Arch/naming-architecture.php'),
         '<?php return [];\n',
     );
+});
+
+test('the repo-owned conformance hooks file is written once and never overwritten', () => {
+    const root = makeRepo(
+        { php: true },
+        {
+            'tests/Conformance/hooks.php':
+                "<?php\n\ndeclare(strict_types=1);\n\nreturn ['assertErasure' => static fn () => null];\n",
+        },
+    );
+
+    syncStandards(root, { isCheck: false });
+
+    assert.match(read(root, 'tests/Conformance/hooks.php'), /assertErasure/);
 });
 
 test('non-kebab-case frontend names fail the check', () => {

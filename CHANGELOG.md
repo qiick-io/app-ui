@@ -8,6 +8,22 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-20
+
+### Added
+
+- Standards: fleet conformance suite (`standards/php/conformance/`, synced to `tests/Conformance/`). Every core-hardening decision ships with a check id (C1–C37): schema/behaviour/config/file, divergences with `reason` / `decision` / `review_by`, product hooks in repo-owned `hooks.php`, and RED/GREEN proofs in `standards/php/conformance-harness/` (SQLite, PostgreSQL, MySQL). Reusable `.github/workflows/conformance.yml` runs the suite on PostgreSQL 16 and MySQL 8.4. Catalogue: `standards/CONFORMANCE.md`. Binding decision 2026-11-20. Affects every PHP app on the next pin bump: sync, fill `qiick-standards.json` → `conformance`, implement hooks or declare divergences, call the workflow.
+- Registry item `record-id`: `RecordId = string | number`, the shared record-id type of the items that hold records (`paginated-multi-select`, `chat-pinned-bar`, `user-avatar`, `user-hover-card`, `nav-user` / `user-info`, `files-grid`, `api-key-list-row`, `avatar-tone`). Ids from UUID APIs and legacy numeric ids both work; equality is strict, so `'7'` and `7` stay different records and no item coerces an id with `Number()` / `parseInt()` (fleet decision 2026-11-20). The item is pulled in as a registry dependency wherever it is used.
+- Component tests with Vitest for `PaginatedMultiSelect`: selecting, deselecting and round-tripping the exact id, for UUID strings and numbers, including single-select. This is the first React component test in the repo; `npm test` now runs them after the script tests.
+
+### Changed
+
+- Docs: API responses expose record ids as UUID strings, not a bigint plus a `uuid` (`docs/api.md`); `docs/forms.md` documents `RecordId` and strict equality for the record-bearing items.
+
+### Upgrade notes
+
+- Every app with the affected items: re-pull them (`npx shadcn add @qiick/<item> --overwrite`); `record-id` installs as a dependency. Props that took `number` now take `RecordId`: existing numeric values compile unchanged, and UUID strings from API resources can be passed without a fork. Do not convert between the two before passing them: identity is strict.
+
 ## [0.11.0] - 2026-11-20
 
 ### Changed
@@ -337,7 +353,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/qiick-io/app-ui/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/qiick-io/app-ui/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/qiick-io/app-ui/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/qiick-io/app-ui/compare/v0.8.0...v0.9.0

@@ -18,7 +18,11 @@
  *         "app": true,                     // self-hosted app: stack and distribution rules
  *         "patterns": ["command-palette"], // optional UI patterns it adopts (standards/patterns.json)
  *         "requiredItems": ["page-layout"], // registry items it must install (check-drift.mjs)
- *         "divergences": { "page-layout": "Why" } // required items left out on purpose (check-drift.mjs)
+ *         "divergences": {                  // registry strings and/or conformance objects
+ *             "page-layout": "Why",
+ *             "C12": { "reason": "…", "decision": "knowledge/decisions/…", "review_by": "YYYY-MM-DD" }
+ *         },
+ *         "conformance": { "userModel": "App\\Models\\User", "apiPrefix": "api/v1" }
  *     }
  *
  * Managed files are of two kinds:
@@ -70,6 +74,28 @@ function readSource(relativePath) {
     return normalize(
         fs.readFileSync(path.join(standardsRoot, relativePath), 'utf8'),
     );
+}
+
+/**
+ * Every file under a directory, recursively.
+ * @param {string} directory
+ * @returns {string[]} Absolute paths
+ */
+function listFilesRecursive(directory) {
+    /** @type {string[]} */
+    const files = [];
+
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        const absolutePath = path.join(directory, entry.name);
+
+        if (entry.isDirectory()) {
+            files.push(...listFilesRecursive(absolutePath));
+        } else if (entry.isFile()) {
+            files.push(absolutePath);
+        }
+    }
+
+    return files;
 }
 
 /**
@@ -420,6 +446,30 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
                 content: readSource('php/naming-architecture.php'),
             },
         );
+
+        // Fleet conformance suite: every managed file under standards/php/conformance/
+        // except the repo-owned hooks.php template.
+        const conformanceRoot = path.join(standardsRoot, 'php/conformance');
+
+        for (const absolutePath of listFilesRecursive(conformanceRoot)) {
+            const relative = path.relative(conformanceRoot, absolutePath);
+            const posixRelative = relative.split(path.sep).join('/');
+
+            if (posixRelative === 'hooks.php') {
+                outputs.push({
+                    path: 'tests/Conformance/hooks.php',
+                    kind: 'template',
+                    content: readSource('php/conformance/hooks.php'),
+                });
+                continue;
+            }
+
+            outputs.push({
+                path: `tests/Conformance/${posixRelative}`,
+                kind: 'file',
+                content: readSource(`php/conformance/${posixRelative}`),
+            });
+        }
     }
 
     // Laravel apps with the qiick UI: the theme-token ratchet over resources/js

@@ -10,7 +10,7 @@ Only when the spec asks for a public API; the Inertia UI never calls it.
 
 - REST under `/api/v1` (`apiPrefix: 'api'` in `bootstrap/app.php`, `Route::prefix('v1')`). A breaking change is `/api/v2`, side by side; `v1` keeps working until a major release removes it.
 - Controllers in `app/Http/Controllers/Api/V1/`, thin like the others, calling the same `*Action` / `*Service` classes as the UI (`standards/rules/code.md`, layer 5).
-- Responses are `*Resource` classes in `app/Http/Resources/Api/V1/`: explicit fields, snake_case keys, ISO-8601 dates, ids as numbers plus a `uuid` where records are shared. Lists paginate (`page`, `per_page` up to `config('api.max_per_page')`, 100).
+- Responses are `*Resource` classes in `app/Http/Resources/Api/V1/`: explicit fields, snake_case keys, ISO-8601 dates and record ids as UUID strings. No database bigint leaves the app (fleet decision 2026-11-20): a UUID is the id, not an extra field beside a numeric id. Lists paginate (`page`, `per_page` up to `config('api.max_per_page')`, 100). Registry items still accept numeric ids through `RecordId` so apps can migrate without a breaking change; see [forms.md](forms.md#record-ids).
 - Errors are Laravel's JSON: `422` with `errors`, `401`, `403`, `404`, `429`. Never an HTML page under `/api`.
 
 ## OpenAPI

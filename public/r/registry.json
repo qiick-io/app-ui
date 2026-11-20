@@ -18,6 +18,19 @@
             ]
         },
         {
+            "name": "record-id",
+            "type": "registry:lib",
+            "title": "Record id",
+            "description": "RecordId = string | number: the shared record id type of the registry items, so UUIDs and legacy numeric ids are both accepted without coercion.",
+            "files": [
+                {
+                    "path": "src/lib/record-id.ts",
+                    "type": "registry:file",
+                    "target": "resources/js/lib/record-id.ts"
+                }
+            ]
+        },
+        {
             "name": "theme",
             "type": "registry:item",
             "title": "Theme",
@@ -721,6 +734,7 @@
                 "@qiick/button",
                 "@qiick/command",
                 "@qiick/popover",
+                "@qiick/record-id",
                 "@qiick/spinner",
                 "@qiick/user-avatar",
                 "@qiick/utils"
@@ -969,6 +983,7 @@
             "registryDependencies": [
                 "@qiick/avatar",
                 "@qiick/avatar-tone",
+                "@qiick/record-id",
                 "@qiick/utils"
             ],
             "files": [
@@ -992,6 +1007,7 @@
                 "@qiick/user-avatar",
                 "@qiick/badge",
                 "@qiick/hover-card",
+                "@qiick/record-id",
                 "@qiick/utils"
             ],
             "files": [
@@ -1013,6 +1029,7 @@
             ],
             "registryDependencies": [
                 "@qiick/dropdown-menu",
+                "@qiick/record-id",
                 "@qiick/sidebar",
                 "@qiick/use-mobile",
                 "@qiick/user-avatar"
@@ -1045,6 +1062,7 @@
                 "@qiick/context-menu",
                 "@qiick/dropdown-menu",
                 "@qiick/hover-card",
+                "@qiick/record-id",
                 "@qiick/tooltip",
                 "@qiick/utils"
             ],
@@ -1375,6 +1393,7 @@
             "type": "registry:lib",
             "title": "Avatar tone",
             "description": "avatarToneClass(id): the theme's avatar-1 … avatar-10 swatch classes for a user id, passed to AvatarFallback (and a sender name) where users must be told apart.",
+            "registryDependencies": ["@qiick/record-id"],
             "files": [
                 {
                     "path": "src/lib/avatar-tone.ts",
@@ -1716,7 +1735,7 @@
             "title": "Chat pinned bar",
             "description": "Pinned messages above a thread, one muted Item with a pin each, jumping to the message.",
             "dependencies": ["lucide-react", "react-i18next"],
-            "registryDependencies": ["@qiick/item"],
+            "registryDependencies": ["@qiick/item", "@qiick/record-id"],
             "files": [
                 {
                     "path": "src/components/chat/chat-pinned-bar.tsx",
@@ -2018,6 +2037,7 @@
                 "@qiick/confirm-destructive-dialog",
                 "@qiick/data-table",
                 "@qiick/header-icon-button",
+                "@qiick/record-id",
                 "@qiick/tooltip"
             ],
             "files": [

@@ -30,6 +30,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import type { RecordId } from '@/lib/record-id';
 import { cn } from '@/lib/utils';
 
 /** One entry of a file card's context menu. */
@@ -54,7 +55,7 @@ type FileCardProps = Omit<
     ComponentProps<'div'>,
     'children' | 'id' | 'onSelect'
 > & {
-    id: number | string;
+    id: RecordId;
     /** Name in the row under the preview (full name in a tooltip). */
     name: string;
     isFolder?: boolean;

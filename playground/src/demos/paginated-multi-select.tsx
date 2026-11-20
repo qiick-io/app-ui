@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { PaginatedMultiSelect } from '@/components/admin/paginated-multi-select';
 import { Label } from '@/components/ui/label';
+import type { RecordId } from '@/lib/record-id';
 
 const DEMO_URL = '/playground/api/users';
 const PEOPLE = [
@@ -70,8 +71,8 @@ function installDemoEndpoint(): void {
 installDemoEndpoint();
 
 export default function PaginatedMultiSelectDemo() {
-    const [reviewers, setReviewers] = useState<number[]>([2]);
-    const [owner, setOwner] = useState<number[]>([]);
+    const [reviewers, setReviewers] = useState<RecordId[]>([2]);
+    const [owner, setOwner] = useState<RecordId[]>([]);
 
     return (
         <div className="flex w-80 flex-col gap-4">

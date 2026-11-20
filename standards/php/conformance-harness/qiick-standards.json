@@ -1,0 +1,20 @@
+{
+    "ref": "develop",
+    "php": true,
+    "conformance": {
+        "userModel": "App\\Models\\User",
+        "publicIdColumn": "public_id",
+        "apiPrefix": "api/v1",
+        "usesSpatieTeams": true,
+        "hasOrganisations": true,
+        "hasUserGroups": true,
+        "hasPrincipals": true,
+        "hasApiKeys": true,
+        "hasSettings": true,
+        "hasUserIdentities": true,
+        "organisationTable": "organisations",
+        "membershipTable": "organisation_user",
+        "openApiPath": "openapi.yaml"
+    },
+    "divergences": {}
+}
