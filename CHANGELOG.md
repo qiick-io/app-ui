@@ -8,6 +8,17 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-20
+
+### Changed
+
+- Standards: migrations freeze only at the first **stable** release (`vX.Y.Z` with no pre-release suffix). Until then `migrations-frozen.sh` prints that migrations are editable and exits 0 (ignoring `origin/main`, beta/rc tags and any `.frozen` baseline); after a stable tag it compares against the latest stable tag plus `origin/main` and `.frozen` as before. The code contract says to edit `create_` migrations and fold add/alter into them before 1.0; betas warn that an upgrade may need a fresh database. Decision 2026-11-20. Unblocks products still on betas that need to fix schema in place (instituta-core tenancy create_ on develop, signaculum-core folding its week of migrations, excubia-app despite dogfood production). externa-core (1.x) stays frozen. Affects every PHP app on the next pin bump.
+
+### Added
+
+- Standards: graphify agent rules in every product's `qiick-standards` block (`standards/rules/graphify.md`: query/path/explain first, `GRAPH_REPORT` only for broad review, `graphify update .` after code changes, AST-only). The standards check fails when `.gitignore` does not ignore `graphify-out/`, when any `graphify-out/` path is tracked, or when `.gitattributes` contains `merge=graphify` (local hooks only). `new-product` ensures the ignore line. Affects every repo on the next pin bump and re-sync: add `/graphify-out/` to `.gitignore` if missing; externa-core must drop its duplicate `## graphify` section outside the block when it adopts the pack version.
+- Standards: a ratchet over Google Chrome's `legacy-scan` (`modern-web-guidance`, Apache-2.0, published by the Chrome team, no dependencies). The scanner finds legacy web platform patterns but always exits 0, findings or not, so there is no gate until one is written: `standards/scripts/check-legacy-web.mjs` is it, and a ratchet rather than a wall, because the fleet already carries findings and the scanner itself calls them provisional (deterministic rules for 38 of about 200 guides, a fifth of the corpus). Each repo commits what it carries in `legacy-scan-baseline.json` and only a new finding fails; a fixed one must be removed from the baseline (`--update`). Findings are keyed by **rule and file, never by line**, so an edit above a finding does not churn the baseline. The scanner version is pinned in the script (`modern-web-guidance@1.0.1`) and recorded in each baseline, since `@latest` would turn every repo red the day Chrome adds a rule; bumping it is its own PR. It runs as a step in each repo's existing lint job, never a job of its own (GitHub bills per job, rounded up to the minute). Seeded today: externa-core 15 findings, excubia-app 10, app-ui 7, the Next and Nuxt starters 0. Five of app-ui's seven are in registry components the products install (`use-autosize-textarea`, `command-palette`, `confirm-destructive-dialog`, `keyboard-shortcuts`), which is why excubia-app carries the same ones. Affects every repo with `frontendRoots`: re-sync to get `scripts/check-legacy-web.mjs` and the baseline seed, run it once with `--update`, and add the step to the lint job.
+
 ## [0.10.0] - 2026-11-18
 
 ### Changed
@@ -326,7 +337,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/qiick-io/app-ui/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/qiick-io/app-ui/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/qiick-io/app-ui/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/qiick-io/app-ui/compare/v0.7.0...v0.8.0

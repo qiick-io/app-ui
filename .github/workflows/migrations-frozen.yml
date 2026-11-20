@@ -1,5 +1,7 @@
-# Reusable forward-only migration check (qiick standards, "Contracts: never break
-# them"): a migration that exists on `main`, on the latest `v*` tag or in the
+# Reusable migration freeze check (qiick standards, "Contracts: never break
+# them"; decision 2026-11-20): freezes only after the first *stable* tag
+# (`vX.Y.Z`, no pre-release suffix). Until then the job exits 0. With a stable
+# tag, a migration that exists on `main`, on the latest stable tag or in the
 # freeze baseline `database/migrations/.frozen` is never edited, renamed or
 # deleted. From excubia-app #193.
 #

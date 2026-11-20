@@ -11,6 +11,12 @@
 - Rate limiters in `FortifyServiceProvider`: `login` (per email + IP), `two-factor` 5/min, `passkeys` 10/min, `auth-sensitive` 5/min for password and 2FA changes.
 - A local admin always works, also in SSO-only mode (break-glass).
 
+## Username is not a login
+
+- Login is **by email only**. There is **no username login**, no "username or email" field and no username route; keep Fortify's email validation and the `login` rate limiter keyed on email.
+- Every product still has `users.username`: string, nullable, unique and stored lowercase, even when nothing uses it yet. It carries @mentions, the OIDC `preferred_username` claim (Signaculum) and the directory account name of LDAP users.
+- A username is identity metadata, not a credential. Never accept it in a login request or show it as the local login label.
+
 ## SSO through Signaculum (optional)
 
 Single sign-on is optional and off by default. Signaculum (`qiick-io/signaculum-core`) is the qiick OpenID Connect provider, but any standard IdP (Keycloak, Zitadel, Authentik, Entra ID) works the same way.

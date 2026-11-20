@@ -16,9 +16,13 @@ on:
 permissions:
   contents: read
 
+# The event is part of the group: without it the `push` run and the
+# `pull_request` run on the same SHA cancel each other, and a required check
+# that was cancelled never reports (externa-core#805). Runs on `main` and
+# `develop` are the release evidence, so they are never cancelled.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop' }}
 
 jobs:
   lint:
@@ -41,6 +45,10 @@ jobs:
         run: npm run lint:i18n
       - name: Restricted imports, boolean names, short names (ratchet)
         run: npm run lint:standards
+      # Chrome's legacy-scan, ratcheted against legacy-scan-baseline.json: a step
+      # here and not a job of its own (rules/checks.md: GitHub bills per job).
+      - name: Legacy web platform patterns (ratchet)
+        run: npm run lint:legacy
 
   types:
     runs-on: ubuntu-latest

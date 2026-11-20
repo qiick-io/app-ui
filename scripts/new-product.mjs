@@ -8,17 +8,18 @@
  *
  * It writes `qiick-standards.json`, adds the `@qiick` registry to
  * `components.json`, writes `.github/workflows/qiick.yml` (the reusable qiick
- * checks pinned to the same ref) and runs the standards sync. It never
- * overwrites a file the app already has, except `components.json`, where it
- * only adds the registry; an existing `qiick-standards.json` keeps its `ref`.
- * Steps it cannot do (`shadcn add`, the install command, health endpoints) are
- * printed at the end and described in `docs/new-product.md`.
+ * checks pinned to the same ref), ensures `.gitignore` ignores `graphify-out/`,
+ * and runs the standards sync. It never overwrites a file the app already has,
+ * except `components.json`, where it only adds the registry; an existing
+ * `qiick-standards.json` keeps its `ref`. Steps it cannot do (`shadcn add`, the
+ * install command, health endpoints) are printed at the end and described in
+ * `docs/new-product.md`.
  */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { syncStandards } from './sync-standards.mjs';
+import { ignoresGraphifyOut, syncStandards } from './sync-standards.mjs';
 
 const appUiRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PRESETS = { Teal: 'theme', Blue: 'theme-blue' };
@@ -108,6 +109,34 @@ function writeIfMissing(file, content, written) {
 }
 
 /**
+ * Ensures `.gitignore` ignores the local graphify output (standards check).
+ * @param {string} targetRoot
+ * @param {string[]} written
+ */
+function ensureGraphifyOutIgnored(targetRoot, written) {
+    const gitignorePath = path.join(targetRoot, '.gitignore');
+
+    if (!fs.existsSync(gitignorePath)) {
+        fs.writeFileSync(gitignorePath, '/graphify-out/\n');
+        written.push(gitignorePath);
+
+        return;
+    }
+
+    const existing = fs.readFileSync(gitignorePath, 'utf8');
+
+    if (ignoresGraphifyOut(existing)) {
+        return;
+    }
+
+    const prefix =
+        existing === '' || existing.endsWith('\n') ? existing : `${existing}\n`;
+
+    fs.writeFileSync(gitignorePath, `${prefix}/graphify-out/\n`);
+    written.push(gitignorePath);
+}
+
+/**
  * @param {{ targetRoot: string, appName: string, preset: string, ref: string }} options
  * @returns {string[]} Files written or changed, relative to the target
  */
@@ -185,6 +214,8 @@ export function scaffoldProduct({
         renderQiickWorkflow(ref, appName),
         written,
     );
+
+    ensureGraphifyOutIgnored(targetRoot, written);
 
     written.push(
         ...syncStandards(targetRoot, { isCheck: false }).map((file) =>
