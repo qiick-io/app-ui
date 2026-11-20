@@ -8,6 +8,8 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-20
+
 ### Changed
 
 - Standards: migrations freeze only at the first **stable** release (`vX.Y.Z` with no pre-release suffix). Until then `migrations-frozen.sh` prints that migrations are editable and exits 0 (ignoring `origin/main`, beta/rc tags and any `.frozen` baseline); after a stable tag it compares against the latest stable tag plus `origin/main` and `.frozen` as before. The code contract says to edit `create_` migrations and fold add/alter into them before 1.0; betas warn that an upgrade may need a fresh database. Decision 2026-11-20. Unblocks products still on betas that need to fix schema in place (instituta-core tenancy create_ on develop, signaculum-core folding its week of migrations, excubia-app despite dogfood production). externa-core (1.x) stays frozen. Affects every PHP app on the next pin bump.
@@ -335,7 +337,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/qiick-io/app-ui/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/qiick-io/app-ui/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/qiick-io/app-ui/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/qiick-io/app-ui/compare/v0.7.0...v0.8.0
