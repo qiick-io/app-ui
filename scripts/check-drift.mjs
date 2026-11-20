@@ -292,6 +292,22 @@ for (const name of requiredItems) {
 }
 
 for (const [name, reason] of Object.entries(divergences)) {
+    // Conformance check divergences are objects with reason/decision/review_by
+    // (validated by the Pest suite). Registry coverage only cares about strings.
+    if (
+        typeof reason === 'object' &&
+        reason !== null &&
+        !Array.isArray(reason)
+    ) {
+        if (typeof reason.reason !== 'string' || reason.reason.trim() === '') {
+            coverageErrors.push(
+                `${STANDARDS_FILE}: conformance divergence "${name}" needs a non-empty reason.`,
+            );
+        }
+
+        continue;
+    }
+
     if (typeof reason !== 'string' || reason.trim() === '') {
         coverageErrors.push(
             `${STANDARDS_FILE}: divergence "${name}" needs a reason.`,
@@ -319,8 +335,10 @@ if (errors.length > 0 || coverageErrors.length > 0) {
     process.exit(1);
 }
 
-const divergentCount = Object.keys(divergences).length;
+const registryDivergentCount = Object.values(divergences).filter(
+    (reason) => typeof reason === 'string',
+).length;
 
 console.log(
-    `check-drift: ok (${checkedFiles} files match, ${usedOverrides.size} overridden; ${requiredItems.length - divergentCount} required items installed, ${divergentCount} divergent)`,
+    `check-drift: ok (${checkedFiles} files match, ${usedOverrides.size} overridden; ${requiredItems.length - registryDivergentCount} required items installed, ${registryDivergentCount} divergent)`,
 );

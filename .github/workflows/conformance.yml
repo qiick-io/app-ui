@@ -1,0 +1,120 @@
+# Reusable fleet conformance suite (qiick standards, "every decision ships with
+# its check"). Runs the product's synced `tests/Conformance` Pest group against
+# a freshly migrated database on PostgreSQL and MySQL for engine-dependent
+# checks (column types, unique-with-empty-string, case-sensitive issuer).
+#
+# In an app:
+#
+#   jobs:
+#     conformance:
+#       uses: qiick-io/app-ui/.github/workflows/conformance.yml@vX.Y.Z
+#
+# Required check name (once the maintainer adds it): `conformance / conformance`.
+#
+# Service containers provide PostgreSQL 16 and MySQL 8.4. The job matrix runs
+# the same Pest group on both; SQLite alone is not sufficient for C3/C5/C11/C15.
+name: conformance
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: Repo root (where artisan, composer.json and tests/Conformance live)
+        type: string
+        default: .
+      php-version:
+        type: string
+        default: '8.4'
+      composer-command:
+        type: string
+        default: composer install --no-interaction --prefer-dist --no-progress
+      build-command:
+        description: Builds what the tests need; empty to skip
+        type: string
+        default: npm ci && npm run build
+      pest-arguments:
+        type: string
+        default: --group=conformance
+
+permissions:
+  contents: read
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [pgsql, mysql]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: conformance
+          POSTGRES_USER: conformance
+          POSTGRES_PASSWORD: secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U conformance -d conformance"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: conformance
+          MYSQL_USER: conformance
+          MYSQL_PASSWORD: secret
+          MYSQL_ROOT_PASSWORD: secret
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -psecret --silent"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    env:
+      DB_CONNECTION: ${{ matrix.database }}
+      DB_HOST: 127.0.0.1
+      DB_PORT: ${{ matrix.database == 'pgsql' && '5432' || '3306' }}
+      DB_DATABASE: conformance
+      DB_USERNAME: conformance
+      DB_PASSWORD: secret
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ inputs.php-version }}
+          extensions: pdo_mysql, pdo_pgsql, pgsql, mysql
+          coverage: none
+          tools: composer:v2
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+
+      - name: Install PHP dependencies
+        run: ${{ inputs.composer-command }}
+
+      - name: Prepare environment
+        run: |
+          if [ -f artisan ] && [ -f .env.example ]; then
+            cp .env.example .env
+            php artisan key:generate --ansi
+          fi
+
+      - name: Build
+        if: inputs.build-command != ''
+        run: ${{ inputs.build-command }}
+
+      - name: Migrate
+        run: php artisan migrate --force --no-interaction
+
+      - name: Conformance suite
+        run: vendor/bin/pest ${{ inputs.pest-arguments }}
