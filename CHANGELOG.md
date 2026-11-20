@@ -8,6 +8,19 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Added
+
+- Registry item `record-id`: `RecordId = string | number`, the shared record-id type of the items that hold records (`paginated-multi-select`, `chat-pinned-bar`, `user-avatar`, `user-hover-card`, `nav-user` / `user-info`, `files-grid`, `api-key-list-row`, `avatar-tone`). Ids from UUID APIs and legacy numeric ids both work; equality is strict, so `'7'` and `7` stay different records and no item coerces an id with `Number()` / `parseInt()` (fleet decision 2026-11-20). The item is pulled in as a registry dependency wherever it is used.
+- Component tests with Vitest for `PaginatedMultiSelect`: selecting, deselecting and round-tripping the exact id, for UUID strings and numbers, including single-select. This is the first React component test in the repo; `npm test` now runs them after the script tests.
+
+### Changed
+
+- Docs: API responses expose record ids as UUID strings, not a bigint plus a `uuid` (`docs/api.md`); `docs/forms.md` documents `RecordId` and strict equality for the record-bearing items.
+
+### Upgrade notes
+
+- Every app with the affected items: re-pull them (`npx shadcn add @qiick/<item> --overwrite`); `record-id` installs as a dependency. Props that took `number` now take `RecordId`: existing numeric values compile unchanged, and UUID strings from API resources can be passed without a fork. Do not convert between the two before passing them: identity is strict.
+
 ## [0.11.0] - 2026-11-20
 
 ### Changed

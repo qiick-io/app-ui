@@ -70,9 +70,11 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
       - name: WCAG 2.2 AA contrast of every token pair
         run: npm run a11y:contrast
-      - name: Script tests (drift check, standards sync)
+      - name: Script and component tests (drift check, standards sync, Vitest)
         run: npm test
       # This repo follows its own standards pack: its synced copy must match standards/.
       - name: Standards pack is synced

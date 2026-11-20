@@ -23,7 +23,7 @@
         "registry:check": "node scripts/check-registry.mjs",
         "standards:check": "node scripts/sync-standards.mjs --check",
         "standards:sync": "node scripts/sync-standards.mjs",
-        "test": "node --test scripts/*.test.mjs",
+        "test": "node --test scripts/*.test.mjs && vitest run",
         "types:check": "tsc --noEmit"
     },
     "devDependencies": {
@@ -31,6 +31,7 @@
         "@commitlint/config-conventional": "^21.2.3",
         "@eslint/js": "^9.39.5",
         "@stylistic/eslint-plugin": "^5.10.0",
+        "@testing-library/react": "^16.3.3",
         "@types/node": "^24.13.6",
         "eslint": "^9.39.5",
         "eslint-config-prettier": "^10.1.8",
@@ -41,10 +42,12 @@
         "eslint-plugin-react": "^7.37.5",
         "eslint-plugin-react-hooks": "^7.0.1",
         "globals": "^17.12.0",
+        "jsdom": "^31.0.1",
         "knip": "^6.44.2",
         "prettier": "^3.9.9",
         "prettier-plugin-tailwindcss": "^0.8.1",
         "typescript": "^5.9.3",
-        "typescript-eslint": "^8.70.1"
+        "typescript-eslint": "^8.70.1",
+        "vitest": "^5.1.1"
     }
 }

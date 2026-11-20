@@ -31,6 +31,12 @@ Every control sits in a shadcn `Field`; the server's errors are the only validat
 - No `InputError` or hand-made error paragraphs: `FieldError` only.
 - Labels, hints and errors go through `t('…')`; Laravel's validation messages come translated from `lang/<locale>/validation.php`.
 
+## Record ids
+
+Record-bearing items (`paginated-multi-select`, `user-avatar`, `files-grid`, `nav-user`, `api-key-list-row`, `chat-pinned-bar`) type ids as `RecordId` from `@qiick/record-id`: `string | number`. Pass the UUID string an API exposes; numeric ids keep working while an app migrates (fleet decision 2026-11-20). Ids are compared strictly as the same type: `'7'` and `7` are different records, so never coerce one with `Number()` or `parseInt()` before passing it to an item.
+
+`paginated-multi-select` uses `RecordId` for `PickerOption.id`, `value` and `onChange`, so a selection round-trips with the exact id the endpoint returned.
+
 ## Submitting
 
 - Drawers and multi-step pages: `useForm` (`setData` / `setDefaults` when the drawer opens, `transform` to drop empty optional values, `preserveScroll: true`, `reset()` on success). Simple pages: `<Form {...store.form()} resetOnSuccess noValidate>{({ processing, errors }) => …}</Form>`. Routes from Wayfinder.

@@ -7,11 +7,12 @@ import {
     HoverCardContent,
     HoverCardTrigger,
 } from '@/components/ui/hover-card';
+import type { RecordId } from '@/lib/record-id';
 import { cn } from '@/lib/utils';
 
 /** The user a card describes; `name` is the display name. */
 export type UserHoverCardUser = {
-    id: number | string;
+    id: RecordId;
     name: string;
     email?: string;
     avatar?: string | null;
