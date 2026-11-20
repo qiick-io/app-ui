@@ -1,13 +1,23 @@
 #!/usr/bin/env bash
 #
-# Migrations frozen (qiick standards, from excubia-app #193): migrations are forward-only. A
-# migration that exists on `main`, on the latest `v*` tag or in the optional freeze baseline
-# `database/migrations/.frozen` must stay byte for byte as it is there: never edited, renamed or
-# deleted. A schema change is a new migration.
+# Migrations frozen (qiick standards, from excubia-app #193; refined by decision
+# 2026-11-20): migrations freeze at the first *stable* release. A stable tag is
+# `v<major>.<minor>.<patch>` with no pre-release suffix (`v1.0.0` yes;
+# `v1.0.0-beta.3`, `-rc.1` no).
 #
-# The baseline lists `<git blob id>  <file>` per migration, frozen before the first tag (an app
-# that already has a tag or a `main` needs none). It only grows: compared with the base branch,
-# a PR may add lines but never change or drop one. Run by the reusable migrations-frozen.yml.
+# No stable tag yet: migrations stay editable (create_ migrations may change;
+# fold add/alter into create_ before 1.0). The check prints that and exits 0,
+# ignoring origin/main, pre-release tags and any `database/migrations/.frozen`.
+#
+# With a stable tag: a migration that exists on `main`, on the latest *stable*
+# `v*` tag or in the optional freeze baseline `database/migrations/.frozen` must
+# stay byte for byte as it is there: never edited, renamed or deleted. A schema
+# change is a new migration.
+#
+# The baseline lists `<git blob id>  <file>` per migration, frozen before the
+# first stable tag (an app that already has one or a `main` needs none). It only
+# grows: compared with the base branch, a PR may add lines but never change or
+# drop one. Run by the reusable migrations-frozen.yml.
 #
 # Usage: scripts/migrations-frozen.sh [base-ref]   (from the repository root, with the tags and
 #        origin/main fetched; base-ref is the PR's base branch, e.g. origin/develop)
@@ -52,19 +62,23 @@ compare_with_ref() {
     done < <(git ls-tree "$ref" -- "$DIR/")
 }
 
+# Latest stable tag only: vX.Y.Z, never a pre-release (-beta, -rc, …).
+STABLE_TAG="$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)"
+
+if [ -z "$STABLE_TAG" ]; then
+    printf 'No stable release yet: migrations are editable (decision 2026-11-20)\n'
+    exit 0
+fi
+
 if git rev-parse --verify --quiet origin/main >/dev/null; then
     compare_with_ref origin/main
 fi
 
-TAG="$(git tag --list 'v*' --sort=-v:refname | head -n 1)"
-
-if [ -n "$TAG" ]; then
-    compare_with_ref "$TAG"
-fi
+compare_with_ref "$STABLE_TAG"
 
 printf '==> Freeze baseline %s\n' "$BASELINE"
 
-[ -f "$BASELINE" ] || printf 'No %s: only main and the latest tag are compared.\n' "$BASELINE"
+[ -f "$BASELINE" ] || printf 'No %s: only main and the latest stable tag are compared.\n' "$BASELINE"
 
 if [ -f "$BASELINE" ]; then
     while read -r blob path; do

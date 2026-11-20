@@ -8,6 +8,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Changed
+
+- Standards: migrations freeze only at the first **stable** release (`vX.Y.Z` with no pre-release suffix). Until then `migrations-frozen.sh` prints that migrations are editable and exits 0 (ignoring `origin/main`, beta/rc tags and any `.frozen` baseline); after a stable tag it compares against the latest stable tag plus `origin/main` and `.frozen` as before. The code contract says to edit `create_` migrations and fold add/alter into them before 1.0; betas warn that an upgrade may need a fresh database. Decision 2026-11-20. Unblocks products still on betas that need to fix schema in place (instituta-core tenancy create_ on develop, signaculum-core folding its week of migrations, excubia-app despite dogfood production). externa-core (1.x) stays frozen. Affects every PHP app on the next pin bump.
+
 ### Added
 
 - Standards: graphify agent rules in every product's `qiick-standards` block (`standards/rules/graphify.md`: query/path/explain first, `GRAPH_REPORT` only for broad review, `graphify update .` after code changes, AST-only). The standards check fails when `.gitignore` does not ignore `graphify-out/`, when any `graphify-out/` path is tracked, or when `.gitattributes` contains `merge=graphify` (local hooks only). `new-product` ensures the ignore line. Affects every repo on the next pin bump and re-sync: add `/graphify-out/` to `.gitignore` if missing; externa-core must drop its duplicate `## graphify` section outside the block when it adopts the pack version.
