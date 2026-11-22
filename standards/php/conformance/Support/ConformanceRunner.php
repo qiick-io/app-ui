@@ -763,26 +763,26 @@ final class ConformanceRunner
 
     /**
      * AC14 → C72: Spatie teams column name and UUID types for the access package.
+     * Skips when teams are really off (externa 1.x keeps team_id and teams false until v2).
      */
     private function c72AccessSpatieTeams(): void
     {
-        if (! $this->hooks->boolean('usesLaravelAccess', false)
-            || ! $this->hooks->boolean('usesSpatieTeams', false)) {
+        if (! $this->hooks->boolean('usesLaravelAccess', false)) {
             return;
         }
+
+        // Same scope as C4/C5/C29: both-false is the quiet skip; a mismatch goes red.
+        if (! $this->spatieTeamsAreInScope()) {
+            return;
+        }
+
+        $this->assertSpatieTeamsDeclarationMatchesConfig();
 
         if (! $this->schema->isEngineDependentDriver()) {
             throw new \RuntimeException('C72 requires PostgreSQL or MySQL.');
         }
 
-        $teamKey = Config::get('permission.column_names.team_foreign_key')
-            ?? Config::get('permission.team_foreign_key');
-
-        if ($teamKey !== 'organisation_id') {
-            throw new \RuntimeException(
-                "permission team_foreign_key must be organisation_id when usesLaravelAccess and teams are on, got {$teamKey}.",
-            );
-        }
+        $this->assertSpatieTeamForeignKeyIsOrganisationId();
 
         foreach (['roles', 'model_has_roles', 'model_has_permissions'] as $table) {
             $this->schema->assertTableExists($table);

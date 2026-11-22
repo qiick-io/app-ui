@@ -842,4 +842,23 @@ describe('engine-dependent probes', function (): void {
         expect(fn () => runCheck('C72'))
             ->toThrow(RuntimeException::class, 'organisation_id must be UUID-typed');
     });
+
+    it('C72 skips when teams are really off (externa 1.x keeps team_id)', function (): void {
+        GreenSchema::migrate();
+        config([
+            'permission.teams' => false,
+            'permission.column_names.team_foreign_key' => 'team_id',
+        ]);
+        $runner = new ConformanceRunner(
+            harnessBasePath(),
+            new ConformanceHooks([
+                'usesLaravelAccess' => true,
+                'usesSpatieTeams' => false,
+            ], []),
+            new SchemaInspector(),
+        );
+
+        $runner->run(catalogById()['C72']);
+        expect(true)->toBeTrue();
+    });
 });

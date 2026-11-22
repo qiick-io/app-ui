@@ -254,9 +254,8 @@ return [
     [
         'id' => 'C72',
         'tag' => 'schema',
-        'description' => 'With Spatie teams on: team_foreign_key is organisation_id and the three team columns are uuid (usesLaravelAccess; PG+MySQL)',
+        'description' => 'When Spatie teams are really on: team_foreign_key is organisation_id and the three team columns are uuid (usesLaravelAccess; skips when teams are off, e.g. externa 1.x; UUID probe needs PG+MySQL)',
         'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
-        'engines' => ['pgsql', 'mysql'],
     ],
     [
         'id' => 'C73',
