@@ -248,7 +248,7 @@ return [
     [
         'id' => 'C71',
         'tag' => 'behaviour',
-        'description' => 'events_enabled true, register_permission_check_method false; role detach clears resolver and API actors are denied super-admin (proved hooks; usesLaravelAccess)',
+        'description' => 'events_enabled true, register_permission_check_method false, Gate::before inactive for Spatie-shaped non-user actors; role detach clears resolver and API actors are denied super-admin (proved hooks; usesLaravelAccess)',
         'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
     ],
     [
@@ -272,7 +272,7 @@ return [
     [
         'id' => 'C75',
         'tag' => 'schema',
-        'description' => 'Access group tables + indexes; Spatie tables match the column allowlist on the migrated schema; migration scan is an extra signal (usesLaravelAccess)',
+        'description' => 'Access group tables + indexes; Spatie tables match the bidirectional column/type/index allowlist on the migrated schema; migration scan (incl. sprintf/concat heuristics) is an extra signal (usesLaravelAccess)',
         'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
     ],
 ];
