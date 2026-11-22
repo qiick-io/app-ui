@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Qiick\Standards\Conformance\Support;
 
 use Illuminate\Contracts\Auth\Access\Authorizable;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Auth\Access\Authorizable as AuthorizableTrait;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
@@ -860,8 +862,8 @@ final class ConformanceRunner
     }
 
     /**
-     * AC17 → C75: package group-table shape; Spatie tables match the allowlist on the
-     * live schema; migration text is only an extra signal.
+     * AC17 → C75: package group-table shape (incl. organisation_id / is_instance XOR);
+     * Spatie tables match the allowlist on the live schema; migration text is an extra signal.
      */
     private function c75AccessGroupMigrations(): void
     {
@@ -874,6 +876,30 @@ final class ConformanceRunner
         $this->schema->assertColumnExists('user_groups', 'metadata');
         $this->schema->assertColumnExists('user_groups', 'deleted_at');
         $this->schema->assertColumnExists('user_groups', 'name');
+        // laravel-access#8 / AC17: instance vs organisation scoping (externa leaves both unused).
+        $this->schema->assertColumnExists('user_groups', 'organisation_id');
+        $this->schema->assertColumnExists('user_groups', 'is_instance');
+
+        if (! $this->schema->isNullable('user_groups', 'organisation_id')) {
+            throw new \RuntimeException('user_groups.organisation_id must be nullable.');
+        }
+
+        if ($this->schema->isNullable('user_groups', 'is_instance')) {
+            throw new \RuntimeException('user_groups.is_instance must not be nullable.');
+        }
+
+        if (! $this->schema->columnTypeContains('user_groups', 'organisation_id', 'uuid')
+            && ! $this->schema->columnTypeContains('user_groups', 'organisation_id', 'char')
+            && ! $this->schema->columnTypeContains('user_groups', 'organisation_id', 'guid')) {
+            throw new \RuntimeException('user_groups.organisation_id must be UUID-typed.');
+        }
+
+        if (! $this->schema->hasIndexCovering('user_groups', 'organisation_id')
+            && ! $this->indexMentionsColumn('user_groups', 'organisation_id')) {
+            throw new \RuntimeException('user_groups.organisation_id must be indexed.');
+        }
+
+        $this->assertUserGroupsInstanceOrganisationXor();
 
         if (! $this->schema->hasUniqueIndexCovering('user_groups', 'public_id')
             && ! $this->schema->hasUniqueIndexCovering('user_groups', 'public_id', 'deleted_at')) {
@@ -1122,6 +1148,34 @@ final class ConformanceRunner
         }
 
         return false;
+    }
+
+    /**
+     * Prove AC17 XOR: is_instance=true only with organisation_id NULL. A rolled-back
+     * insert of the forbidden combo must fail (CHECK or SQLite trigger).
+     */
+    private function assertUserGroupsInstanceOrganisationXor(): void
+    {
+        $connection = DB::connection();
+        $connection->beginTransaction();
+
+        try {
+            $connection->table('user_groups')->insert([
+                'public_id' => (string) Str::uuid(),
+                'name' => '__c75_instance_org_xor__',
+                'organisation_id' => (string) Str::uuid(),
+                'is_instance' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $connection->rollBack();
+
+            throw new \RuntimeException(
+                'user_groups must CHECK that is_instance=true only when organisation_id IS NULL (is_instance with organisation_id set must be rejected).',
+            );
+        } catch (QueryException) {
+            $connection->rollBack();
+        }
     }
 
     /**

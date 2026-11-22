@@ -101,7 +101,7 @@ MySQL).
 | C72 | schema    | When teams are really on: `team_foreign_key=organisation_id` and UUID team columns (usesLaravelAccess; skips when teams are off, e.g. externa 1.x)   | [laravel-access](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-22-laravel-access-package.md)                                                    |
 | C73 | behaviour | Expired group membership grants nothing, proved via probe (usesLaravelAccess)                                                                        | [laravel-access](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-22-laravel-access-package.md)                                                    |
 | C74 | behaviour | Role/group/membership activity properties use public UUIDs only, proved via probe (usesLaravelAccess)                                                | [laravel-access](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-22-laravel-access-package.md)                                                    |
-| C75 | schema    | Access group tables + bidirectional Spatie allowlist (columns/types/indexes); migration scan extra signal (usesLaravelAccess)                        | [laravel-access](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-22-laravel-access-package.md)                                                    |
+| C75 | schema    | Access group tables (incl. `organisation_id` / `is_instance` XOR) + bidirectional Spatie allowlist; migration scan (usesLaravelAccess)               | [laravel-access](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-22-laravel-access-package.md)                                                    |
 
 Source of the ordered list: merged OpenCode cross-review §5 and Cursor cross-review §5
 (2026-11-20), with Cursor's `permission:setup-teams` check kept as C36 and the
@@ -145,11 +145,14 @@ Set `conformance.usesLaravelAccess: true` when the product adopts
 - **C73:** proved hook `assertExpiredMembershipGrantsNothing`.
 - **C74:** proved hook `assertAccessActivityUuidOnly`.
 - **C75:** package group-table shape (including `name` unique, `expires_at` /
-  `user_id` / `role_id` indexes); Spatie tables must match the column allowlist
-  on the **migrated** database in both directions (unexpected columns, missing
-  required columns/types/indexes); migration text (literal / variable
-  `Schema::table`, `ALTER TABLE`, sprintf / concatenation heuristics) is only
-  an extra signal. Comments are stripped so examples do not false-positive.
+  `user_id` / `role_id` indexes, nullable `organisation_id`, `is_instance`, and
+  the XOR that `is_instance=true` only with `organisation_id` NULL); Spatie
+  tables must match the column allowlist on the **migrated** database in both
+  directions (unexpected columns, missing required columns/types/indexes);
+  migration text (literal / variable `Schema::table`, `ALTER TABLE`, sprintf /
+  concatenation heuristics) is only an extra signal. Comments are stripped so
+  examples do not false-positive. Externa 1.x keeps the columns unused
+  (`is_instance=false`, `organisation_id` null) with teams off.
 
 Source: `knowledge/projects/qiick/packages/laravel-access-standards-review.md`
 §3.3.

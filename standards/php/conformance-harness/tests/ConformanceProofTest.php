@@ -836,6 +836,126 @@ YAML);
         expect(fn () => runCheck('C75'))->toThrow(RuntimeException::class, 'public_id');
     });
 
+    it('C75 goes red when user_groups.organisation_id is missing', function (): void {
+        GreenSchema::migrate();
+        Schema::drop('user_group_role');
+        Schema::drop('user_group_user');
+        Schema::drop('user_groups');
+        Schema::create('user_groups', function (Blueprint $table): void {
+            $table->id();
+            $table->uuid('public_id')->unique();
+            $table->string('name')->unique();
+            $table->json('metadata')->nullable();
+            $table->boolean('is_instance')->default(false);
+            $table->timestamps();
+            $table->softDeletes();
+        });
+        Schema::create('user_group_user', function (Blueprint $table): void {
+            $table->foreignId('user_group_id');
+            $table->foreignId('user_id')->index();
+            $table->dateTime('expires_at')->nullable()->index();
+            $table->timestamps();
+            $table->unique(['user_group_id', 'user_id']);
+        });
+        Schema::create('user_group_role', function (Blueprint $table): void {
+            $table->foreignId('user_group_id');
+            $table->foreignId('role_id')->index();
+            $table->timestamps();
+            $table->unique(['user_group_id', 'role_id']);
+        });
+
+        expect(fn () => runCheck('C75'))
+            ->toThrow(RuntimeException::class, 'organisation_id');
+    });
+
+    it('C75 goes red when the instance/organisation XOR constraint is missing', function (): void {
+        GreenSchema::migrate();
+        Schema::drop('user_group_role');
+        Schema::drop('user_group_user');
+        Schema::drop('user_groups');
+        Schema::create('user_groups', function (Blueprint $table): void {
+            $table->id();
+            $table->uuid('public_id')->unique();
+            $table->string('name')->unique();
+            $table->json('metadata')->nullable();
+            $table->uuid('organisation_id')->nullable()->index();
+            $table->boolean('is_instance')->default(false);
+            $table->timestamps();
+            $table->softDeletes();
+        });
+        // Deliberately no XOR trigger / CHECK — insert of the forbidden combo succeeds.
+        Schema::create('user_group_user', function (Blueprint $table): void {
+            $table->foreignId('user_group_id');
+            $table->foreignId('user_id')->index();
+            $table->dateTime('expires_at')->nullable()->index();
+            $table->timestamps();
+            $table->unique(['user_group_id', 'user_id']);
+        });
+        Schema::create('user_group_role', function (Blueprint $table): void {
+            $table->foreignId('user_group_id');
+            $table->foreignId('role_id')->index();
+            $table->timestamps();
+            $table->unique(['user_group_id', 'role_id']);
+        });
+
+        expect(fn () => runCheck('C75'))
+            ->toThrow(RuntimeException::class, 'is_instance=true only when organisation_id IS NULL');
+    });
+
+    it('C75 goes red when is_instance can coexist with a non-null organisation_id', function (): void {
+        // Same gap as missing XOR: the forbidden combo must be rejected by the schema.
+        GreenSchema::migrate();
+        Schema::drop('user_group_role');
+        Schema::drop('user_group_user');
+        Schema::drop('user_groups');
+        Schema::create('user_groups', function (Blueprint $table): void {
+            $table->id();
+            $table->uuid('public_id')->unique();
+            $table->string('name')->unique();
+            $table->json('metadata')->nullable();
+            $table->uuid('organisation_id')->nullable()->index();
+            $table->boolean('is_instance')->default(false);
+            $table->timestamps();
+            $table->softDeletes();
+        });
+        Schema::create('user_group_user', function (Blueprint $table): void {
+            $table->foreignId('user_group_id');
+            $table->foreignId('user_id')->index();
+            $table->dateTime('expires_at')->nullable()->index();
+            $table->timestamps();
+            $table->unique(['user_group_id', 'user_id']);
+        });
+        Schema::create('user_group_role', function (Blueprint $table): void {
+            $table->foreignId('user_group_id');
+            $table->foreignId('role_id')->index();
+            $table->timestamps();
+            $table->unique(['user_group_id', 'role_id']);
+        });
+
+        expect(fn () => runCheck('C75'))
+            ->toThrow(RuntimeException::class, 'is_instance with organisation_id set must be rejected');
+    });
+
+    it('C75 stays green for externa 1.x shape (teams off, org columns unused)', function (): void {
+        GreenSchema::migrate();
+        config([
+            'permission.teams' => false,
+            'permission.column_names.team_foreign_key' => 'team_id',
+        ]);
+        $runner = new ConformanceRunner(
+            harnessBasePath(),
+            new ConformanceHooks([
+                'usesLaravelAccess' => true,
+                'usesSpatieTeams' => false,
+                'hasOrganisations' => false,
+            ], []),
+            new SchemaInspector(),
+        );
+
+        $runner->run(catalogById()['C75']);
+        expect(true)->toBeTrue();
+    });
+
     it('C75 goes red when a literal Schema::table alters Spatie roles', function (): void {
         GreenSchema::migrate();
         $dir = harnessBasePath().'/database/migrations';
@@ -1127,3 +1247,4 @@ describe('engine-dependent probes', function (): void {
         expect(true)->toBeTrue();
     });
 });
+
