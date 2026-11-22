@@ -1,0 +1,45 @@
+{
+    "$comment": "Canonical Laravel/PHP compatibility matrix for every qiick Composer package. The reusable .github/workflows/package-matrix.yml outputs this JSON; packages consume it with fromJSON. Docs: docs/package-matrix.md.",
+    "matrix": {
+        "php": ["8.3", "8.4", "8.5"],
+        "laravel": ["12", "13"],
+        "dependency-version": ["lowest", "stable"],
+        "include": [
+            {
+                "laravel": "12",
+                "testbench": "10"
+            },
+            {
+                "laravel": "13",
+                "testbench": "11"
+            }
+        ],
+        "exclude": []
+    },
+    "databases": [
+        {
+            "name": "SQLite",
+            "connection": "sqlite",
+            "image": null,
+            "port": null
+        },
+        {
+            "name": "PostgreSQL 17",
+            "connection": "pgsql",
+            "image": "postgres:17@sha256:223efeb196329b55b3b9a13db144956411dbc18e727e59f681c3e0aede6475cf",
+            "port": 5432
+        },
+        {
+            "name": "MySQL 8.4",
+            "connection": "mysql",
+            "image": "mysql:8.4@sha256:a81d043930e51745522bd5c430961cf8286f0a23f0a9a2a6e0108f7ea71b0902",
+            "port": 3306
+        },
+        {
+            "name": "MariaDB 10.11",
+            "connection": "mariadb",
+            "image": "mariadb:10.11@sha256:e5fe75b2b9de0eb9f6f9a4d9c97272fb3a7480e389ccd487a786bab2a12cc0d7",
+            "port": 3306
+        }
+    ]
+}

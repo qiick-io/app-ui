@@ -456,3 +456,58 @@ test('a committed merge=graphify line in .gitattributes fails the check', () => 
     assert.equal(errors.length, 1);
     assert.match(errors[0], /\.gitattributes must not contain merge=graphify/);
 });
+
+test('a package:true repo without the shared matrix fails the check', () => {
+    const root = makeRepo(
+        { ref: 'develop', php: true, package: true },
+        {
+            '.github/workflows/ci.yml': `
+name: CI
+jobs:
+  tests:
+    strategy:
+      matrix:
+        php: ['8.3']
+`,
+        },
+    );
+
+    syncStandards(root, { isCheck: false });
+
+    const errors = syncStandards(root, { isCheck: true }).filter((message) =>
+        message.startsWith('package matrix:'),
+    );
+
+    assert.ok(errors.length >= 1);
+    assert.match(errors.join('\n'), /package-matrix\.yml/);
+});
+
+test('a package:true repo that consumes the shared matrix passes that check', () => {
+    const root = makeRepo(
+        { ref: 'develop', php: true, package: true },
+        {
+            '.github/workflows/ci.yml': `
+jobs:
+  package-matrix:
+    uses: qiick-io/app-ui/.github/workflows/package-matrix.yml@v0.13.0
+  tests:
+    needs: package-matrix
+    strategy:
+      matrix: \${{ fromJSON(needs.package-matrix.outputs.matrix) }}
+  databases:
+    needs: package-matrix
+    strategy:
+      matrix:
+        database: \${{ fromJSON(needs.package-matrix.outputs.databases) }}
+`,
+        },
+    );
+
+    syncStandards(root, { isCheck: false });
+
+    const errors = syncStandards(root, { isCheck: true }).filter((message) =>
+        message.startsWith('package matrix:'),
+    );
+
+    assert.deepEqual(errors, []);
+});

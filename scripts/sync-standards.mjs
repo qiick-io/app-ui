@@ -16,6 +16,7 @@
  *         "oxlint": true,                  // Vite+ apps: the shared Oxlint configs
  *         "eslint": true,                  // repos still on ESLint: the shared ESLint config
  *         "app": true,                     // self-hosted app: stack and distribution rules
+ *         "package": true,                 // Composer package: must consume package-matrix.yml
  *         "patterns": ["command-palette"], // optional UI patterns it adopts (standards/patterns.json)
  *         "requiredItems": ["page-layout"], // registry items it must install (check-drift.mjs)
  *         "divergences": {                  // registry strings and/or conformance objects
@@ -36,14 +37,17 @@
  *   repo's own.
  *
  * `--check` fails on a missing or different managed file or block, on a
- * frontend file or directory name that is not kebab-case, and on graphify git
- * hygiene: `.gitignore` must ignore `graphify-out/`, no tracked `graphify-out/`
- * path, and `.gitattributes` must not contain `merge=graphify`.
+ * frontend file or directory name that is not kebab-case, on graphify git
+ * hygiene (`.gitignore` must ignore `graphify-out/`, no tracked `graphify-out/`
+ * path, and `.gitattributes` must not contain `merge=graphify`), and — when
+ * `"package": true` — on a CI matrix that does not consume package-matrix.yml
+ * (see docs/package-matrix.md).
  */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findPackageMatrixViolations } from '../standards/scripts/check-package-matrix.mjs';
 
 const CONFIG_FILE = 'qiick-standards.json';
 const SOURCE_URL = 'https://github.com/qiick-io/app-ui/tree/develop/standards';
@@ -876,6 +880,10 @@ export function syncStandards(
         }
 
         messages.push(...findGraphifyGitViolations(targetRoot));
+
+        if (config.package === true) {
+            messages.push(...findPackageMatrixViolations(targetRoot));
+        }
     }
 
     return messages;

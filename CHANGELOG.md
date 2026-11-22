@@ -8,6 +8,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Added
+
+- CI: adds a shared Laravel / PHP compatibility matrix and database service list for qiick Composer packages. The reusable `package-matrix.yml` exports the canonical JSON so package workflows can keep their existing test jobs and required check names while consuming it with `fromJSON`. Packages can exclude unsupported PHP versions (for example, `laravel-audit` excludes PHP 8.3); the shared database targets are SQLite, MySQL 8.4, MariaDB 11.4, and PostgreSQL 17. Docs: `docs/package-matrix.md`.
+
 ### Fixed
 
 - Conformance C75 (AC17): require nullable `user_groups.organisation_id`, non-null `is_instance`, and the XOR constraint (`is_instance` true only with `organisation_id` NULL), matching qiick/laravel-access#8. Externa 1.x keeps the columns unused and stays green.
