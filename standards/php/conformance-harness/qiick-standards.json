@@ -6,6 +6,7 @@
         "publicIdColumn": "public_id",
         "apiPrefix": "api/v1",
         "usesSpatieTeams": true,
+        "usesLaravelAccess": true,
         "hasOrganisations": true,
         "hasUserGroups": true,
         "hasPrincipals": true,

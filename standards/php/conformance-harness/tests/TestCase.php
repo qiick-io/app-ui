@@ -18,6 +18,9 @@ abstract class TestCase extends OrchestraTestCase
 
         config([
             'permission.teams' => true,
+            'permission.events_enabled' => true,
+            // Spatie's Gate::before permission check stays off after full boot (C71).
+            'permission.register_permission_check_method' => false,
             'permission.column_names.team_foreign_key' => 'organisation_id',
             'super_admin' => [
                 'first_name' => 'Super',

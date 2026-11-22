@@ -8,6 +8,28 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-22
+
+### Added
+
+- Conformance C71–C75 (`usesLaravelAccess`): laravel-access review AC13–AC17 — `events_enabled` + resolver clear, Spatie team UUID helper, expired membership, UUID-only access activity properties, package group-table shape with no Spatie-table alterations. Skipped until the product sets the flag. RED/GREEN proofs in the harness (#217, #219).
+
+### Fixed
+
+- Conformance C71–C75 re-review nits (#219 / #218): C75 Spatie allowlist is bidirectional (missing columns, type changes, dropped required uniques go red); C71 probes `Gate::before` at runtime against a Spatie-shaped non-user actor; migration scan catches sprintf / concatenation ALTER and intervening-statement `Schema::table($var)`; documents that a probe which only `$probe->pass()` after `instanceof` stays green.
+- Conformance C71–C75 review hardenings (landed with #217): C75 verifies the migrated Spatie schema against a column allowlist (catches `Schema::table($var)` / `ALTER TABLE`) and keeps the migration scan as an extra signal (variable assignment, raw DDL, comment strip); C71/C73/C74 require `ConformanceBehaviourProbe::pass()` so empty no-op hooks stay red; C71 also asserts `register_permission_check_method === false` and `assertApiActorDeniedSuperAdmin`; C75 asserts `user_groups.name` unique and `expires_at` / `user_id` / `role_id` indexes.
+- Conformance runner gaps from fleet re-reviews (#216 / #208, #209): C3 creates a real fixture user; every check (C37 included) runs in its own transaction/SAVEPOINT so a PostgreSQL abort cannot blind later checks; C37 asserts for real and goes red when a declared hook is a no-op; C10 rejects cascade on `api_keys.owner_id` and `principals.user_id`; C11 requires `previous_key_valid_until` as dateTime; C26 matches exact path+method pairs and honours the OpenAPI `servers` prefix; C29/C4/C5 skip only when `permission.teams` is really off and go red when teams are on with a wrong declaration or `team_foreign_key`; C2 requires `principals.organisation_id` NOT NULL with organisations and accepts `principals` as `membershipTable`. Affects every PHP app on the next pin bump and re-sync.
+
+### Changed
+
+- Docs: `docs/api-keys.md` and `docs/api.md` align with the 2026-11-19 decision and `qiick/laravel-api-keys` v0.1.0 — token `{product}_{live|test}_{id}{secret}`, full-token SHA-256, `api-keys.rotation_grace_hours` (max 168), and `403 ip_not_allowed` (#214).
+
+### Upgrade notes
+
+- **Every PHP app:** bump the three pins to `v0.13.0` and re-sync the standards pack. The conformance runner fixes in #216 and the C71–C75 hardenings in #217/#219 ship with this tag; adopt or declare divergences for any new red check.
+- **Apps adopting `qiick/laravel-access`:** set `conformance.usesLaravelAccess: true`, keep `permission.events_enabled` true and `register_permission_check_method` false, implement the proved hooks (`assertRoleDetachClearsResolver`, `assertApiActorDeniedSuperAdmin`, `assertExpiredMembershipGrantsNothing`, `assertAccessActivityUuidOnly`) so they call `$probe->pass()` after exercising the real path, and ensure Spatie tables match the bidirectional allowlist.
+- Before `1.0.0` a minor may include behaviour that would be major later; this release does not rename registry props or tokens.
+
 ## [0.12.0] - 2026-11-20
 
 ### Added
@@ -353,7 +375,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/qiick-io/app-ui/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/qiick-io/app-ui/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/qiick-io/app-ui/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/qiick-io/app-ui/compare/v0.9.0...v0.10.0

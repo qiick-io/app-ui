@@ -19,8 +19,8 @@ A hand-written OpenAPI 3.1 file in `resources/openapi/<api>-v1.yaml`, served as 
 
 ## Authentication
 
-- API keys, not user sessions: `<prefix>_` + 40 random characters, shown once (`flash.plain_text_api_key`), stored as a SHA-256 hash plus a 12-character prefix for display. Sent as `Authorization: Bearer <key>`.
-- Columns, the `<resource>:(read|write)` scope vocabulary, rotation, revocation, expiry and the activity log: [api-keys.md](api-keys.md).
+- API keys, not user sessions: `{product}_{live|test}_{id}{secret}` (three-letter product, 8-character id, 32-character secret; SHA-256 of the **whole** token; `key_prefix` is `{product}_{live|test}_{id}`). Shown once (`flash.plain_text_api_key`). Sent as `Authorization: Bearer <key>`. Contract code: `qiick/laravel-api-keys`.
+- Columns, the `<resource>:(read|write)` scope vocabulary, rotation, revocation, expiry, `ip_not_allowed` and the activity log: [api-keys.md](api-keys.md).
 - No Sanctum or Passport unless the spec needs OAuth for third parties (then Passport, asked first).
 
 ## Limits

@@ -48,7 +48,7 @@ final class GreenSchema
 
         Schema::create('user_identities', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('user_id');
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
 
             if (Schema::getConnection()->getDriverName() === 'mysql'
                 || Schema::getConnection()->getDriverName() === 'mariadb') {
@@ -70,6 +70,8 @@ final class GreenSchema
             $table->string('guard_name');
             $table->uuid('organisation_id')->nullable();
             $table->timestamps();
+            // Spatie teams-on shape: unique per organisation + name + guard.
+            $table->unique(['organisation_id', 'name', 'guard_name']);
         });
 
         Schema::create('permissions', function (Blueprint $table): void {
@@ -77,6 +79,7 @@ final class GreenSchema
             $table->string('name');
             $table->string('guard_name');
             $table->timestamps();
+            $table->unique(['name', 'guard_name']);
         });
 
         Schema::create('model_has_roles', function (Blueprint $table): void {
@@ -98,30 +101,39 @@ final class GreenSchema
             $table->unsignedBigInteger('role_id');
         });
 
+        // laravel-access package shape (§2.4–2.6): standard names + public_id / metadata / expires_at.
         Schema::create('user_groups', function (Blueprint $table): void {
             $table->id();
-            $table->string('name');
+            $table->uuid('public_id')->unique();
+            $table->string('name')->unique();
+            $table->text('description')->nullable();
+            $table->json('metadata')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
 
-        Schema::create('group_user', function (Blueprint $table): void {
+        Schema::create('user_group_user', function (Blueprint $table): void {
             $table->foreignId('user_group_id');
-            $table->foreignId('user_id');
+            $table->foreignId('user_id')->index();
+            $table->dateTime('expires_at')->nullable()->index();
+            $table->timestamps();
             $table->unique(['user_group_id', 'user_id']);
         });
 
-        Schema::create('group_role', function (Blueprint $table): void {
+        Schema::create('user_group_role', function (Blueprint $table): void {
             $table->foreignId('user_group_id');
-            $table->foreignId('role_id');
+            $table->foreignId('role_id')->index();
+            $table->timestamps();
             $table->unique(['user_group_id', 'role_id']);
         });
 
         Schema::create('principals', function (Blueprint $table): void {
             $table->uuid('id')->primary();
             $table->string('type');
-            $table->foreignId('user_id')->nullable()->unique();
-            $table->uuid('organisation_id')->nullable();
+            // nullOnDelete: the principal row stays for audit (core-hardening).
+            $table->foreignId('user_id')->nullable()->unique()->constrained('users')->nullOnDelete();
+            // Decision 2026-11-22: NOT NULL when the product has organisations.
+            $table->uuid('organisation_id');
             $table->string('name')->nullable();
             $table->timestamp('deactivated_at')->nullable();
             $table->timestamps();
@@ -133,7 +145,8 @@ final class GreenSchema
             $table->string('key_prefix', 32);
             $table->string('key_hash', 64)->unique();
             $table->uuid('owner_principal_id');
-            $table->foreignId('created_by')->nullable();
+            $table->foreign('owner_principal_id')->references('id')->on('principals')->restrictOnDelete();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->json('scopes');
             $table->json('ip_allowlist')->nullable();
             $table->unsignedInteger('rate_limit_per_minute')->nullable();
