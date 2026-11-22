@@ -12,23 +12,23 @@ The API key screen is the most security-sensitive screen a qiick product ships, 
 
 One `api_keys` table with these columns, named exactly like this:
 
-| Column                     | Type                         | Note                                                                                          |
-| -------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------- |
+| Column                     | Type                         | Note                                                                                                 |
+| -------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `uuid`                     | uuid                         | public id for APIs and audit `api_key_id`; `ulid` where the app uses ulids, declared as a divergence |
-| `name`                     | string                       | what uses the key, so it can be found when it has to be rotated or revoked                    |
-| `key_prefix`               | string, indexed              | non-secret lookup half (`{product}_` + `live` or `test` + `_{id}`), shown in the list         |
-| `key_hash`                 | string                       | SHA-256 of the **whole** presented token; the plaintext is never stored                       |
-| `owner_principal_id`       | FK                           | the identity the key acts as (on delete: restrict or null + revoke job; never silent cascade) |
-| `created_by`               | FK, nullable                 | who issued it, kept apart from the owner on purpose                                           |
-| `scopes`                   | json                         | `<resource>:<action>` strings, see below                                                      |
-| `ip_allowlist`             | json, nullable               | addresses and CIDR ranges; null/empty allows every address; malformed entries deny            |
-| `rate_limit_per_minute`    | unsigned int, nullable       | null falls back to `config('api-keys.default_rate_limit_per_minute')` (60; `0` = off)         |
-| `expires_at`               | datetime, nullable           | null never expires; use a future-dated datetime, never MySQL `TIMESTAMP`                      |
-| `last_used_at`             | timestamp, nullable          | written quietly by the authenticator                                                          |
-| `last_used_ip`             | string, nullable             | last client IP recorded with usage                                                            |
-| `revoked_at`               | timestamp, nullable, indexed |                                                                                               |
-| `previous_key_hash`        | string, nullable             | full-token hash replaced by the last rotation, valid until the next column                    |
-| `previous_key_valid_until` | datetime, nullable           | end of the rotation grace window; future-dated datetime, never MySQL `TIMESTAMP`              |
+| `name`                     | string                       | what uses the key, so it can be found when it has to be rotated or revoked                           |
+| `key_prefix`               | string, indexed              | non-secret lookup half (`{product}_` + `live` or `test` + `_{id}`), shown in the list                |
+| `key_hash`                 | string                       | SHA-256 of the **whole** presented token; the plaintext is never stored                              |
+| `owner_principal_id`       | FK                           | the identity the key acts as (on delete: restrict or null + revoke job; never silent cascade)        |
+| `created_by`               | FK, nullable                 | who issued it, kept apart from the owner on purpose                                                  |
+| `scopes`                   | json                         | `<resource>:<action>` strings, see below                                                             |
+| `ip_allowlist`             | json, nullable               | addresses and CIDR ranges; null/empty allows every address; malformed entries deny                   |
+| `rate_limit_per_minute`    | unsigned int, nullable       | null falls back to `config('api-keys.default_rate_limit_per_minute')` (60; `0` = off)                |
+| `expires_at`               | datetime, nullable           | null never expires; use a future-dated datetime, never MySQL `TIMESTAMP`                             |
+| `last_used_at`             | timestamp, nullable          | written quietly by the authenticator                                                                 |
+| `last_used_ip`             | string, nullable             | last client IP recorded with usage                                                                   |
+| `revoked_at`               | timestamp, nullable, indexed |                                                                                                      |
+| `previous_key_hash`        | string, nullable             | full-token hash replaced by the last rotation, valid until the next column                           |
+| `previous_key_valid_until` | datetime, nullable           | end of the rotation grace window; future-dated datetime, never MySQL `TIMESTAMP`                     |
 
 - The token is `{product}_{live|test}_{id}{secret}`: a three-letter product prefix, `live` or `test`, an 8-character public id, then a 32-character secret (A–Za–z0–9, ≥160 bits CSPRNG). There is **no** underscore between id and secret. The stored `key_prefix` is `{product}_{live|test}_{id}` (for example `exc_live_7fK2pQ9x`). The server looks the row up by `key_prefix` and compares the SHA-256 of the **entire** presented token with `hash_equals()`, against `key_hash` and, while `previous_key_valid_until` is in the future, `previous_key_hash`.
 - A key never grants more than its owner can do: every request is checked against the owner's permissions **and** the key's scopes. Deactivating the owner stops their keys.
