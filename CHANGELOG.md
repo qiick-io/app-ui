@@ -8,6 +8,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Changed
+
+- Docs: `docs/api-keys.md` and `docs/api.md` align with the 2026-11-19 decision and `qiick/laravel-api-keys` v0.1.0 — token `{product}_{live|test}_{id}{secret}`, full-token SHA-256, `api-keys.rotation_grace_hours` (max 168), and `403 ip_not_allowed`.
+
 ## [0.12.0] - 2026-11-20
 
 ### Added
