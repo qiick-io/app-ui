@@ -10,11 +10,14 @@ declare(strict_types=1);
  * live in `qiick-standards.json` → `conformance`. Callables that exercise the
  * real app (soft-deleted groups, erasure, SSRF, …) go here.
  *
- * Each key matches a check that calls `ConformanceHooks::requireCallable()`.
+ * Most keys are presence-only (`ConformanceHooks::requireCallable()`). Access-
+ * package hooks C71/C73/C74 receive a `ConformanceBehaviourProbe` and must call
+ * `$probe->pass()` after exercising the real path — an empty no-op stays red.
+ *
  * Omit a key until the product is ready; the check fails until you implement
  * it or declare a divergence in `qiick-standards.json`.
  *
- * @return array<string, callable(): void>
+ * @return array<string, callable(\Qiick\Standards\Conformance\Support\ConformanceBehaviourProbe|null): void>
  */
 return [
     // 'assertSoftDeletedGroupGrantsNothing' => function (): void { ... },
@@ -34,7 +37,11 @@ return [
     // 'assertSuperAdmin' => function (): void { ... },
     // 'assertApiResourcesHideBigints' => function (): void { ... },
     // 'assertEncryptedCasts' => function (): void { ... },
-    // 'assertRoleDetachClearsResolver' => function (): void { ... }, // C71
-    // 'assertExpiredMembershipGrantsNothing' => function (): void { ... }, // C73
-    // 'assertAccessActivityUuidOnly' => function (): void { ... }, // C74
+    // C71 — receive $probe, exercise detach/clear, then $probe->pass():
+    // 'assertRoleDetachClearsResolver' => function ($probe): void { ... },
+    // 'assertApiActorDeniedSuperAdmin' => function ($probe): void { ... },
+    // C73:
+    // 'assertExpiredMembershipGrantsNothing' => function ($probe): void { ... },
+    // C74:
+    // 'assertAccessActivityUuidOnly' => function ($probe): void { ... },
 ];

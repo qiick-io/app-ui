@@ -744,7 +744,7 @@ final class ConformanceRunner
     }
 
     /**
-     * AC13 → C71: Spatie events must fire so the access resolver can clear, plus a product hook.
+     * AC13 → C71: Spatie events on, Spatie's Gate permission check off, resolver clear proved.
      */
     private function c71AccessEventsAndResolver(): void
     {
@@ -758,7 +758,16 @@ final class ConformanceRunner
             );
         }
 
-        $this->hooks->requireCallable('assertRoleDetachClearsResolver');
+        // After full boot Spatie must not register its own Gate::before permission check.
+        if (Config::get('permission.register_permission_check_method') !== false) {
+            throw new \RuntimeException(
+                'permission.register_permission_check_method must be false when usesLaravelAccess is set.',
+            );
+        }
+
+        $this->hooks->requireProved('assertRoleDetachClearsResolver');
+        // API actors (keys) must never receive the super-admin Gate::before pass.
+        $this->hooks->requireProved('assertApiActorDeniedSuperAdmin');
     }
 
     /**
@@ -805,7 +814,7 @@ final class ConformanceRunner
             return;
         }
 
-        $this->hooks->requireCallable('assertExpiredMembershipGrantsNothing');
+        $this->hooks->requireProved('assertExpiredMembershipGrantsNothing');
     }
 
     /**
@@ -817,11 +826,12 @@ final class ConformanceRunner
             return;
         }
 
-        $this->hooks->requireCallable('assertAccessActivityUuidOnly');
+        $this->hooks->requireProved('assertAccessActivityUuidOnly');
     }
 
     /**
-     * AC17 → C75: package group-table shape, and no migration alters Spatie role tables.
+     * AC17 → C75: package group-table shape; Spatie tables match the allowlist on the
+     * live schema; migration text is only an extra signal.
      */
     private function c75AccessGroupMigrations(): void
     {
@@ -833,6 +843,7 @@ final class ConformanceRunner
         $this->schema->assertColumnExists('user_groups', 'public_id');
         $this->schema->assertColumnExists('user_groups', 'metadata');
         $this->schema->assertColumnExists('user_groups', 'deleted_at');
+        $this->schema->assertColumnExists('user_groups', 'name');
 
         if (! $this->schema->hasUniqueIndexCovering('user_groups', 'public_id')
             && ! $this->schema->hasUniqueIndexCovering('user_groups', 'public_id', 'deleted_at')) {
@@ -850,6 +861,22 @@ final class ConformanceRunner
             }
         }
 
+        if (! $this->schema->hasUniqueIndexCovering('user_groups', 'name')
+            && ! $this->schema->hasUniqueIndexCovering('user_groups', 'name', 'deleted_at')) {
+            $foundName = false;
+
+            foreach ($this->schema->indexes('user_groups') as $index) {
+                if (($index['unique'] ?? false) && in_array('name', $index['columns'] ?? [], true)) {
+                    $foundName = true;
+                    break;
+                }
+            }
+
+            if (! $foundName) {
+                throw new \RuntimeException('user_groups.name must be unique.');
+            }
+        }
+
         $membershipTable = 'user_group_user';
         $this->schema->assertTableExists($membershipTable);
         $this->schema->assertColumnExists($membershipTable, 'expires_at');
@@ -859,9 +886,18 @@ final class ConformanceRunner
             throw new \RuntimeException('user_group_user.expires_at must be dateTime, not MySQL TIMESTAMP.');
         }
 
+        if (! $this->schema->hasIndexCovering($membershipTable, 'expires_at')
+            && ! $this->indexMentionsColumn($membershipTable, 'expires_at')) {
+            throw new \RuntimeException('user_group_user.expires_at must be indexed.');
+        }
+
         if (! $this->schema->hasUniqueIndexCovering($membershipTable, 'user_group_id', 'user_id')
             && ! $this->schema->hasUniqueIndexCovering($membershipTable, 'user_id', 'user_group_id')) {
             throw new \RuntimeException('user_group_user must UNIQUE(user_group_id, user_id).');
+        }
+
+        if (! $this->indexMentionsColumn($membershipTable, 'user_id')) {
+            throw new \RuntimeException('user_group_user.user_id must be indexed.');
         }
 
         $rolePivot = 'user_group_role';
@@ -872,6 +908,14 @@ final class ConformanceRunner
             throw new \RuntimeException('user_group_role must UNIQUE(user_group_id, role_id).');
         }
 
+        if (! $this->indexMentionsColumn($rolePivot, 'role_id')) {
+            throw new \RuntimeException('user_group_role.role_id must be indexed.');
+        }
+
+        // Primary proof: the migrated Spatie schema must not grow package-owned columns.
+        $this->assertSpatieTablesMatchAllowlist();
+
+        // Extra signal only: migration sources that mention altering Spatie tables.
         $offenders = $this->migrationsThatAlterSpatieTables();
 
         if ($offenders !== []) {
@@ -883,7 +927,58 @@ final class ConformanceRunner
     }
 
     /**
-     * Paths of migration files that Schema::table Spatie's owned tables (forbidden for the access package).
+     * Fail when a Spatie table has a column outside the fleet allowlist (catches
+     * ALTER / Schema::table($var) that already ran on the database).
+     */
+    private function assertSpatieTablesMatchAllowlist(): void
+    {
+        $allowlists = [
+            'roles' => [
+                'id', 'name', 'guard_name', 'created_at', 'updated_at',
+                'organisation_id', 'team_id', // team_id: externa 1.x until v2
+                'public_id', 'is_system', 'is_assignable', 'description', 'metadata',
+            ],
+            'permissions' => ['id', 'name', 'guard_name', 'created_at', 'updated_at'],
+            'model_has_roles' => [
+                'role_id', 'model_type', 'model_id', 'organisation_id', 'team_id',
+            ],
+            'model_has_permissions' => [
+                'permission_id', 'model_type', 'model_id', 'organisation_id', 'team_id',
+            ],
+            'role_has_permissions' => ['permission_id', 'role_id'],
+        ];
+
+        foreach ($allowlists as $table => $allowed) {
+            if (! $this->schema->hasTable($table)) {
+                throw new \RuntimeException("Expected Spatie table \"{$table}\" to exist when usesLaravelAccess is set.");
+            }
+
+            $allowedLookup = array_flip($allowed);
+
+            foreach ($this->schema->columnNames($table) as $column) {
+                if (! isset($allowedLookup[$column])) {
+                    throw new \RuntimeException(
+                        "Spatie table {$table} has unexpected column \"{$column}\"; laravel-access must not alter Spatie tables.",
+                    );
+                }
+            }
+        }
+    }
+
+    private function indexMentionsColumn(string $table, string $column): bool
+    {
+        foreach ($this->schema->indexes($table) as $index) {
+            if (in_array($column, $index['columns'] ?? [], true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Extra signal: migration sources that alter Spatie tables (literal Schema::table,
+     * variable Schema::table after assignment, or ALTER TABLE). Comments are stripped.
      *
      * @return list<string>
      */
@@ -906,10 +1001,17 @@ final class ConformanceRunner
                     continue;
                 }
 
-                $contents = $file->getContents();
+                $contents = $this->stripPhpCommentsForScan($file->getContents());
 
                 foreach ($spatieTables as $table) {
-                    if (preg_match('/Schema::table\(\s*[\'"]'.$table.'[\'"]/', $contents) === 1) {
+                    $quoted = preg_quote($table, '/');
+
+                    if (preg_match('/Schema::table\(\s*[\'"]'.$quoted.'[\'"]/', $contents) === 1
+                        || preg_match('/ALTER\s+TABLE\s+[\'"`]?'.$quoted.'[\'"`]?/i', $contents) === 1
+                        || preg_match(
+                            '/\$\w+\s*=\s*[\'"]'.$quoted.'[\'"]\s*;[^;]*Schema::table\(\s*\$\w+/s',
+                            $contents,
+                        ) === 1) {
                         $offenders[] = $file->getFilename();
                         break;
                     }
@@ -918,6 +1020,16 @@ final class ConformanceRunner
         }
 
         return $offenders;
+    }
+
+    /**
+     * Strip //, # and block comments so a commented Schema::table('roles') is not a false positive.
+     */
+    private function stripPhpCommentsForScan(string $contents): string
+    {
+        $withoutBlock = preg_replace('~/\*.*?\*/~s', '', $contents) ?? $contents;
+
+        return preg_replace('~^\s*(//|#).*$~m', '', $withoutBlock) ?? $withoutBlock;
     }
 
     /**

@@ -102,7 +102,7 @@ final class GreenSchema
         Schema::create('user_groups', function (Blueprint $table): void {
             $table->id();
             $table->uuid('public_id')->unique();
-            $table->string('name');
+            $table->string('name')->unique();
             $table->text('description')->nullable();
             $table->json('metadata')->nullable();
             $table->timestamps();
@@ -111,7 +111,7 @@ final class GreenSchema
 
         Schema::create('user_group_user', function (Blueprint $table): void {
             $table->foreignId('user_group_id');
-            $table->foreignId('user_id');
+            $table->foreignId('user_id')->index();
             $table->dateTime('expires_at')->nullable()->index();
             $table->timestamps();
             $table->unique(['user_group_id', 'user_id']);
@@ -119,7 +119,7 @@ final class GreenSchema
 
         Schema::create('user_group_role', function (Blueprint $table): void {
             $table->foreignId('user_group_id');
-            $table->foreignId('role_id');
+            $table->foreignId('role_id')->index();
             $table->timestamps();
             $table->unique(['user_group_id', 'role_id']);
         });

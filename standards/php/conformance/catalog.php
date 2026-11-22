@@ -248,7 +248,7 @@ return [
     [
         'id' => 'C71',
         'tag' => 'behaviour',
-        'description' => 'permission.events_enabled is true; a role detach clears the access resolver entry in the same request (usesLaravelAccess)',
+        'description' => 'events_enabled true, register_permission_check_method false; role detach clears resolver and API actors are denied super-admin (proved hooks; usesLaravelAccess)',
         'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
     ],
     [
@@ -260,19 +260,19 @@ return [
     [
         'id' => 'C73',
         'tag' => 'behaviour',
-        'description' => 'An expired group membership grants nothing, including super-admin through a group (usesLaravelAccess)',
+        'description' => 'An expired group membership grants nothing, including super-admin through a group (proved hook; usesLaravelAccess)',
         'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
     ],
     [
         'id' => 'C74',
         'tag' => 'behaviour',
-        'description' => 'Role, group and membership activity properties carry public UUIDs only — never bigint ids (usesLaravelAccess)',
+        'description' => 'Role, group and membership activity properties carry public UUIDs only — never bigint ids (proved hook; usesLaravelAccess)',
         'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
     ],
     [
         'id' => 'C75',
         'tag' => 'schema',
-        'description' => 'Access package group tables (user_groups.public_id/metadata, user_group_user.expires_at dateTime, user_group_role); no migration alters Spatie role tables (usesLaravelAccess)',
+        'description' => 'Access group tables + indexes; Spatie tables match the column allowlist on the migrated schema; migration scan is an extra signal (usesLaravelAccess)',
         'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
     ],
 ];

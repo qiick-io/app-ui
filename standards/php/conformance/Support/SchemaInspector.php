@@ -103,6 +103,44 @@ final class SchemaInspector
         return false;
     }
 
+    /**
+     * True when any index (unique or not) covers exactly these columns in order.
+     */
+    public function hasIndexCovering(string $table, string ...$columns): bool
+    {
+        $wanted = array_values($columns);
+
+        foreach ($this->indexes($table) as $index) {
+            $indexed = array_values($index['columns'] ?? []);
+
+            if ($indexed === $wanted) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Column names present on the table.
+     *
+     * @return list<string>
+     */
+    public function columnNames(string $table): array
+    {
+        $names = [];
+
+        foreach ($this->columns($table) as $definition) {
+            $name = $definition['name'] ?? null;
+
+            if (is_string($name)) {
+                $names[] = $name;
+            }
+        }
+
+        return $names;
+    }
+
     public function columnTypeContains(string $table, string $column, string $needle): bool
     {
         $definition = $this->column($table, $column);
