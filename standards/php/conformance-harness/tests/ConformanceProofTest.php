@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Qiick\ConformanceHarness\GreenSchema;
+use Qiick\Standards\Conformance\Support\ConformanceBehaviourProbe;
 use Qiick\Standards\Conformance\Support\ConformanceHooks;
 use Qiick\Standards\Conformance\Support\ConformanceRunner;
 use Qiick\Standards\Conformance\Support\SchemaInspector;
@@ -678,6 +680,15 @@ YAML);
             ->toThrow(RuntimeException::class, 'register_permission_check_method must be false');
     });
 
+    it('C71 goes red when a grant-all Gate::before is registered at runtime', function (): void {
+        GreenSchema::migrate();
+        config(['permission.register_permission_check_method' => false]);
+        Gate::before(static fn (): ?bool => true);
+
+        expect(fn () => runCheck('C71'))
+            ->toThrow(RuntimeException::class, 'Gate::before callback granted');
+    });
+
     it('C71 goes red when the resolver-clear hook is missing', function (): void {
         GreenSchema::migrate();
         $runner = new ConformanceRunner(
@@ -747,6 +758,28 @@ YAML);
 
         expect(fn () => $runner->run(catalogById()['C73']))
             ->toThrow(RuntimeException::class, 'did not prove the behaviour');
+    });
+
+    it('C73 stays green when the hook only passes the probe without exercising behaviour (documented limit)', function (): void {
+        GreenSchema::migrate();
+        $runner = new ConformanceRunner(
+            harnessBasePath(),
+            new ConformanceHooks(['usesLaravelAccess' => true], [
+                'assertExpiredMembershipGrantsNothing' => static function (?ConformanceBehaviourProbe $probe = null): void {
+                    if ($probe instanceof ConformanceBehaviourProbe) {
+                        $probe->pass();
+
+                        return;
+                    }
+
+                    throw new RuntimeException('real path never runs');
+                },
+            ]),
+            new SchemaInspector(),
+        );
+
+        $runner->run(catalogById()['C73']);
+        expect(true)->toBeTrue();
     });
 
     it('C74 goes red when the access-activity UUID hook is missing', function (): void {
@@ -865,6 +898,88 @@ YAML);
 
         expect(fn () => runCheck('C75'))
             ->toThrow(RuntimeException::class, 'unexpected column "bad"');
+    });
+
+    it('C75 goes red when a required Spatie column is missing', function (): void {
+        GreenSchema::migrate();
+        Schema::drop('roles');
+        Schema::create('roles', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->uuid('organisation_id')->nullable();
+            $table->timestamps();
+            $table->unique(['organisation_id', 'name']);
+        });
+
+        expect(fn () => runCheck('C75'))
+            ->toThrow(RuntimeException::class, 'missing required column "guard_name"');
+    });
+
+    it('C75 goes red when a required Spatie column type changes', function (): void {
+        GreenSchema::migrate();
+        Schema::drop('roles');
+        Schema::create('roles', function (Blueprint $table): void {
+            $table->id();
+            $table->integer('name');
+            $table->string('guard_name');
+            $table->uuid('organisation_id')->nullable();
+            $table->timestamps();
+            $table->unique(['organisation_id', 'name', 'guard_name']);
+        });
+
+        expect(fn () => runCheck('C75'))
+            ->toThrow(RuntimeException::class, 'unexpected type');
+    });
+
+    it('C75 goes red when a required Spatie unique index is missing', function (): void {
+        GreenSchema::migrate();
+        Schema::drop('roles');
+        Schema::create('roles', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('guard_name');
+            $table->uuid('organisation_id')->nullable();
+            $table->timestamps();
+        });
+
+        expect(fn () => runCheck('C75'))
+            ->toThrow(RuntimeException::class, 'missing a required unique index');
+    });
+
+    it('C75 goes red when a migration builds ALTER TABLE with sprintf', function (): void {
+        GreenSchema::migrate();
+        $dir = harnessBasePath().'/database/migrations';
+        @mkdir($dir, 0777, true);
+        $file = $dir.'/2026_11_22_sprintf_alter.php';
+        file_put_contents(
+            $file,
+            "<?php\nuse Illuminate\\Support\\Facades\\DB;\nDB::statement(sprintf('ALTER TABLE %s ADD bad varchar(10)', 'roles'));\n",
+        );
+
+        try {
+            expect(fn () => runCheck('C75'))
+                ->toThrow(RuntimeException::class, 'must not alter Spatie role tables');
+        } finally {
+            @unlink($file);
+        }
+    });
+
+    it('C75 goes red when Schema::table uses a variable after intervening statements', function (): void {
+        GreenSchema::migrate();
+        $dir = harnessBasePath().'/database/migrations';
+        @mkdir($dir, 0777, true);
+        $file = $dir.'/2026_11_22_intervening_alter.php';
+        file_put_contents(
+            $file,
+            "<?php\nuse Illuminate\\Support\\Facades\\Schema;\n\$tableName = 'roles';\n\$noop = 1;\nSchema::table(\$tableName, function (\$table) { \$table->string('bad'); });\n",
+        );
+
+        try {
+            expect(fn () => runCheck('C75'))
+                ->toThrow(RuntimeException::class, 'must not alter Spatie role tables');
+        } finally {
+            @unlink($file);
+        }
     });
 
     it('C75 goes red when user_group_user.expires_at has no index', function (): void {

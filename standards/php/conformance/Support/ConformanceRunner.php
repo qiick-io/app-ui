@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Qiick\Standards\Conformance\Support;
 
+use Illuminate\Contracts\Auth\Access\Authorizable;
+use Illuminate\Foundation\Auth\Access\Authorizable as AuthorizableTrait;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
@@ -765,9 +768,36 @@ final class ConformanceRunner
             );
         }
 
+        // Runtime proof: config alone is not enough if a grant-all / Spatie before was re-registered.
+        $this->assertSpatiePermissionGateBeforeIsInactive();
+
         $this->hooks->requireProved('assertRoleDetachClearsResolver');
         // API actors (keys) must never receive the super-admin Gate::before pass.
         $this->hooks->requireProved('assertApiActorDeniedSuperAdmin');
+    }
+
+    /**
+     * Fail when a Gate::before grants to a Spatie-shaped non-user actor (Spatie's
+     * register_permission_check_method before, or an unconditional grant-all).
+     * A product super-admin before that only passes for the User model stays green.
+     */
+    private function assertSpatiePermissionGateBeforeIsInactive(): void
+    {
+        $spatieShapedActor = new class implements Authorizable
+        {
+            use AuthorizableTrait;
+
+            public function checkPermissionTo(mixed $permission, mixed $guardName = null): bool
+            {
+                return true;
+            }
+        };
+
+        if (Gate::forUser($spatieShapedActor)->allows('__qiick_conformance_spatie_gate_probe__')) {
+            throw new \RuntimeException(
+                'A Gate::before callback granted a permission to a non-user Spatie-shaped actor; keep register_permission_check_method off and do not re-register a grant-all before after boot.',
+            );
+        }
     }
 
     /**
@@ -927,33 +957,96 @@ final class ConformanceRunner
     }
 
     /**
-     * Fail when a Spatie table has a column outside the fleet allowlist (catches
-     * ALTER / Schema::table($var) that already ran on the database).
+     * Bidirectional Spatie schema allowlist: unexpected columns fail, required
+     * columns/types/indexes must still be present (drops and type changes go red).
+     *
+     * @return array<string, array{
+     *     required: array<string, list<string>>,
+     *     optional: list<string>,
+     *     required_unique_indexes: list<list<string>>
+     * }>
+     */
+    private function spatieTableAllowlists(): array
+    {
+        $stringTypes = ['varchar', 'string', 'character varying', 'char'];
+        $integerTypes = ['bigint', 'integer', 'int', 'int8', 'int4'];
+        $datetimeTypes = ['datetime', 'timestamp', 'date'];
+
+        return [
+            'roles' => [
+                'required' => [
+                    'id' => $integerTypes,
+                    'name' => $stringTypes,
+                    'guard_name' => $stringTypes,
+                    'created_at' => $datetimeTypes,
+                    'updated_at' => $datetimeTypes,
+                ],
+                'optional' => [
+                    'organisation_id', 'team_id', // team_id: externa 1.x until v2
+                    'public_id', 'is_system', 'is_assignable', 'description', 'metadata',
+                ],
+                'required_unique_indexes' => [
+                    ['name', 'guard_name'],
+                    ['organisation_id', 'name', 'guard_name'],
+                    ['team_id', 'name', 'guard_name'],
+                ],
+            ],
+            'permissions' => [
+                'required' => [
+                    'id' => $integerTypes,
+                    'name' => $stringTypes,
+                    'guard_name' => $stringTypes,
+                    'created_at' => $datetimeTypes,
+                    'updated_at' => $datetimeTypes,
+                ],
+                'optional' => [],
+                'required_unique_indexes' => [
+                    ['name', 'guard_name'],
+                ],
+            ],
+            'model_has_roles' => [
+                'required' => [
+                    'role_id' => $integerTypes,
+                    'model_type' => $stringTypes,
+                    'model_id' => $integerTypes,
+                ],
+                'optional' => ['organisation_id', 'team_id'],
+                'required_unique_indexes' => [],
+            ],
+            'model_has_permissions' => [
+                'required' => [
+                    'permission_id' => $integerTypes,
+                    'model_type' => $stringTypes,
+                    'model_id' => $integerTypes,
+                ],
+                'optional' => ['organisation_id', 'team_id'],
+                'required_unique_indexes' => [],
+            ],
+            'role_has_permissions' => [
+                'required' => [
+                    'permission_id' => $integerTypes,
+                    'role_id' => $integerTypes,
+                ],
+                'optional' => [],
+                'required_unique_indexes' => [],
+            ],
+        ];
+    }
+
+    /**
+     * Fail when the migrated Spatie schema diverges from the allowlist in either direction.
      */
     private function assertSpatieTablesMatchAllowlist(): void
     {
-        $allowlists = [
-            'roles' => [
-                'id', 'name', 'guard_name', 'created_at', 'updated_at',
-                'organisation_id', 'team_id', // team_id: externa 1.x until v2
-                'public_id', 'is_system', 'is_assignable', 'description', 'metadata',
-            ],
-            'permissions' => ['id', 'name', 'guard_name', 'created_at', 'updated_at'],
-            'model_has_roles' => [
-                'role_id', 'model_type', 'model_id', 'organisation_id', 'team_id',
-            ],
-            'model_has_permissions' => [
-                'permission_id', 'model_type', 'model_id', 'organisation_id', 'team_id',
-            ],
-            'role_has_permissions' => ['permission_id', 'role_id'],
-        ];
-
-        foreach ($allowlists as $table => $allowed) {
+        foreach ($this->spatieTableAllowlists() as $table => $definition) {
             if (! $this->schema->hasTable($table)) {
                 throw new \RuntimeException("Expected Spatie table \"{$table}\" to exist when usesLaravelAccess is set.");
             }
 
-            $allowedLookup = array_flip($allowed);
+            $allowedLookup = array_flip(array_merge(
+                array_keys($definition['required']),
+                $definition['optional'],
+            ));
 
             foreach ($this->schema->columnNames($table) as $column) {
                 if (! isset($allowedLookup[$column])) {
@@ -962,7 +1055,62 @@ final class ConformanceRunner
                     );
                 }
             }
+
+            foreach ($definition['required'] as $column => $typeNeedles) {
+                if (! in_array($column, $this->schema->columnNames($table), true)) {
+                    throw new \RuntimeException(
+                        "Spatie table {$table} is missing required column \"{$column}\".",
+                    );
+                }
+
+                $this->assertSpatieColumnType($table, $column, $typeNeedles);
+            }
+
+            foreach (['organisation_id', 'team_id', 'public_id'] as $uuidColumn) {
+                if (in_array($uuidColumn, $this->schema->columnNames($table), true)) {
+                    $this->assertSpatieColumnType($table, $uuidColumn, ['uuid', 'char', 'guid', 'uniqueidentifier']);
+                }
+            }
+
+            if ($definition['required_unique_indexes'] !== []) {
+                $hasRequiredUnique = false;
+
+                foreach ($definition['required_unique_indexes'] as $columns) {
+                    if ($this->schema->hasUniqueIndexCovering($table, ...$columns)) {
+                        $hasRequiredUnique = true;
+                        break;
+                    }
+                }
+
+                if (! $hasRequiredUnique) {
+                    $patterns = array_map(
+                        static fn (array $columns): string => '('.implode(', ', $columns).')',
+                        $definition['required_unique_indexes'],
+                    );
+
+                    throw new \RuntimeException(
+                        "Spatie table {$table} is missing a required unique index; expected one of: "
+                        .implode(', ', $patterns).'.',
+                    );
+                }
+            }
         }
+    }
+
+    /**
+     * @param list<string> $typeNeedles
+     */
+    private function assertSpatieColumnType(string $table, string $column, array $typeNeedles): void
+    {
+        foreach ($typeNeedles as $needle) {
+            if ($this->schema->columnTypeContains($table, $column, $needle)) {
+                return;
+            }
+        }
+
+        throw new \RuntimeException(
+            "Spatie table {$table}.{$column} has an unexpected type; laravel-access must not alter Spatie column types.",
+        );
     }
 
     private function indexMentionsColumn(string $table, string $column): bool
@@ -978,7 +1126,9 @@ final class ConformanceRunner
 
     /**
      * Extra signal: migration sources that alter Spatie tables (literal Schema::table,
-     * variable Schema::table after assignment, or ALTER TABLE). Comments are stripped.
+     * variable Schema::table after assignment, ALTER TABLE, or constructed DDL via
+     * sprintf / concatenation). Comments are stripped. Constructed DDL is a
+     * best-effort heuristic — the live-schema allowlist remains the primary proof.
      *
      * @return list<string>
      */
@@ -1009,7 +1159,19 @@ final class ConformanceRunner
                     if (preg_match('/Schema::table\(\s*[\'"]'.$quoted.'[\'"]/', $contents) === 1
                         || preg_match('/ALTER\s+TABLE\s+[\'"`]?'.$quoted.'[\'"`]?/i', $contents) === 1
                         || preg_match(
-                            '/\$\w+\s*=\s*[\'"]'.$quoted.'[\'"]\s*;[^;]*Schema::table\(\s*\$\w+/s',
+                            '/\$(\w+)\s*=\s*[\'"]'.$quoted.'[\'"]\s*;[\s\S]*?Schema::table\(\s*\$\1\b/',
+                            $contents,
+                        ) === 1
+                        || preg_match(
+                            '/sprintf\s*\(\s*[\'"][^\'"]*ALTER\s+TABLE[^\'"]*[\'"]\s*,\s*[\'"]'.$quoted.'[\'"]/i',
+                            $contents,
+                        ) === 1
+                        || preg_match(
+                            '/[\'"]ALTER\s+TABLE\s+[\'"]\s*\.\s*[\'"]'.$quoted.'[\'"]/i',
+                            $contents,
+                        ) === 1
+                        || preg_match(
+                            '/[\'"]ALTER\s+TABLE\s+'.$quoted.'\b/i',
                             $contents,
                         ) === 1) {
                         $offenders[] = $file->getFilename();

@@ -70,6 +70,8 @@ final class GreenSchema
             $table->string('guard_name');
             $table->uuid('organisation_id')->nullable();
             $table->timestamps();
+            // Spatie teams-on shape: unique per organisation + name + guard.
+            $table->unique(['organisation_id', 'name', 'guard_name']);
         });
 
         Schema::create('permissions', function (Blueprint $table): void {
@@ -77,6 +79,7 @@ final class GreenSchema
             $table->string('name');
             $table->string('guard_name');
             $table->timestamps();
+            $table->unique(['name', 'guard_name']);
         });
 
         Schema::create('model_has_roles', function (Blueprint $table): void {
