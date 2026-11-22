@@ -193,7 +193,7 @@ return [
     [
         'id' => 'C29',
         'tag' => 'behaviour',
-        'description' => 'Team switch calls setPermissionsTeamId and unsets roles/permissions relations; skipped when usesSpatieTeams is false',
+        'description' => 'Team switch calls setPermissionsTeamId and unsets roles/permissions; skipped only when permission.teams is really off; red when teams are on with a wrong declaration or team_foreign_key',
         'decision' => 'knowledge/decisions/2026-11-20-core-hardening',
     ],
     [

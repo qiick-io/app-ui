@@ -451,14 +451,14 @@ YAML);
         unlink($path);
     });
 
-    it('C29 is skipped when usesSpatieTeams is false', function (): void {
+    it('C29 is skipped when Spatie teams are really off in config', function (): void {
         GreenSchema::migrate();
-        $base = harnessBasePath();
+        config(['permission.teams' => false]);
         $hooks = new ConformanceHooks(
             ['usesSpatieTeams' => false],
             [],
         );
-        $runner = new ConformanceRunner($base, $hooks, new SchemaInspector());
+        $runner = new ConformanceRunner(harnessBasePath(), $hooks, new SchemaInspector());
 
         $runner->run([
             'id' => 'C29',
@@ -467,6 +467,69 @@ YAML);
             'decision' => 'knowledge/decisions/2026-11-20-core-hardening',
         ]);
         expect(true)->toBeTrue();
+    });
+
+    it('C29 goes red when teams are on in config but usesSpatieTeams is false', function (): void {
+        GreenSchema::migrate();
+        config([
+            'permission.teams' => true,
+            'permission.column_names.team_foreign_key' => 'team_id',
+        ]);
+        $hooks = new ConformanceHooks(
+            ['usesSpatieTeams' => false],
+            [],
+        );
+        $runner = new ConformanceRunner(harnessBasePath(), $hooks, new SchemaInspector());
+
+        expect(fn () => $runner->run([
+            'id' => 'C29',
+            'tag' => 'behaviour',
+            'description' => 'team switch',
+            'decision' => 'knowledge/decisions/2026-11-20-core-hardening',
+        ]))->toThrow(RuntimeException::class, 'usesSpatieTeams is false');
+    });
+
+    it('C29 goes red when teams are on with a wrong team_foreign_key', function (): void {
+        GreenSchema::migrate();
+        config([
+            'permission.teams' => true,
+            'permission.column_names.team_foreign_key' => 'team_id',
+        ]);
+        $hooks = new ConformanceHooks(
+            ['usesSpatieTeams' => true],
+            ['assertTeamSwitch' => static function (): void {}],
+        );
+        $runner = new ConformanceRunner(harnessBasePath(), $hooks, new SchemaInspector());
+
+        expect(fn () => $runner->run([
+            'id' => 'C29',
+            'tag' => 'behaviour',
+            'description' => 'team switch',
+            'decision' => 'knowledge/decisions/2026-11-20-core-hardening',
+        ]))->toThrow(RuntimeException::class, 'team_foreign_key must be organisation_id');
+    });
+
+    it('C29 goes red when organisation_id column is missing on roles', function (): void {
+        GreenSchema::migrate();
+        Schema::drop('roles');
+        Schema::create('roles', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('guard_name');
+            $table->timestamps();
+        });
+        $hooks = new ConformanceHooks(
+            ['usesSpatieTeams' => true],
+            ['assertTeamSwitch' => static function (): void {}],
+        );
+        $runner = new ConformanceRunner(harnessBasePath(), $hooks, new SchemaInspector());
+
+        expect(fn () => $runner->run([
+            'id' => 'C29',
+            'tag' => 'behaviour',
+            'description' => 'team switch',
+            'decision' => 'knowledge/decisions/2026-11-20-core-hardening',
+        ]))->toThrow(RuntimeException::class, 'organisation_id');
     });
 
     it('C37 goes red when a declared hook is reduced to a no-op', function (): void {

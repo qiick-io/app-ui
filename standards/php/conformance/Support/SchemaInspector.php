@@ -227,7 +227,10 @@ final class SchemaInspector
      * Run a check in its own transaction (or SAVEPOINT when already inside one)
      * so a failure cannot abort the outer Pest / RefreshDatabase transaction
      * and blind later checks — the PostgreSQL abort that hid C37.
-     * Side effects are rolled back whether the callback passes or throws.
+     *
+     * Rolls back database side effects on this connection only. File writes,
+     * config mutations, queued jobs and an explicit commit() of the outer
+     * transaction are outside this guarantee.
      *
      * @template TReturn
      *

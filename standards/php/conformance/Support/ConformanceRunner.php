@@ -238,31 +238,21 @@ final class ConformanceRunner
 
     private function c4SpatieTeamsConfig(): void
     {
-        if (! $this->hooks->boolean('usesSpatieTeams', false)) {
+        if (! $this->spatieTeamsAreInScope()) {
             return;
         }
 
-        if (Config::get('permission.teams') !== true) {
-            throw new \RuntimeException('permission.teams must be true when usesSpatieTeams is set.');
-        }
-
-        if (Config::get('permission.column_names.team_foreign_key') !== 'organisation_id'
-            && Config::get('permission.team_foreign_key') !== 'organisation_id') {
-            // Spatie 6+ uses column_names.team_foreign_key; older used team_foreign_key.
-            $teamKey = Config::get('permission.column_names.team_foreign_key')
-                ?? Config::get('permission.team_foreign_key');
-
-            if ($teamKey !== 'organisation_id') {
-                throw new \RuntimeException("permission team_foreign_key must be organisation_id, got {$teamKey}.");
-            }
-        }
+        $this->assertSpatieTeamsDeclarationMatchesConfig();
+        $this->assertSpatieTeamForeignKeyIsOrganisationId();
     }
 
     private function c5SpatieTeamColumnTypes(): void
     {
-        if (! $this->hooks->boolean('usesSpatieTeams', false)) {
+        if (! $this->spatieTeamsAreInScope()) {
             return;
         }
+
+        $this->assertSpatieTeamsDeclarationMatchesConfig();
 
         if (! $this->schema->isEngineDependentDriver()) {
             throw new \RuntimeException('C5 requires PostgreSQL or MySQL.');
@@ -607,15 +597,66 @@ final class ConformanceRunner
     }
 
     /**
-     * Team switch is only meaningful when Spatie teams are on (same gate as C4/C5).
+     * Team switch: skip only when Spatie teams are really off in config.
+     * When teams are on, a wrong declaration or team_foreign_key / missing
+     * organisation_id columns must go red — not be hidden by usesSpatieTeams=false.
      */
     private function c29TeamSwitch(): void
     {
-        if (! $this->hooks->boolean('usesSpatieTeams', false)) {
+        if (! $this->spatieTeamsAreInScope()) {
             return;
         }
 
+        $this->assertSpatieTeamsDeclarationMatchesConfig();
+        $this->assertSpatieTeamForeignKeyIsOrganisationId();
+        $this->assertSpatieTeamColumnsExist();
         $this->hooks->requireCallable('assertTeamSwitch');
+    }
+
+    /**
+     * True when either the product declares Spatie teams or config has them on.
+     * Both-false is the only quiet skip; a mismatch or both-true runs the check.
+     */
+    private function spatieTeamsAreInScope(): bool
+    {
+        return $this->hooks->boolean('usesSpatieTeams', false)
+            || Config::get('permission.teams') === true;
+    }
+
+    private function assertSpatieTeamsDeclarationMatchesConfig(): void
+    {
+        $declared = $this->hooks->boolean('usesSpatieTeams', false);
+        $enabled = Config::get('permission.teams') === true;
+
+        if ($declared && ! $enabled) {
+            throw new \RuntimeException('usesSpatieTeams is true but permission.teams is not true.');
+        }
+
+        if (! $declared && $enabled) {
+            throw new \RuntimeException(
+                'permission.teams is true but usesSpatieTeams is false: set usesSpatieTeams or turn teams off.',
+            );
+        }
+    }
+
+    private function assertSpatieTeamForeignKeyIsOrganisationId(): void
+    {
+        $teamKey = Config::get('permission.column_names.team_foreign_key')
+            ?? Config::get('permission.team_foreign_key');
+
+        if ($teamKey !== 'organisation_id') {
+            throw new \RuntimeException(
+                "permission team_foreign_key must be organisation_id, got ".(is_scalar($teamKey) ? (string) $teamKey : 'null').'.',
+            );
+        }
+    }
+
+    private function assertSpatieTeamColumnsExist(): void
+    {
+        foreach (['roles', 'model_has_roles', 'model_has_permissions'] as $table) {
+            $this->schema->assertTableExists($table);
+            $this->schema->assertColumnExists($table, 'organisation_id');
+        }
     }
 
     private function c33FrozenBaseline(): void
@@ -723,7 +764,15 @@ final class ConformanceRunner
             $attributes['is_active'] = true;
         }
 
-        return $this->schema->connection()->table('users')->insertGetId($attributes);
+        try {
+            return $this->schema->connection()->table('users')->insertGetId($attributes);
+        } catch (\Throwable $exception) {
+            throw new \RuntimeException(
+                'C3 could not insert a fixture user (extra NOT NULL columns without defaults?). '.$exception->getMessage(),
+                0,
+                $exception,
+            );
+        }
     }
 
     /**
