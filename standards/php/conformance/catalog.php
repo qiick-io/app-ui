@@ -27,8 +27,8 @@ return [
     [
         'id' => 'C2',
         'tag' => 'schema',
-        'description' => 'No users.organisation_id; organisations use UUID PK and membership pivot UNIQUE(organisation_id,user_id)',
-        'decision' => 'knowledge/decisions/2026-11-19-fleet-core-schema',
+        'description' => 'No users.organisation_id; organisations use UUID PK and membership UNIQUE(organisation_id,user_id); with hasOrganisations, principals.organisation_id is NOT NULL (principals may be the membership table)',
+        'decision' => 'knowledge/decisions/2026-11-22-principal-organisation-required-in-multi-tenant-products',
     ],
     [
         'id' => 'C3',
@@ -77,7 +77,7 @@ return [
     [
         'id' => 'C10',
         'tag' => 'schema',
-        'description' => 'API keys: key_hash UNIQUE; owner_principal_id UUID FK; FK actions never cascade-erase evidence; no required owner_id→users after backfill',
+        'description' => 'API keys: key_hash UNIQUE; owner_principal_id UUID FK; owner_principal_id, owner_id and principals.user_id never cascade-erase evidence',
         'decision' => 'knowledge/decisions/2026-11-20-core-hardening',
     ],
     [
@@ -175,7 +175,7 @@ return [
     [
         'id' => 'C26',
         'tag' => 'file',
-        'description' => 'OpenAPI document exists, declares openapi 3.1.x, and every named api/v1 route appears in it',
+        'description' => 'OpenAPI document exists, declares openapi 3.1.x, and every named api/v1 route appears as an exact path+method pair (honours servers prefix)',
         'decision' => 'knowledge/decisions/2026-11-20-core-hardening',
     ],
     [
@@ -193,7 +193,7 @@ return [
     [
         'id' => 'C29',
         'tag' => 'behaviour',
-        'description' => 'Team switch calls setPermissionsTeamId and unsets roles/permissions relations; roles from org A are not visible in org B',
+        'description' => 'Team switch calls setPermissionsTeamId and unsets roles/permissions; skipped only when permission.teams is really off; red when teams are on with a wrong declaration or team_foreign_key',
         'decision' => 'knowledge/decisions/2026-11-20-core-hardening',
     ],
     [
@@ -241,7 +241,7 @@ return [
     [
         'id' => 'C37',
         'tag' => 'file',
-        'description' => 'Every conformance divergence has reason, decision and review_by; unknown ids fail; expired review_by fails; stale (still green) declarations fail',
+        'description' => 'Every conformance divergence has reason, decision and review_by; unknown ids fail; expired review_by fails; stale (still green, including a no-op hook) declarations fail',
         'decision' => 'knowledge/decisions/2026-11-20-core-hardening',
     ],
 ];

@@ -48,7 +48,7 @@ final class GreenSchema
 
         Schema::create('user_identities', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('user_id');
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
 
             if (Schema::getConnection()->getDriverName() === 'mysql'
                 || Schema::getConnection()->getDriverName() === 'mariadb') {
@@ -120,8 +120,10 @@ final class GreenSchema
         Schema::create('principals', function (Blueprint $table): void {
             $table->uuid('id')->primary();
             $table->string('type');
-            $table->foreignId('user_id')->nullable()->unique();
-            $table->uuid('organisation_id')->nullable();
+            // nullOnDelete: the principal row stays for audit (core-hardening).
+            $table->foreignId('user_id')->nullable()->unique()->constrained('users')->nullOnDelete();
+            // Decision 2026-11-22: NOT NULL when the product has organisations.
+            $table->uuid('organisation_id');
             $table->string('name')->nullable();
             $table->timestamp('deactivated_at')->nullable();
             $table->timestamps();
@@ -133,7 +135,8 @@ final class GreenSchema
             $table->string('key_prefix', 32);
             $table->string('key_hash', 64)->unique();
             $table->uuid('owner_principal_id');
-            $table->foreignId('created_by')->nullable();
+            $table->foreign('owner_principal_id')->references('id')->on('principals')->restrictOnDelete();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->json('scopes');
             $table->json('ip_allowlist')->nullable();
             $table->unsignedInteger('rate_limit_per_minute')->nullable();

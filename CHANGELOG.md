@@ -8,6 +8,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Fixed
+
+- Conformance runner gaps from fleet re-reviews (#208, #209): C3 creates a real fixture user; every check (C37 included) runs in its own transaction/SAVEPOINT so a PostgreSQL abort cannot blind later checks; C37 asserts for real and goes red when a declared hook is a no-op; C10 rejects cascade on `api_keys.owner_id` and `principals.user_id`; C11 requires `previous_key_valid_until` as dateTime; C26 matches exact path+method pairs and honours the OpenAPI `servers` prefix; C29/C4/C5 skip only when `permission.teams` is really off and go red when teams are on with a wrong declaration or `team_foreign_key`; C2 requires `principals.organisation_id` NOT NULL with organisations and accepts `principals` as `membershipTable`. Access-package checks (C71+) deferred to a follow-up. Affects every PHP app on the next pin bump and re-sync.
+
 ### Changed
 
 - Docs: `docs/api-keys.md` and `docs/api.md` align with the 2026-11-19 decision and `qiick/laravel-api-keys` v0.1.0 — token `{product}_{live|test}_{id}{secret}`, full-token SHA-256, `api-keys.rotation_grace_hours` (max 168), and `403 ip_not_allowed`.

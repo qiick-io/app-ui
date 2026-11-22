@@ -7,10 +7,14 @@ namespace Qiick\Standards\Conformance\Support;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 /**
  * Executes one fleet conformance check against the product's migrated database
  * and built config. Behaviour checks that need product specifics call hooks.
+ *
+ * Every check runs inside a SAVEPOINT so one failure cannot abort the outer
+ * Pest / RefreshDatabase transaction and blind later checks (C37 on PostgreSQL).
  */
 final class ConformanceRunner
 {
@@ -24,6 +28,16 @@ final class ConformanceRunner
      * @param array{id: string, tag: string, description: string, decision: string, engines?: list<string>} $check
      */
     public function run(array $check): void
+    {
+        $this->schema->isolate(function () use ($check): void {
+            $this->runIsolated($check);
+        });
+    }
+
+    /**
+     * @param array{id: string, tag: string, description: string, decision: string, engines?: list<string>} $check
+     */
+    private function runIsolated(array $check): void
     {
         $engines = $check['engines'] ?? null;
 
@@ -63,7 +77,7 @@ final class ConformanceRunner
             'C26' => $this->c26OpenApi(),
             'C27' => $this->hooks->requireCallable('assertWebhooks'),
             'C28' => $this->hooks->requireCallable('assertSsrfGuard'),
-            'C29' => $this->hooks->requireCallable('assertTeamSwitch'),
+            'C29' => $this->c29TeamSwitch(),
             'C30' => $this->hooks->requireCallable('assertSuperAdmin'),
             'C31' => $this->hooks->requireCallable('assertApiResourcesHideBigints'),
             'C32' => $this->hooks->requireCallable('assertEncryptedCasts'),
@@ -134,10 +148,14 @@ final class ConformanceRunner
 
         $organisationTable = $this->hooks->table('organisationTable', 'organisations');
         $membershipTable = $this->hooks->table('membershipTable', 'organisation_user');
+        $principalsTable = $this->hooks->table('principalsTable', 'principals');
 
         if (! $this->schema->hasTable($organisationTable) && $this->schema->hasTable('organizations')) {
             $organisationTable = 'organizations';
-            $membershipTable = $this->hooks->table('membershipTable', 'organization_user');
+
+            if ($membershipTable === 'organisation_user') {
+                $membershipTable = $this->hooks->table('membershipTable', 'organization_user');
+            }
         }
 
         $this->schema->assertTableExists($organisationTable);
@@ -149,13 +167,24 @@ final class ConformanceRunner
             throw new \RuntimeException("{$organisationTable}.id must be a UUID primary key.");
         }
 
-        $this->schema->assertTableExists($membershipTable);
-
         $orgIdColumn = str_contains($membershipTable, 'organization') ? 'organization_id' : 'organisation_id';
+        $this->schema->assertTableExists($membershipTable);
 
         if (! $this->schema->hasUniqueIndexCovering($membershipTable, $orgIdColumn, 'user_id')
             && ! $this->schema->hasUniqueIndexCovering($membershipTable, 'user_id', $orgIdColumn)) {
             throw new \RuntimeException("{$membershipTable} must UNIQUE({$orgIdColumn}, user_id).");
+        }
+
+        // Decision 2026-11-22: with organisations, every principal belongs to one org.
+        // Principals may also be the membership table (membershipTable=principals).
+        if ($this->hooks->boolean('hasPrincipals', true) && $this->schema->hasTable($principalsTable)) {
+            $this->schema->assertColumnExists($principalsTable, 'organisation_id');
+
+            if ($this->schema->isNullable($principalsTable, 'organisation_id')) {
+                throw new \RuntimeException(
+                    'principals.organisation_id must be NOT NULL when hasOrganisations is true.',
+                );
+            }
         }
     }
 
@@ -181,6 +210,9 @@ final class ConformanceRunner
             throw new \RuntimeException('C3 case-sensitivity probe requires PostgreSQL or MySQL.');
         }
 
+        // Real fixture user: inserting user_id=1 without a row aborts PostgreSQL's transaction.
+        $userId = $this->insertFixtureUser();
+
         // Probe: case-sensitive uniqueness should allow Issuer/X and issuer/x as two rows.
         $probeIssuerA = 'ConformanceIssuer/Case';
         $probeIssuerB = 'conformanceissuer/case';
@@ -188,12 +220,12 @@ final class ConformanceRunner
 
         try {
             $this->schema->statement(
-                "INSERT INTO {$table} (user_id, issuer, subject, created_at, updated_at) VALUES (1, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
-                [$probeIssuerA, $probeSubject],
+                "INSERT INTO {$table} (user_id, issuer, subject, created_at, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+                [$userId, $probeIssuerA, $probeSubject],
             );
             $this->schema->statement(
-                "INSERT INTO {$table} (user_id, issuer, subject, created_at, updated_at) VALUES (1, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
-                [$probeIssuerB, $probeSubject],
+                "INSERT INTO {$table} (user_id, issuer, subject, created_at, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+                [$userId, $probeIssuerB, $probeSubject],
             );
         } catch (\Throwable $exception) {
             throw new \RuntimeException(
@@ -206,31 +238,21 @@ final class ConformanceRunner
 
     private function c4SpatieTeamsConfig(): void
     {
-        if (! $this->hooks->boolean('usesSpatieTeams', false)) {
+        if (! $this->spatieTeamsAreInScope()) {
             return;
         }
 
-        if (Config::get('permission.teams') !== true) {
-            throw new \RuntimeException('permission.teams must be true when usesSpatieTeams is set.');
-        }
-
-        if (Config::get('permission.column_names.team_foreign_key') !== 'organisation_id'
-            && Config::get('permission.team_foreign_key') !== 'organisation_id') {
-            // Spatie 6+ uses column_names.team_foreign_key; older used team_foreign_key.
-            $teamKey = Config::get('permission.column_names.team_foreign_key')
-                ?? Config::get('permission.team_foreign_key');
-
-            if ($teamKey !== 'organisation_id') {
-                throw new \RuntimeException("permission team_foreign_key must be organisation_id, got {$teamKey}.");
-            }
-        }
+        $this->assertSpatieTeamsDeclarationMatchesConfig();
+        $this->assertSpatieTeamForeignKeyIsOrganisationId();
     }
 
     private function c5SpatieTeamColumnTypes(): void
     {
-        if (! $this->hooks->boolean('usesSpatieTeams', false)) {
+        if (! $this->spatieTeamsAreInScope()) {
             return;
         }
+
+        $this->assertSpatieTeamsDeclarationMatchesConfig();
 
         if (! $this->schema->isEngineDependentDriver()) {
             throw new \RuntimeException('C5 requires PostgreSQL or MySQL.');
@@ -329,6 +351,29 @@ final class ConformanceRunner
                 throw new \RuntimeException('api_keys.created_by must null-on-delete, not cascade.');
             }
         }
+
+        // Legacy / dual-read owner_id → users: never a silent cascade (core-hardening FK table).
+        if ($this->schema->hasColumn($table, 'owner_id')) {
+            $ownerIdOnDelete = $this->schema->foreignKeyOnDelete($table, 'owner_id');
+
+            if ($ownerIdOnDelete !== null && str_contains($ownerIdOnDelete, 'cascade')) {
+                throw new \RuntimeException('api_keys.owner_id must not cascade-delete on user removal.');
+            }
+        }
+
+        if ($this->hooks->boolean('hasPrincipals', true)) {
+            $principalsTable = $this->hooks->table('principalsTable', 'principals');
+
+            if ($this->schema->hasTable($principalsTable) && $this->schema->hasColumn($principalsTable, 'user_id')) {
+                $principalsUserOnDelete = $this->schema->foreignKeyOnDelete($principalsTable, 'user_id');
+
+                if ($principalsUserOnDelete !== null && str_contains($principalsUserOnDelete, 'cascade')) {
+                    throw new \RuntimeException(
+                        'principals.user_id must not cascade-delete; null on delete so the principal row stays for audit.',
+                    );
+                }
+            }
+        }
     }
 
     private function c11ApiKeyColumns(): void
@@ -340,11 +385,14 @@ final class ConformanceRunner
         $table = $this->hooks->table('apiKeysTable', 'api_keys');
         $this->schema->assertTableExists($table);
 
+        $previousKeyColumn = 'previous_key_valid_until';
+
         foreach (['uuid', 'key_prefix', 'key_hash', 'scopes', 'ip_allowlist', 'rate_limit_per_minute', 'expires_at', 'previous_key_valid_until', 'last_used_at', 'revoked_at'] as $column) {
             // Some products name previous_key_* slightly differently during adoption.
             if ($column === 'previous_key_valid_until' && ! $this->schema->hasColumn($table, $column)) {
                 if ($this->schema->hasColumn($table, 'previous_key_expires_at')) {
                     $column = 'previous_key_expires_at';
+                    $previousKeyColumn = 'previous_key_expires_at';
                 }
             }
 
@@ -353,6 +401,12 @@ final class ConformanceRunner
 
         if (! $this->schema->isDateTimeNotTimestamp($table, 'expires_at')) {
             throw new \RuntimeException('api_keys.expires_at must be dateTime, not MySQL TIMESTAMP.');
+        }
+
+        if (! $this->schema->isDateTimeNotTimestamp($table, $previousKeyColumn)) {
+            throw new \RuntimeException(
+                "api_keys.{$previousKeyColumn} must be dateTime, not MySQL TIMESTAMP.",
+            );
         }
     }
 
@@ -507,6 +561,8 @@ final class ConformanceRunner
             throw new \RuntimeException('OpenAPI version must be 3.1.x (declare a divergence for 3.0.x).');
         }
 
+        $document = $this->parseOpenApiDocument($content);
+        $documentedPairs = $this->openApiPathMethodPairs($document);
         $apiPrefix = trim($this->hooks->apiPrefix(), '/');
         $missing = [];
 
@@ -518,13 +574,88 @@ final class ConformanceRunner
                 continue;
             }
 
-            if (! str_contains($content, $uri) && ! str_contains($content, '/'.$uri)) {
-                $missing[] = "{$name} ({$uri})";
+            $normalizedPath = $this->normalizeOpenApiPath('/'.$uri);
+
+            foreach ($route->methods() as $method) {
+                if (in_array($method, ['HEAD', 'OPTIONS'], true)) {
+                    continue;
+                }
+
+                $pairKey = strtoupper($method).' '.$normalizedPath;
+
+                if (! isset($documentedPairs[$pairKey])) {
+                    $missing[] = "{$name} {$method} {$normalizedPath}";
+                }
             }
         }
 
         if ($missing !== []) {
-            throw new \RuntimeException('OpenAPI missing named api routes: '.implode(', ', array_slice($missing, 0, 10)));
+            throw new \RuntimeException(
+                'OpenAPI missing exact path+method pairs: '.implode(', ', array_slice($missing, 0, 10)),
+            );
+        }
+    }
+
+    /**
+     * Team switch: skip only when Spatie teams are really off in config.
+     * When teams are on, a wrong declaration or team_foreign_key / missing
+     * organisation_id columns must go red — not be hidden by usesSpatieTeams=false.
+     */
+    private function c29TeamSwitch(): void
+    {
+        if (! $this->spatieTeamsAreInScope()) {
+            return;
+        }
+
+        $this->assertSpatieTeamsDeclarationMatchesConfig();
+        $this->assertSpatieTeamForeignKeyIsOrganisationId();
+        $this->assertSpatieTeamColumnsExist();
+        $this->hooks->requireCallable('assertTeamSwitch');
+    }
+
+    /**
+     * True when either the product declares Spatie teams or config has them on.
+     * Both-false is the only quiet skip; a mismatch or both-true runs the check.
+     */
+    private function spatieTeamsAreInScope(): bool
+    {
+        return $this->hooks->boolean('usesSpatieTeams', false)
+            || Config::get('permission.teams') === true;
+    }
+
+    private function assertSpatieTeamsDeclarationMatchesConfig(): void
+    {
+        $declared = $this->hooks->boolean('usesSpatieTeams', false);
+        $enabled = Config::get('permission.teams') === true;
+
+        if ($declared && ! $enabled) {
+            throw new \RuntimeException('usesSpatieTeams is true but permission.teams is not true.');
+        }
+
+        if (! $declared && $enabled) {
+            throw new \RuntimeException(
+                'permission.teams is true but usesSpatieTeams is false: set usesSpatieTeams or turn teams off.',
+            );
+        }
+    }
+
+    private function assertSpatieTeamForeignKeyIsOrganisationId(): void
+    {
+        $teamKey = Config::get('permission.column_names.team_foreign_key')
+            ?? Config::get('permission.team_foreign_key');
+
+        if ($teamKey !== 'organisation_id') {
+            throw new \RuntimeException(
+                "permission team_foreign_key must be organisation_id, got ".(is_scalar($teamKey) ? (string) $teamKey : 'null').'.',
+            );
+        }
+    }
+
+    private function assertSpatieTeamColumnsExist(): void
+    {
+        foreach (['roles', 'model_has_roles', 'model_has_permissions'] as $table) {
+            $this->schema->assertTableExists($table);
+            $this->schema->assertColumnExists($table, 'organisation_id');
         }
     }
 
@@ -605,6 +736,195 @@ final class ConformanceRunner
         if ($hits !== []) {
             throw new \RuntimeException('permission:setup-teams must never be called: '.implode(', ', array_slice($hits, 0, 5)));
         }
+    }
+
+    /**
+     * Insert a real users row for probe FKs (C3). Hard-coding user_id=1 aborts
+     * PostgreSQL when the row is missing.
+     */
+    private function insertFixtureUser(): int|string
+    {
+        $publicIdColumn = $this->hooks->publicIdColumn();
+        $attributes = [
+            $publicIdColumn => (string) Str::uuid(),
+            'email' => 'conformance-c3-'.bin2hex(random_bytes(4)).'@example.test',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        if ($this->schema->hasColumn('users', 'locale')) {
+            $attributes['locale'] = 'en';
+        }
+
+        if ($this->schema->hasColumn('users', 'timezone')) {
+            $attributes['timezone'] = 'UTC';
+        }
+
+        if ($this->schema->hasColumn('users', 'is_active')) {
+            $attributes['is_active'] = true;
+        }
+
+        try {
+            return $this->schema->connection()->table('users')->insertGetId($attributes);
+        } catch (\Throwable $exception) {
+            throw new \RuntimeException(
+                'C3 could not insert a fixture user (extra NOT NULL columns without defaults?). '.$exception->getMessage(),
+                0,
+                $exception,
+            );
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function parseOpenApiDocument(string $content): array
+    {
+        $trimmed = ltrim($content);
+
+        if (str_starts_with($trimmed, '{')) {
+            /** @var array<string, mixed> $decoded */
+            $decoded = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+
+            return $decoded;
+        }
+
+        if (class_exists(\Symfony\Component\Yaml\Yaml::class)) {
+            /** @var array<string, mixed>|null $parsed */
+            $parsed = \Symfony\Component\Yaml\Yaml::parse($content);
+
+            return is_array($parsed) ? $parsed : [];
+        }
+
+        // Minimal YAML path map when symfony/yaml is unavailable: enough for the check.
+        return $this->parseOpenApiPathsFromYamlRoughly($content);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function parseOpenApiPathsFromYamlRoughly(string $content): array
+    {
+        $paths = [];
+        $servers = [];
+        $currentPath = null;
+
+        foreach (preg_split("/\r\n|\n|\r/", $content) ?: [] as $line) {
+            if (preg_match('/^\s*-\s*url:\s*[\'"]?([^\'"\s]+)/', $line, $serverMatch) === 1) {
+                $servers[] = ['url' => $serverMatch[1]];
+            }
+
+            if (preg_match('/^(\s*)(\/[^\s:]*):\s*$/', $line, $pathMatch) === 1) {
+                $currentPath = $pathMatch[2];
+                $paths[$currentPath] = [];
+
+                continue;
+            }
+
+            if ($currentPath !== null
+                && preg_match('/^\s+(get|post|put|patch|delete|head|options|trace)\s*:/i', $line, $methodMatch) === 1) {
+                $paths[$currentPath][strtolower($methodMatch[1])] = [];
+            }
+        }
+
+        return [
+            'servers' => $servers,
+            'paths' => $paths,
+        ];
+    }
+
+    /**
+     * Exact METHOD + path keys documented in OpenAPI, expanded by each servers URL path prefix.
+     *
+     * @param  array<string, mixed>  $document
+     * @return array<string, true>
+     */
+    private function openApiPathMethodPairs(array $document): array
+    {
+        $serverPrefixes = $this->openApiServerPathPrefixes($document);
+        $pairs = [];
+        $paths = $document['paths'] ?? [];
+
+        if (! is_array($paths)) {
+            return $pairs;
+        }
+
+        foreach ($paths as $path => $operations) {
+            if (! is_string($path) || ! is_array($operations)) {
+                continue;
+            }
+
+            foreach ($operations as $method => $operation) {
+                if (! is_string($method) || in_array(strtolower($method), ['parameters', 'summary', 'description', 'servers'], true)) {
+                    continue;
+                }
+
+                if (! is_array($operation) && $operation !== null) {
+                    continue;
+                }
+
+                foreach ($serverPrefixes as $prefix) {
+                    $fullPath = $this->normalizeOpenApiPath($prefix.$path);
+                    $pairs[strtoupper($method).' '.$fullPath] = true;
+                }
+            }
+        }
+
+        return $pairs;
+    }
+
+    /**
+     * @param  array<string, mixed>  $document
+     * @return list<string>
+     */
+    private function openApiServerPathPrefixes(array $document): array
+    {
+        $prefixes = [''];
+        $servers = $document['servers'] ?? [];
+
+        if (! is_array($servers) || $servers === []) {
+            return $prefixes;
+        }
+
+        $prefixes = [];
+
+        foreach ($servers as $server) {
+            if (! is_array($server)) {
+                continue;
+            }
+
+            $url = $server['url'] ?? null;
+
+            if (! is_string($url) || $url === '') {
+                continue;
+            }
+
+            $path = parse_url($url, PHP_URL_PATH);
+
+            if (! is_string($path) || $path === '' || $path === '/') {
+                $prefixes[] = '';
+
+                continue;
+            }
+
+            $prefixes[] = rtrim($path, '/');
+        }
+
+        return $prefixes === [] ? [''] : array_values(array_unique($prefixes));
+    }
+
+    private function normalizeOpenApiPath(string $path): string
+    {
+        $normalized = '/'.trim($path, '/');
+
+        if ($normalized === '/') {
+            return '/';
+        }
+
+        // Laravel {param} and OpenAPI {param} already match; collapse duplicate slashes.
+        $normalized = (string) preg_replace('#/+#', '/', $normalized);
+
+        return $normalized;
     }
 
     private function hasStableTag(): bool
