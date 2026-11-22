@@ -210,7 +210,68 @@ final class SchemaInspector
      */
     public function statement(string $sql, array $bindings = []): void
     {
+        $this->connection()->statement($sql, $bindings);
+    }
+
+    /**
+     * The connection the inspector talks to.
+     */
+    public function connection(): \Illuminate\Database\Connection
+    {
         $name = $this->connectionName ?? (string) config('database.default');
-        DB::connection($name)->statement($sql, $bindings);
+
+        return DB::connection($name);
+    }
+
+    /**
+     * Run a check in its own transaction (or SAVEPOINT when already inside one)
+     * so a failure cannot abort the outer Pest / RefreshDatabase transaction
+     * and blind later checks — the PostgreSQL abort that hid C37.
+     * Side effects are rolled back whether the callback passes or throws.
+     *
+     * @template TReturn
+     *
+     * @param  callable(): TReturn  $callback
+     * @return TReturn
+     */
+    public function isolate(callable $callback): mixed
+    {
+        $connection = $this->connection();
+
+        if ($connection->transactionLevel() === 0) {
+            $connection->beginTransaction();
+
+            try {
+                $result = $callback();
+                $connection->rollBack();
+
+                return $result;
+            } catch (\Throwable $exception) {
+                $connection->rollBack();
+
+                throw $exception;
+            }
+        }
+
+        $savepoint = 'conformance_'.bin2hex(random_bytes(4));
+        $pdo = $connection->getPdo();
+        $pdo->exec('SAVEPOINT '.$savepoint);
+
+        try {
+            $result = $callback();
+            $pdo->exec('ROLLBACK TO SAVEPOINT '.$savepoint);
+            $pdo->exec('RELEASE SAVEPOINT '.$savepoint);
+
+            return $result;
+        } catch (\Throwable $exception) {
+            try {
+                $pdo->exec('ROLLBACK TO SAVEPOINT '.$savepoint);
+                $pdo->exec('RELEASE SAVEPOINT '.$savepoint);
+            } catch (\Throwable) {
+                // Connection may already be unusable; rethrow the original.
+            }
+
+            throw $exception;
+        }
     }
 }
