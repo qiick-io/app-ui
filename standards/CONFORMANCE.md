@@ -27,6 +27,7 @@ via the reusable [`.github/workflows/conformance.yml`](../.github/workflows/conf
         "publicIdColumn": "public_id",
         "apiPrefix": "api/v1",
         "usesSpatieTeams": true,
+        "usesLaravelAccess": false,
         "hasOrganisations": true,
         "hasUserGroups": true,
         "hasPrincipals": true,
@@ -95,10 +96,17 @@ MySQL).
 | C35 | file      | `graphify-out/` ignored                                                                                                                              | [core-hardening](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-20-core-hardening.md)                                                            |
 | C36 | file      | Never call `permission:setup-teams`                                                                                                                  | [fleet-core-schema](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-19-fleet-core-schema.md)                                                      |
 | C37 | file      | Divergence metadata: reason, decision, review_by; no unknown/expired/stale (including a declared hook reduced to a no-op); each check is isolated    | [core-hardening](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-20-core-hardening.md)                                                            |
+| C7  | behaviour | Soft-deleted group grants no permission                                                                                                              | [roles-groups](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-19-roles-groups-initial-admin-and-username.md)                                     |
+| C71 | behaviour | `permission.events_enabled === true`; role detach clears the access resolver (skipped unless `usesLaravelAccess`)                                    | [laravel-access](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-22-laravel-access-package.md)                                                    |
+| C72 | schema    | With teams on: `team_foreign_key=organisation_id` and UUID team columns (usesLaravelAccess; PG+MySQL)                                                | [laravel-access](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-22-laravel-access-package.md)                                                    |
+| C73 | behaviour | Expired group membership grants nothing, including super-admin through a group (usesLaravelAccess)                                                   | [laravel-access](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-22-laravel-access-package.md)                                                    |
+| C74 | behaviour | Role/group/membership activity properties use public UUIDs only (usesLaravelAccess)                                                                  | [laravel-access](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-22-laravel-access-package.md)                                                    |
+| C75 | schema    | Access group tables (`user_groups.public_id`/`metadata`, `user_group_user.expires_at` dateTime, `user_group_role`); no migration alters Spatie roles | [laravel-access](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-22-laravel-access-package.md)                                                    |
 
 Source of the ordered list: merged OpenCode cross-review §5 and Cursor cross-review §5
 (2026-11-20), with Cursor's `permission:setup-teams` check kept as C36 and the
-divergence meta-check as C37.
+divergence meta-check as C37. C71–C75 are AC13–AC17 from the laravel-access
+standards review (2026-11-22), numbered after C70.
 
 ## Runner isolation (C3 / C37)
 
@@ -115,10 +123,10 @@ no-op **without** a divergence (for example an empty `assertTeamSwitch`) stays
 green: proving the hook exercises real product behaviour is the product's
 responsibility.
 
-## Access-package checks (C71+)
+## Access-package checks (C71–C75)
 
-The access-package conformance checks from
-`knowledge/projects/qiick/packages/laravel-access-standards-review.md` §3.3
-(AC13–AC17: `events_enabled`, Spatie team helper, expired membership, audit
-property shape, package group migrations) are numbered after C70 and land in a
-follow-up PR once `qiick/laravel-access` exposes the surfaces they assert.
+Set `conformance.usesLaravelAccess: true` when the product adopts
+`qiick/laravel-access`. Until then the five checks are no-ops. Behaviour hooks:
+`assertRoleDetachClearsResolver` (C71), `assertExpiredMembershipGrantsNothing`
+(C73), `assertAccessActivityUuidOnly` (C74). Source:
+`knowledge/projects/qiick/packages/laravel-access-standards-review.md` §3.3.

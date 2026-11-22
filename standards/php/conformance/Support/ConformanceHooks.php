@@ -16,6 +16,7 @@ namespace Qiick\Standards\Conformance\Support;
  *     apiPrefix?: string,
  *     openApiPath?: string,
  *     usesSpatieTeams?: bool,
+ *     usesLaravelAccess?: bool,
  *     hasOrganisations?: bool,
  *     hasUserGroups?: bool,
  *     hasPrincipals?: bool,

@@ -34,4 +34,7 @@ return [
     // 'assertSuperAdmin' => function (): void { ... },
     // 'assertApiResourcesHideBigints' => function (): void { ... },
     // 'assertEncryptedCasts' => function (): void { ... },
+    // 'assertRoleDetachClearsResolver' => function (): void { ... }, // C71
+    // 'assertExpiredMembershipGrantsNothing' => function (): void { ... }, // C73
+    // 'assertAccessActivityUuidOnly' => function (): void { ... }, // C74
 ];

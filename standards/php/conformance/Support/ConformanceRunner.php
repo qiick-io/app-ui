@@ -86,6 +86,11 @@ final class ConformanceRunner
             'C35' => $this->c35GraphifyIgnored(),
             'C36' => $this->c36NoSetupTeams(),
             'C37' => null, // meta-check handled by the suite runner
+            'C71' => $this->c71AccessEventsAndResolver(),
+            'C72' => $this->c72AccessSpatieTeams(),
+            'C73' => $this->c73AccessExpiredMembership(),
+            'C74' => $this->c74AccessActivityUuids(),
+            'C75' => $this->c75AccessGroupMigrations(),
             default => throw new \RuntimeException("No runner for {$check['id']}."),
         };
     }
@@ -736,6 +741,183 @@ final class ConformanceRunner
         if ($hits !== []) {
             throw new \RuntimeException('permission:setup-teams must never be called: '.implode(', ', array_slice($hits, 0, 5)));
         }
+    }
+
+    /**
+     * AC13 → C71: Spatie events must fire so the access resolver can clear, plus a product hook.
+     */
+    private function c71AccessEventsAndResolver(): void
+    {
+        if (! $this->hooks->boolean('usesLaravelAccess', false)) {
+            return;
+        }
+
+        if (Config::get('permission.events_enabled') !== true) {
+            throw new \RuntimeException(
+                'permission.events_enabled must be true when usesLaravelAccess is set (access resolver cache).',
+            );
+        }
+
+        $this->hooks->requireCallable('assertRoleDetachClearsResolver');
+    }
+
+    /**
+     * AC14 → C72: Spatie teams column name and UUID types for the access package.
+     */
+    private function c72AccessSpatieTeams(): void
+    {
+        if (! $this->hooks->boolean('usesLaravelAccess', false)
+            || ! $this->hooks->boolean('usesSpatieTeams', false)) {
+            return;
+        }
+
+        if (! $this->schema->isEngineDependentDriver()) {
+            throw new \RuntimeException('C72 requires PostgreSQL or MySQL.');
+        }
+
+        $teamKey = Config::get('permission.column_names.team_foreign_key')
+            ?? Config::get('permission.team_foreign_key');
+
+        if ($teamKey !== 'organisation_id') {
+            throw new \RuntimeException(
+                "permission team_foreign_key must be organisation_id when usesLaravelAccess and teams are on, got {$teamKey}.",
+            );
+        }
+
+        foreach (['roles', 'model_has_roles', 'model_has_permissions'] as $table) {
+            $this->schema->assertTableExists($table);
+            $this->schema->assertColumnExists($table, 'organisation_id');
+
+            if (! $this->schema->columnTypeContains($table, 'organisation_id', 'uuid')
+                && ! $this->schema->columnTypeContains($table, 'organisation_id', 'char')
+                && ! $this->schema->columnTypeContains($table, 'organisation_id', 'guid')) {
+                throw new \RuntimeException("{$table}.organisation_id must be UUID-typed for laravel-access.");
+            }
+        }
+    }
+
+    /**
+     * AC15 → C73: expired memberships grant nothing through the real resolver.
+     */
+    private function c73AccessExpiredMembership(): void
+    {
+        if (! $this->hooks->boolean('usesLaravelAccess', false)) {
+            return;
+        }
+
+        $this->hooks->requireCallable('assertExpiredMembershipGrantsNothing');
+    }
+
+    /**
+     * AC16 → C74: access audit properties expose public UUIDs only.
+     */
+    private function c74AccessActivityUuids(): void
+    {
+        if (! $this->hooks->boolean('usesLaravelAccess', false)) {
+            return;
+        }
+
+        $this->hooks->requireCallable('assertAccessActivityUuidOnly');
+    }
+
+    /**
+     * AC17 → C75: package group-table shape, and no migration alters Spatie role tables.
+     */
+    private function c75AccessGroupMigrations(): void
+    {
+        if (! $this->hooks->boolean('usesLaravelAccess', false)) {
+            return;
+        }
+
+        $this->schema->assertTableExists('user_groups');
+        $this->schema->assertColumnExists('user_groups', 'public_id');
+        $this->schema->assertColumnExists('user_groups', 'metadata');
+        $this->schema->assertColumnExists('user_groups', 'deleted_at');
+
+        if (! $this->schema->hasUniqueIndexCovering('user_groups', 'public_id')
+            && ! $this->schema->hasUniqueIndexCovering('user_groups', 'public_id', 'deleted_at')) {
+            $found = false;
+
+            foreach ($this->schema->indexes('user_groups') as $index) {
+                if (($index['unique'] ?? false) && in_array('public_id', $index['columns'] ?? [], true)) {
+                    $found = true;
+                    break;
+                }
+            }
+
+            if (! $found) {
+                throw new \RuntimeException('user_groups.public_id must be unique.');
+            }
+        }
+
+        $membershipTable = 'user_group_user';
+        $this->schema->assertTableExists($membershipTable);
+        $this->schema->assertColumnExists($membershipTable, 'expires_at');
+
+        if ($this->schema->isEngineDependentDriver()
+            && ! $this->schema->isDateTimeNotTimestamp($membershipTable, 'expires_at')) {
+            throw new \RuntimeException('user_group_user.expires_at must be dateTime, not MySQL TIMESTAMP.');
+        }
+
+        if (! $this->schema->hasUniqueIndexCovering($membershipTable, 'user_group_id', 'user_id')
+            && ! $this->schema->hasUniqueIndexCovering($membershipTable, 'user_id', 'user_group_id')) {
+            throw new \RuntimeException('user_group_user must UNIQUE(user_group_id, user_id).');
+        }
+
+        $rolePivot = 'user_group_role';
+        $this->schema->assertTableExists($rolePivot);
+
+        if (! $this->schema->hasUniqueIndexCovering($rolePivot, 'user_group_id', 'role_id')
+            && ! $this->schema->hasUniqueIndexCovering($rolePivot, 'role_id', 'user_group_id')) {
+            throw new \RuntimeException('user_group_role must UNIQUE(user_group_id, role_id).');
+        }
+
+        $offenders = $this->migrationsThatAlterSpatieTables();
+
+        if ($offenders !== []) {
+            throw new \RuntimeException(
+                'laravel-access / product migrations must not alter Spatie role tables: '
+                .implode(', ', array_slice($offenders, 0, 8)),
+            );
+        }
+    }
+
+    /**
+     * Paths of migration files that Schema::table Spatie's owned tables (forbidden for the access package).
+     *
+     * @return list<string>
+     */
+    private function migrationsThatAlterSpatieTables(): array
+    {
+        $directories = [
+            $this->basePath.'/database/migrations',
+            $this->basePath.'/vendor/qiick/laravel-access/database/migrations',
+        ];
+        $spatieTables = ['roles', 'permissions', 'model_has_roles', 'model_has_permissions', 'role_has_permissions'];
+        $offenders = [];
+
+        foreach ($directories as $directory) {
+            if (! is_dir($directory)) {
+                continue;
+            }
+
+            foreach (File::files($directory) as $file) {
+                if ($file->getExtension() !== 'php') {
+                    continue;
+                }
+
+                $contents = $file->getContents();
+
+                foreach ($spatieTables as $table) {
+                    if (preg_match('/Schema::table\(\s*[\'"]'.$table.'[\'"]/', $contents) === 1) {
+                        $offenders[] = $file->getFilename();
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $offenders;
     }
 
     /**

@@ -26,4 +26,7 @@ return [
     'assertSuperAdmin' => static function (): void {},
     'assertApiResourcesHideBigints' => static function (): void {},
     'assertEncryptedCasts' => static function (): void {},
+    'assertRoleDetachClearsResolver' => static function (): void {},
+    'assertExpiredMembershipGrantsNothing' => static function (): void {},
+    'assertAccessActivityUuidOnly' => static function (): void {},
 ];

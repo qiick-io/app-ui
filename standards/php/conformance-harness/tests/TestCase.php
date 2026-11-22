@@ -18,6 +18,7 @@ abstract class TestCase extends OrchestraTestCase
 
         config([
             'permission.teams' => true,
+            'permission.events_enabled' => true,
             'permission.column_names.team_foreign_key' => 'organisation_id',
             'super_admin' => [
                 'first_name' => 'Super',
