@@ -8,6 +8,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Fixed
+
+- Conformance C75 (AC17): require nullable `user_groups.organisation_id`, non-null `is_instance`, and the XOR constraint (`is_instance` true only with `organisation_id` NULL), matching qiick/laravel-access#8. Externa 1.x keeps the columns unused and stays green.
+
 ## [0.13.0] - 2026-11-22
 
 ### Added
