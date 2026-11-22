@@ -8,9 +8,14 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Added
+
+- Conformance C71–C75 (`usesLaravelAccess`): laravel-access review AC13–AC17 — `events_enabled` + resolver clear, Spatie team UUID helper, expired membership, UUID-only access activity properties, package group-table shape with no Spatie-table alterations. Skipped until the product sets the flag. RED/GREEN proofs in the harness.
+
 ### Fixed
 
-- Conformance runner gaps from fleet re-reviews (#208, #209): C3 creates a real fixture user; every check (C37 included) runs in its own transaction/SAVEPOINT so a PostgreSQL abort cannot blind later checks; C37 asserts for real and goes red when a declared hook is a no-op; C10 rejects cascade on `api_keys.owner_id` and `principals.user_id`; C11 requires `previous_key_valid_until` as dateTime; C26 matches exact path+method pairs and honours the OpenAPI `servers` prefix; C29/C4/C5 skip only when `permission.teams` is really off and go red when teams are on with a wrong declaration or `team_foreign_key`; C2 requires `principals.organisation_id` NOT NULL with organisations and accepts `principals` as `membershipTable`. Access-package checks (C71+) deferred to a follow-up. Affects every PHP app on the next pin bump and re-sync.
+- Conformance C71–C75 review hardenings (#217): C75 verifies the migrated Spatie schema against a column allowlist (catches `Schema::table($var)` / `ALTER TABLE`) and keeps the migration scan as an extra signal (variable assignment, raw DDL, comment strip); C71/C73/C74 require `ConformanceBehaviourProbe::pass()` so empty no-op hooks stay red; C71 also asserts `register_permission_check_method === false` and `assertApiActorDeniedSuperAdmin`; C75 asserts `user_groups.name` unique and `expires_at` / `user_id` / `role_id` indexes.
+- Conformance runner gaps from fleet re-reviews (#208, #209): C3 creates a real fixture user; every check (C37 included) runs in its own transaction/SAVEPOINT so a PostgreSQL abort cannot blind later checks; C37 asserts for real and goes red when a declared hook is a no-op; C10 rejects cascade on `api_keys.owner_id` and `principals.user_id`; C11 requires `previous_key_valid_until` as dateTime; C26 matches exact path+method pairs and honours the OpenAPI `servers` prefix; C29/C4/C5 skip only when `permission.teams` is really off and go red when teams are on with a wrong declaration or `team_foreign_key`; C2 requires `principals.organisation_id` NOT NULL with organisations and accepts `principals` as `membershipTable`. Affects every PHP app on the next pin bump and re-sync.
 
 ### Changed
 

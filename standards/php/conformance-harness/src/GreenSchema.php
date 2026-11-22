@@ -98,22 +98,29 @@ final class GreenSchema
             $table->unsignedBigInteger('role_id');
         });
 
+        // laravel-access package shape (§2.4–2.6): standard names + public_id / metadata / expires_at.
         Schema::create('user_groups', function (Blueprint $table): void {
             $table->id();
-            $table->string('name');
+            $table->uuid('public_id')->unique();
+            $table->string('name')->unique();
+            $table->text('description')->nullable();
+            $table->json('metadata')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
 
-        Schema::create('group_user', function (Blueprint $table): void {
+        Schema::create('user_group_user', function (Blueprint $table): void {
             $table->foreignId('user_group_id');
-            $table->foreignId('user_id');
+            $table->foreignId('user_id')->index();
+            $table->dateTime('expires_at')->nullable()->index();
+            $table->timestamps();
             $table->unique(['user_group_id', 'user_id']);
         });
 
-        Schema::create('group_role', function (Blueprint $table): void {
+        Schema::create('user_group_role', function (Blueprint $table): void {
             $table->foreignId('user_group_id');
-            $table->foreignId('role_id');
+            $table->foreignId('role_id')->index();
+            $table->timestamps();
             $table->unique(['user_group_id', 'role_id']);
         });
 

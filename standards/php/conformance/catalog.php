@@ -244,4 +244,35 @@ return [
         'description' => 'Every conformance divergence has reason, decision and review_by; unknown ids fail; expired review_by fails; stale (still green, including a no-op hook) declarations fail',
         'decision' => 'knowledge/decisions/2026-11-20-core-hardening',
     ],
+    // C71–C75: qiick/laravel-access (review AC13–AC17). Skipped unless usesLaravelAccess.
+    [
+        'id' => 'C71',
+        'tag' => 'behaviour',
+        'description' => 'events_enabled true, register_permission_check_method false; role detach clears resolver and API actors are denied super-admin (proved hooks; usesLaravelAccess)',
+        'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
+    ],
+    [
+        'id' => 'C72',
+        'tag' => 'schema',
+        'description' => 'When Spatie teams are really on: team_foreign_key is organisation_id and the three team columns are uuid (usesLaravelAccess; skips when teams are off, e.g. externa 1.x; UUID probe needs PG+MySQL)',
+        'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
+    ],
+    [
+        'id' => 'C73',
+        'tag' => 'behaviour',
+        'description' => 'An expired group membership grants nothing, including super-admin through a group (proved hook; usesLaravelAccess)',
+        'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
+    ],
+    [
+        'id' => 'C74',
+        'tag' => 'behaviour',
+        'description' => 'Role, group and membership activity properties carry public UUIDs only — never bigint ids (proved hook; usesLaravelAccess)',
+        'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
+    ],
+    [
+        'id' => 'C75',
+        'tag' => 'schema',
+        'description' => 'Access group tables + indexes; Spatie tables match the column allowlist on the migrated schema; migration scan is an extra signal (usesLaravelAccess)',
+        'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
+    ],
 ];

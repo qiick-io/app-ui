@@ -65,8 +65,9 @@ function runCheck(string $id): void
  */
 function greenSchemaCheckIds(): array
 {
-    // C3/C5/C11/C15 need PostgreSQL or MySQL (see engine-dependent probes).
-    return ['C1', 'C2', 'C4', 'C6', 'C9', 'C10', 'C12', 'C14', 'C16', 'C18', 'C26', 'C33', 'C34', 'C35', 'C36'];
+    // C3/C5/C11/C15/C72 need PostgreSQL or MySQL (see engine-dependent probes).
+    // C75 is schema/file and runs on every engine when usesLaravelAccess is true.
+    return ['C1', 'C2', 'C4', 'C6', 'C9', 'C10', 'C12', 'C14', 'C16', 'C18', 'C26', 'C33', 'C34', 'C35', 'C36', 'C75'];
 }
 
 /**
@@ -76,7 +77,11 @@ function greenSchemaCheckIds(): array
  */
 function hookedBehaviourCheckIds(): array
 {
-    return ['C7', 'C8', 'C13', 'C17', 'C19', 'C20', 'C21', 'C22', 'C23', 'C24', 'C25', 'C27', 'C28', 'C29', 'C30', 'C31', 'C32'];
+    return [
+        'C7', 'C8', 'C13', 'C17', 'C19', 'C20', 'C21', 'C22', 'C23', 'C24', 'C25',
+        'C27', 'C28', 'C29', 'C30', 'C31', 'C32',
+        'C71', 'C73', 'C74',
+    ];
 }
 
 beforeEach(function (): void {
@@ -656,6 +661,261 @@ YAML);
             'decision' => 'knowledge/decisions/2026-11-19-roles-groups-initial-admin-and-username',
         ]))->toThrow(RuntimeException::class, 'hooks.php');
     });
+
+    it('C71 goes red when permission.events_enabled is false', function (): void {
+        GreenSchema::migrate();
+        config(['permission.events_enabled' => false]);
+
+        expect(fn () => runCheck('C71'))
+            ->toThrow(RuntimeException::class, 'permission.events_enabled must be true');
+    });
+
+    it('C71 goes red when register_permission_check_method is still on', function (): void {
+        GreenSchema::migrate();
+        config(['permission.register_permission_check_method' => true]);
+
+        expect(fn () => runCheck('C71'))
+            ->toThrow(RuntimeException::class, 'register_permission_check_method must be false');
+    });
+
+    it('C71 goes red when the resolver-clear hook is missing', function (): void {
+        GreenSchema::migrate();
+        $runner = new ConformanceRunner(
+            harnessBasePath(),
+            new ConformanceHooks(['usesLaravelAccess' => true], []),
+            new SchemaInspector(),
+        );
+
+        expect(fn () => $runner->run(catalogById()['C71']))
+            ->toThrow(RuntimeException::class, 'assertRoleDetachClearsResolver');
+    });
+
+    it('C71 goes red when the resolver-clear hook is a no-op', function (): void {
+        GreenSchema::migrate();
+        $runner = new ConformanceRunner(
+            harnessBasePath(),
+            new ConformanceHooks(['usesLaravelAccess' => true], [
+                'assertRoleDetachClearsResolver' => static function (): void {},
+                'assertApiActorDeniedSuperAdmin' => static function ($probe): void {
+                    $probe->pass();
+                },
+            ]),
+            new SchemaInspector(),
+        );
+
+        expect(fn () => $runner->run(catalogById()['C71']))
+            ->toThrow(RuntimeException::class, 'did not prove the behaviour');
+    });
+
+    it('C71 goes red when the API-actor hook is missing', function (): void {
+        GreenSchema::migrate();
+        $runner = new ConformanceRunner(
+            harnessBasePath(),
+            new ConformanceHooks(['usesLaravelAccess' => true], [
+                'assertRoleDetachClearsResolver' => static function ($probe): void {
+                    $probe->pass();
+                },
+            ]),
+            new SchemaInspector(),
+        );
+
+        expect(fn () => $runner->run(catalogById()['C71']))
+            ->toThrow(RuntimeException::class, 'assertApiActorDeniedSuperAdmin');
+    });
+
+    it('C73 goes red when the expired-membership hook is missing', function (): void {
+        GreenSchema::migrate();
+        $runner = new ConformanceRunner(
+            harnessBasePath(),
+            new ConformanceHooks(['usesLaravelAccess' => true], []),
+            new SchemaInspector(),
+        );
+
+        expect(fn () => $runner->run(catalogById()['C73']))
+            ->toThrow(RuntimeException::class, 'assertExpiredMembershipGrantsNothing');
+    });
+
+    it('C73 goes red when the expired-membership hook is a no-op', function (): void {
+        GreenSchema::migrate();
+        $runner = new ConformanceRunner(
+            harnessBasePath(),
+            new ConformanceHooks(['usesLaravelAccess' => true], [
+                'assertExpiredMembershipGrantsNothing' => static function (): void {},
+            ]),
+            new SchemaInspector(),
+        );
+
+        expect(fn () => $runner->run(catalogById()['C73']))
+            ->toThrow(RuntimeException::class, 'did not prove the behaviour');
+    });
+
+    it('C74 goes red when the access-activity UUID hook is missing', function (): void {
+        GreenSchema::migrate();
+        $runner = new ConformanceRunner(
+            harnessBasePath(),
+            new ConformanceHooks(['usesLaravelAccess' => true], []),
+            new SchemaInspector(),
+        );
+
+        expect(fn () => $runner->run(catalogById()['C74']))
+            ->toThrow(RuntimeException::class, 'assertAccessActivityUuidOnly');
+    });
+
+    it('C74 goes red when the access-activity UUID hook is a no-op', function (): void {
+        GreenSchema::migrate();
+        $runner = new ConformanceRunner(
+            harnessBasePath(),
+            new ConformanceHooks(['usesLaravelAccess' => true], [
+                'assertAccessActivityUuidOnly' => static function (): void {},
+            ]),
+            new SchemaInspector(),
+        );
+
+        expect(fn () => $runner->run(catalogById()['C74']))
+            ->toThrow(RuntimeException::class, 'did not prove the behaviour');
+    });
+
+    it('C75 goes red when user_groups.public_id is missing', function (): void {
+        GreenSchema::migrate();
+        Schema::drop('user_group_role');
+        Schema::drop('user_group_user');
+        Schema::drop('user_groups');
+        Schema::create('user_groups', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name')->unique();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+        Schema::create('user_group_user', function (Blueprint $table): void {
+            $table->foreignId('user_group_id');
+            $table->foreignId('user_id')->index();
+            $table->dateTime('expires_at')->nullable()->index();
+            $table->timestamps();
+            $table->unique(['user_group_id', 'user_id']);
+        });
+        Schema::create('user_group_role', function (Blueprint $table): void {
+            $table->foreignId('user_group_id');
+            $table->foreignId('role_id')->index();
+            $table->timestamps();
+            $table->unique(['user_group_id', 'role_id']);
+        });
+
+        expect(fn () => runCheck('C75'))->toThrow(RuntimeException::class, 'public_id');
+    });
+
+    it('C75 goes red when a literal Schema::table alters Spatie roles', function (): void {
+        GreenSchema::migrate();
+        $dir = harnessBasePath().'/database/migrations';
+        @mkdir($dir, 0777, true);
+        $file = $dir.'/2026_11_22_000000_add_access_column_to_roles_table.php';
+        file_put_contents(
+            $file,
+            "<?php\nuse Illuminate\\Support\\Facades\\Schema;\nSchema::table('roles', function (\$table) { \$table->string('bad'); });\n",
+        );
+
+        try {
+            expect(fn () => runCheck('C75'))
+                ->toThrow(RuntimeException::class, 'must not alter Spatie role tables');
+        } finally {
+            @unlink($file);
+        }
+    });
+
+    it('C75 goes red when Schema::table uses a variable Spatie table name', function (): void {
+        GreenSchema::migrate();
+        $dir = harnessBasePath().'/database/migrations';
+        @mkdir($dir, 0777, true);
+        $file = $dir.'/2026_11_22_fn_alter_roles.php';
+        file_put_contents(
+            $file,
+            "<?php\nuse Illuminate\\Support\\Facades\\Schema;\n\$tableName = 'roles';\nSchema::table(\$tableName, function (\$table) { \$table->string('bad'); });\n",
+        );
+
+        try {
+            expect(fn () => runCheck('C75'))
+                ->toThrow(RuntimeException::class, 'must not alter Spatie role tables');
+        } finally {
+            @unlink($file);
+        }
+    });
+
+    it('C75 goes red when a migration uses ALTER TABLE on Spatie roles', function (): void {
+        GreenSchema::migrate();
+        $dir = harnessBasePath().'/database/migrations';
+        @mkdir($dir, 0777, true);
+        $file = $dir.'/2026_11_22_alter_roles_sql.php';
+        file_put_contents(
+            $file,
+            "<?php\nuse Illuminate\\Support\\Facades\\DB;\nDB::statement(\"ALTER TABLE roles ADD bad varchar(10)\");\n",
+        );
+
+        try {
+            expect(fn () => runCheck('C75'))
+                ->toThrow(RuntimeException::class, 'must not alter Spatie role tables');
+        } finally {
+            @unlink($file);
+        }
+    });
+
+    it('C75 goes red when the migrated Spatie schema has an extra column', function (): void {
+        GreenSchema::migrate();
+        Schema::table('roles', function (Blueprint $table): void {
+            $table->string('bad')->nullable();
+        });
+
+        expect(fn () => runCheck('C75'))
+            ->toThrow(RuntimeException::class, 'unexpected column "bad"');
+    });
+
+    it('C75 goes red when user_group_user.expires_at has no index', function (): void {
+        GreenSchema::migrate();
+        Schema::drop('user_group_user');
+        Schema::create('user_group_user', function (Blueprint $table): void {
+            $table->foreignId('user_group_id');
+            $table->foreignId('user_id')->index();
+            $table->dateTime('expires_at')->nullable();
+            $table->timestamps();
+            $table->unique(['user_group_id', 'user_id']);
+        });
+
+        expect(fn () => runCheck('C75'))
+            ->toThrow(RuntimeException::class, 'expires_at must be indexed');
+    });
+
+    it('C75 stays green when Schema::table appears only in a comment', function (): void {
+        GreenSchema::migrate();
+        $dir = harnessBasePath().'/database/migrations';
+        @mkdir($dir, 0777, true);
+        $file = $dir.'/2026_11_22_comment_only.php';
+        file_put_contents(
+            $file,
+            "<?php\n// Schema::table('roles', function (\$table) { \$table->string('bad'); });\n",
+        );
+
+        try {
+            runCheck('C75');
+            expect(true)->toBeTrue();
+        } finally {
+            @unlink($file);
+        }
+    });
+
+    it('C75 goes red when user_group_user.expires_at is a MySQL TIMESTAMP', function (): void {
+        if (! in_array(Schema::getConnection()->getDriverName(), ['mysql', 'mariadb'], true)) {
+            $this->markTestSkipped('TIMESTAMP vs DATETIME is a MySQL semantics check.');
+        }
+
+        GreenSchema::migrate();
+        Schema::table('user_group_user', function (Blueprint $table): void {
+            $table->dropColumn('expires_at');
+        });
+        Schema::table('user_group_user', function (Blueprint $table): void {
+            $table->timestamp('expires_at')->nullable()->index();
+        });
+
+        expect(fn () => runCheck('C75'))
+            ->toThrow(RuntimeException::class, 'expires_at must be dateTime');
+    });
 });
 
 describe('engine-dependent probes', function (): void {
@@ -701,6 +961,54 @@ describe('engine-dependent probes', function (): void {
 
         GreenSchema::migrate();
         runCheck('C5');
+        expect(true)->toBeTrue();
+    });
+
+    it('C72 goes green when access Spatie team columns are UUID', function (): void {
+        if (! in_array(Schema::getConnection()->getDriverName(), ['pgsql', 'mysql', 'mariadb'], true)) {
+            $this->markTestSkipped('C72 requires PostgreSQL or MySQL.');
+        }
+
+        GreenSchema::migrate();
+        runCheck('C72');
+        expect(true)->toBeTrue();
+    });
+
+    it('C72 goes red when organisation_id is unsignedBigInteger', function (): void {
+        if (! in_array(Schema::getConnection()->getDriverName(), ['pgsql', 'mysql', 'mariadb'], true)) {
+            $this->markTestSkipped('C72 requires PostgreSQL or MySQL.');
+        }
+
+        GreenSchema::migrate();
+        Schema::drop('roles');
+        Schema::create('roles', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('guard_name');
+            $table->unsignedBigInteger('organisation_id')->nullable();
+            $table->timestamps();
+        });
+
+        expect(fn () => runCheck('C72'))
+            ->toThrow(RuntimeException::class, 'organisation_id must be UUID-typed');
+    });
+
+    it('C72 skips when teams are really off (externa 1.x keeps team_id)', function (): void {
+        GreenSchema::migrate();
+        config([
+            'permission.teams' => false,
+            'permission.column_names.team_foreign_key' => 'team_id',
+        ]);
+        $runner = new ConformanceRunner(
+            harnessBasePath(),
+            new ConformanceHooks([
+                'usesLaravelAccess' => true,
+                'usesSpatieTeams' => false,
+            ], []),
+            new SchemaInspector(),
+        );
+
+        $runner->run(catalogById()['C72']);
         expect(true)->toBeTrue();
     });
 });
