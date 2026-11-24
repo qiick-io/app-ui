@@ -221,9 +221,38 @@ test('PHP repos get the backend conventions', () => {
     syncStandards(frontendOnlyRepo, { isCheck: false });
 
     assert.match(read(laravelRepo, 'AGENTS.md'), /^## Backend conventions$/m);
+    assert.match(read(laravelRepo, 'AGENTS.md'), /^## Fleet conventions$/m);
+    assert.match(
+        read(laravelRepo, '.qiick/standards/conventions.md'),
+        /^## F14 Test fakes in `Testing`$/m,
+    );
     assert.doesNotMatch(
         read(frontendOnlyRepo, 'AGENTS.md'),
-        /Backend conventions/,
+        /Backend conventions|Fleet conventions/,
+    );
+});
+
+test('the fleet convention checks run only in a repo that adopted them', () => {
+    const files = {
+        'composer.json': JSON.stringify({ name: 'qiick/laravel-demo' }),
+        'config/demo.php': "<?php return ['timeout' => env('TIMEOUT')];",
+    };
+    const conventionErrors = (config) => {
+        const root = makeRepo(config, files);
+
+        syncStandards(root, { isCheck: false });
+
+        return syncStandards(root, { isCheck: true }).filter((message) =>
+            message.startsWith('conventions'),
+        );
+    };
+
+    assert.deepEqual(conventionErrors({ php: true, package: true }), []);
+    assert.match(
+        conventionErrors({ php: true, package: true, conventions: {} }).join(
+            '\n',
+        ),
+        /F7 .*env\('TIMEOUT'\) does not start with DEMO_/,
     );
 });
 

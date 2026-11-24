@@ -1,0 +1,315 @@
+{
+    "$comment": "Fleet registry of machine error codes (the JSON `error` member). One code, one meaning, one owner. Rules: standards/rules/conventions.md (F11). sharedOwners: codes any repo may emit with the same meaning. replacedBy: a duplicate the owner removes before its 1.0 (or in its next major).",
+    "sharedOwners": ["laravel-http-basics", "oauth"],
+    "codes": [
+        {
+            "code": "validation_failed",
+            "owner": "laravel-http-basics",
+            "description": "Request body or fields failed validation (422)."
+        },
+        {
+            "code": "unauthenticated",
+            "owner": "laravel-http-basics",
+            "description": "Authentication is required or the credential is invalid (401)."
+        },
+        {
+            "code": "forbidden",
+            "owner": "laravel-http-basics",
+            "description": "The caller is authenticated but not allowed to perform this action (403)."
+        },
+        {
+            "code": "not_found",
+            "owner": "laravel-http-basics",
+            "description": "The requested resource or route does not exist (404)."
+        },
+        {
+            "code": "method_not_allowed",
+            "owner": "laravel-http-basics",
+            "description": "The HTTP method is not allowed for this route (405)."
+        },
+        {
+            "code": "too_many_requests",
+            "owner": "laravel-http-basics",
+            "description": "The caller exceeded a rate limit (429)."
+        },
+        {
+            "code": "conflict",
+            "owner": "laravel-http-basics",
+            "description": "The request conflicts with the current resource state (409)."
+        },
+        {
+            "code": "unsupported_media_type",
+            "owner": "laravel-http-basics",
+            "description": "The request Content-Type is not supported (415)."
+        },
+        {
+            "code": "service_unavailable",
+            "owner": "laravel-http-basics",
+            "description": "The service is temporarily unavailable (503)."
+        },
+        {
+            "code": "http_error",
+            "owner": "laravel-http-basics",
+            "description": "Other client HTTP error without a more specific fleet code (4xx)."
+        },
+        {
+            "code": "server_error",
+            "owner": "laravel-http-basics",
+            "description": "Unexpected server failure (5xx)."
+        },
+        {
+            "code": "idempotency_key_required",
+            "owner": "laravel-http-basics",
+            "description": "Idempotency-Key header is required on this route."
+        },
+        {
+            "code": "idempotency_key_invalid",
+            "owner": "laravel-http-basics",
+            "description": "Idempotency-Key header failed format validation."
+        },
+        {
+            "code": "idempotency_payload_mismatch",
+            "owner": "laravel-http-basics",
+            "description": "Payload fingerprint does not match the original claim."
+        },
+        {
+            "code": "idempotency_in_progress",
+            "owner": "laravel-http-basics",
+            "description": "Another request with this key is still in progress."
+        },
+        {
+            "code": "idempotency_not_replayable",
+            "owner": "laravel-http-basics",
+            "description": "The prior response cannot be replayed."
+        },
+        {
+            "code": "idempotency_unavailable",
+            "owner": "laravel-http-basics",
+            "description": "The idempotency store could not be reached."
+        },
+        {
+            "code": "idempotency_unsupported_media",
+            "owner": "laravel-http-basics",
+            "description": "Idempotent routes require application/json or application/*+json."
+        },
+        {
+            "code": "upload_forbidden_type",
+            "owner": "laravel-http-basics",
+            "description": "The file type is blocked by the upload security floor."
+        },
+        {
+            "code": "upload_type_not_allowed",
+            "owner": "laravel-http-basics",
+            "description": "The file type is not allowed in this upload context."
+        },
+        {
+            "code": "upload_content_mismatch",
+            "owner": "laravel-http-basics",
+            "description": "The file content does not match its declared type, or the archive cannot be read safely."
+        },
+        {
+            "code": "upload_too_large",
+            "owner": "laravel-http-basics",
+            "description": "The file, or an archive once inflated, exceeds the upload limits."
+        },
+        {
+            "code": "upload_name_invalid",
+            "owner": "laravel-http-basics",
+            "description": "The file name is invalid, or the uploaded file cannot be read."
+        },
+        {
+            "code": "upload_infected",
+            "owner": "laravel-http-basics",
+            "description": "The malware scanner flagged the file."
+        },
+        {
+            "code": "upload_scan_failed",
+            "owner": "laravel-http-basics",
+            "description": "The malware scanner could not inspect the file."
+        },
+        {
+            "code": "invalid_request",
+            "owner": "oauth",
+            "description": "RFC 6749: the request is missing a parameter or is malformed."
+        },
+        {
+            "code": "invalid_client",
+            "owner": "oauth",
+            "description": "RFC 6749: client authentication failed."
+        },
+        {
+            "code": "invalid_grant",
+            "owner": "oauth",
+            "description": "RFC 6749: the grant or refresh token is invalid, expired or revoked."
+        },
+        {
+            "code": "unauthorized_client",
+            "owner": "oauth",
+            "description": "RFC 6749: the client may not use this grant type."
+        },
+        {
+            "code": "unsupported_grant_type",
+            "owner": "oauth",
+            "description": "RFC 6749: the grant type is not supported."
+        },
+        {
+            "code": "invalid_scope",
+            "owner": "oauth",
+            "description": "RFC 6749: the requested scope is invalid or exceeds the grant."
+        },
+        {
+            "code": "access_denied",
+            "owner": "oauth",
+            "description": "RFC 6749: the resource owner or server denied the request."
+        },
+        {
+            "code": "temporarily_unavailable",
+            "owner": "oauth",
+            "description": "RFC 6749: the server cannot handle the request right now."
+        },
+        {
+            "code": "invalid_token",
+            "owner": "oauth",
+            "description": "RFC 6750: the access token is missing, expired, revoked or malformed."
+        },
+        {
+            "code": "insufficient_scope",
+            "owner": "oauth",
+            "description": "RFC 6750: the token lacks the scope this request needs."
+        },
+        {
+            "code": "invalid_redirect_uri",
+            "owner": "oauth",
+            "description": "RFC 7591: a registered redirect URI is not allowed."
+        },
+        {
+            "code": "invalid_client_metadata",
+            "owner": "oauth",
+            "description": "RFC 7591: a client metadata value is invalid."
+        },
+        {
+            "code": "ip_not_allowed",
+            "owner": "laravel-api-keys",
+            "description": "The API key may not be used from this IP address."
+        },
+        {
+            "code": "request_not_allowed",
+            "owner": "laravel-api-keys",
+            "description": "The API key may not make this request (method, route or origin restriction)."
+        },
+        {
+            "code": "rate_limit_exceeded",
+            "owner": "laravel-api-keys",
+            "description": "The API key exceeded its rate limit.",
+            "replacedBy": "too_many_requests"
+        },
+        {
+            "code": "bad_request",
+            "owner": "signaculum-core",
+            "description": "Generic client error without a more specific code.",
+            "replacedBy": "http_error"
+        },
+        {
+            "code": "write_disabled",
+            "owner": "instituta-core",
+            "description": "Writes are switched off for this instance or key."
+        },
+        {
+            "code": "ability_missing",
+            "owner": "instituta-core",
+            "description": "The API key lacks the ability this operation needs."
+        },
+        {
+            "code": "guest_refused",
+            "owner": "instituta-core",
+            "description": "Guests may not perform this operation."
+        },
+        {
+            "code": "out_of_perimeter",
+            "owner": "instituta-core",
+            "description": "The item is outside the perimeter of the key or user."
+        },
+        {
+            "code": "base_required",
+            "owner": "instituta-core",
+            "description": "The change must name the base revision it applies to."
+        },
+        {
+            "code": "stale_base",
+            "owner": "instituta-core",
+            "description": "The base revision is no longer the current one."
+        },
+        {
+            "code": "path_mismatch",
+            "owner": "instituta-core",
+            "description": "The path in the request does not match the item."
+        },
+        {
+            "code": "item_exists",
+            "owner": "instituta-core",
+            "description": "An item already exists at this path."
+        },
+        {
+            "code": "section_missing",
+            "owner": "instituta-core",
+            "description": "The section does not exist."
+        },
+        {
+            "code": "section_not_synced",
+            "owner": "instituta-core",
+            "description": "The section has not been synced yet."
+        },
+        {
+            "code": "invalid_change",
+            "owner": "instituta-core",
+            "description": "The change cannot be applied."
+        },
+        {
+            "code": "invalid_frontmatter",
+            "owner": "instituta-core",
+            "description": "The item frontmatter is invalid."
+        },
+        {
+            "code": "proposal_not_open",
+            "owner": "instituta-core",
+            "description": "The proposal is no longer open."
+        },
+        {
+            "code": "self_accept_refused",
+            "owner": "instituta-core",
+            "description": "An author may not accept their own proposal."
+        },
+        {
+            "code": "agent_accept_refused",
+            "owner": "instituta-core",
+            "description": "An agent may not accept a proposal."
+        },
+        {
+            "code": "quota_exceeded",
+            "owner": "instituta-core",
+            "description": "The usage quota is exhausted."
+        },
+        {
+            "code": "rate_limited",
+            "owner": "instituta-core",
+            "description": "The caller exceeded a rate limit.",
+            "replacedBy": "too_many_requests"
+        },
+        {
+            "code": "embeddings_disabled",
+            "owner": "instituta-core",
+            "description": "Embeddings are switched off for this instance."
+        },
+        {
+            "code": "search_unsupported",
+            "owner": "instituta-core",
+            "description": "The configured database does not support this search (501)."
+        },
+        {
+            "code": "request_failed",
+            "owner": "instituta-core",
+            "description": "Generic failure without a more specific code; replaced by http_error for a 4xx and server_error for a 5xx.",
+            "replacedBy": "server_error"
+        }
+    ]
+}
