@@ -51,13 +51,13 @@ The fleet checklist for deciding when a qiick **product** (a self-hosted app, no
 
 ## 4. Supply chain
 
-| #   | Item                                                                                                  | Gate   | Status |
-| --- | ----------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 4.1 | Rulesets: release tags created by admins only and immutable; `main` takes merge commits only.         | Beta   |        |
-| 4.2 | `develop` and `main` change only through PRs with green required checks.                              | Beta   |        |
-| 4.3 | Dependabot runs weekly grouped updates and security updates.                                          | Beta   |        |
-| 4.4 | `minimum-stability: stable`, no `repositories` entries; reusable workflows and actions pinned by SHA. | Beta   |        |
-| 4.5 | Release tags are signed.                                                                              | Stable |        |
+| #   | Item                                                                                                                            | Gate   | Status |
+| --- | ------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 4.1 | Rulesets: release tags created by admins only and immutable; `main` takes merge commits only.                                   | Beta   |        |
+| 4.2 | `develop` and `main` change only through PRs with green required checks.                                                        | Beta   |        |
+| 4.3 | Dependabot alerts are on and dependency updates follow the fleet decision in force (2026-11-10: alerts only, no automatic PRs). | Beta   |        |
+| 4.4 | `minimum-stability: stable`, no `repositories` entries; reusable workflows and actions pinned by SHA.                           | Beta   |        |
+| 4.5 | Release tags are signed.                                                                                                        | Stable |        |
 
 ## 5. Distribution (self-hosted products only)
 
