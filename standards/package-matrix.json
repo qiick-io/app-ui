@@ -1,5 +1,5 @@
 {
-    "$comment": "Canonical Laravel/PHP compatibility matrix for every qiick Composer package. The reusable .github/workflows/package-matrix.yml outputs this JSON; packages consume it with fromJSON. Docs: docs/package-matrix.md.",
+    "$comment": "Canonical Laravel/PHP compatibility matrix and database targets for every qiick Composer package. The reusable .github/workflows/package-matrix.yml exports the PHP matrix with package exclusions and the non-SQLite database services; packages consume them with fromJSON. Docs: docs/package-matrix.md.",
     "matrix": {
         "php": ["8.3", "8.4", "8.5"],
         "laravel": ["12", "13"],
@@ -26,20 +26,41 @@
         {
             "name": "PostgreSQL 17",
             "connection": "pgsql",
-            "image": "postgres:17@sha256:223efeb196329b55b3b9a13db144956411dbc18e727e59f681c3e0aede6475cf",
-            "port": 5432
+            "image": "postgres:17@sha256:87c8b42f423b45d5247e6aa8fdb2e7762fec164c68a50fe3eb07e7bfcaf4dbcf",
+            "port": 5432,
+            "environment": {
+                "POSTGRES_HOST_AUTH_METHOD": "trust",
+                "POSTGRES_DB": "qiick_package"
+            },
+            "options": "--health-cmd=\"pg_isready -U postgres -d qiick_package\" --health-interval=5s --health-timeout=5s --health-retries=20",
+            "username": "postgres",
+            "password": ""
         },
         {
             "name": "MySQL 8.4",
             "connection": "mysql",
-            "image": "mysql:8.4@sha256:a81d043930e51745522bd5c430961cf8286f0a23f0a9a2a6e0108f7ea71b0902",
-            "port": 3306
+            "image": "mysql:8.4@sha256:8c233bad33d520a7aae1c1e619c3a9775f4a1ba2d463d692fada04ec7f40be00",
+            "port": 3306,
+            "environment": {
+                "MYSQL_ALLOW_EMPTY_PASSWORD": "yes",
+                "MYSQL_DATABASE": "qiick_package"
+            },
+            "options": "--health-cmd=\"mysqladmin ping -h 127.0.0.1\" --health-interval=5s --health-timeout=5s --health-retries=20",
+            "username": "root",
+            "password": ""
         },
         {
-            "name": "MariaDB 10.11",
+            "name": "MariaDB 11.4",
             "connection": "mariadb",
-            "image": "mariadb:10.11@sha256:e5fe75b2b9de0eb9f6f9a4d9c97272fb3a7480e389ccd487a786bab2a12cc0d7",
-            "port": 3306
+            "image": "mariadb:11.4@sha256:a8992b5e5404d11e03c54a31d0c1bdea3fd116d283aa6d1a627551f29045309b",
+            "port": 3306,
+            "environment": {
+                "MARIADB_ALLOW_EMPTY_ROOT_PASSWORD": "yes",
+                "MARIADB_DATABASE": "qiick_package"
+            },
+            "options": "--health-cmd=\"healthcheck.sh --connect --innodb_initialized\" --health-interval=5s --health-timeout=5s --health-retries=20",
+            "username": "root",
+            "password": ""
         }
     ]
 }

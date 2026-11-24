@@ -457,6 +457,30 @@ test('a committed merge=graphify line in .gitattributes fails the check', () => 
     assert.match(errors[0], /\.gitattributes must not contain merge=graphify/);
 });
 
+test('a package without opt-in is not required to consume the shared matrix', () => {
+    const root = makeRepo(
+        { ref: 'develop', php: true },
+        {
+            '.github/workflows/ci.yml': `
+name: CI
+jobs:
+  tests:
+    strategy:
+      matrix:
+        php: ['8.3']
+`,
+        },
+    );
+
+    syncStandards(root, { isCheck: false });
+
+    const errors = syncStandards(root, { isCheck: true }).filter((message) =>
+        message.startsWith('package matrix:'),
+    );
+
+    assert.deepEqual(errors, []);
+});
+
 test('a package:true repo without the shared matrix fails the check', () => {
     const root = makeRepo(
         { ref: 'develop', php: true, package: true },
