@@ -57,6 +57,23 @@ final class DemoServiceProvider {
     'src/Contracts/TokenStore.php': '<?php interface TokenStore {}',
     'src/Testing/InMemoryTokenStore.php':
         '<?php final class InMemoryTokenStore { private static $tokens = []; }',
+    'docs/public-api.md':
+        '# Public API\n\n## Deprecation policy\n\nRemoval in majors only.\n',
+    'tests/Arch/PublicApiTest.php':
+        "<?php file_get_contents(__DIR__.'/../../docs/public-api.md');",
+    'docs/security-checklist.md':
+        '| # | Property | Covering test | Status |\n| --- | --- | --- | --- |\n',
+    'docs/decisions/2026-11-24-token-lifetime.md':
+        '# 2026-11-24: Token lifetime\n\nWhy.\n',
+    'CHANGELOG.md':
+        '# Changelog\n\n## [Unreleased]\n\n## [1.0.0] - 2026-11-24\n\n[1.0.0]: https://github.com/qiick-io/laravel-demo/compare/v0.9.0...v1.0.0\n',
+    'UPGRADING.md': '# Upgrading\n\n## From 0.9.0 to 1.0.0\n',
+    'composer.json': JSON.stringify({
+        name: 'qiick/laravel-demo',
+        require: { 'qiick/laravel-outbound': '^1.0' },
+    }),
+    '.github/workflows/ci.yml':
+        'jobs:\n  test:\n    steps:\n      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2\n      - uses: ./.github/actions/setup\n',
     'database/migrations/2026_11_24_000000_create_demo_tokens_table.php': `<?php
 Schema::create('demo_tokens', function (Blueprint $table) {
     $table->id();
@@ -181,6 +198,29 @@ final class PruneTokensCommand {
                 'src/FakeTokenStore.php': '<?php final class FakeTokenStore {}',
             },
         ],
+        [
+            'F12',
+            {
+                'docs/decisions/2026-11-24-token-lifetime.md':
+                    '# Token lifetime\n',
+            },
+        ],
+        [
+            'F13',
+            {
+                'composer.json': JSON.stringify({
+                    name: 'qiick/laravel-demo',
+                    require: { 'qiick/laravel-outbound': '^0.1' },
+                }),
+            },
+        ],
+        [
+            'F15',
+            {
+                '.github/workflows/ci.yml':
+                    'jobs:\n  test:\n    steps:\n      - uses: actions/checkout@v4\n',
+            },
+        ],
     ];
 
     for (const [conventionId, changes] of cases) {
@@ -227,6 +267,13 @@ final class PruneReportsCommand {
 }`,
             'routes/console.php':
                 "<?php Schedule::command('excubia:prune-reports')->daily();",
+            'app/Console/Commands/InstallCommand.php':
+                "<?php final class InstallCommand { protected $signature = 'excubia:install {--force}'; }",
+            'app/Console/Commands/UpgradeCommand.php':
+                "<?php #[Signature('excubia:upgrade')] final class UpgradeCommand {}",
+            'docs/beta-readiness.md': '# Beta readiness\n',
+            '.env.example': 'DB_CONNECTION=sqlite\n',
+            'phpunit.xml': '<env name="DB_DATABASE" value=":memory:"/>',
         },
         'qiick/excubia-app',
     );
@@ -302,4 +349,42 @@ test('the fleet error code registry has one entry per code', () => {
         }).length,
         3,
     );
+});
+
+test('F18 checks the product structure', () => {
+    const root = makeRepo(
+        {
+            '.env.example':
+                'DB_CONNECTION=mysql\nDB_DATABASE=excubia_app_beta3\n',
+            'phpunit.xml': '<phpunit />',
+        },
+        'qiick/excubia-app',
+    );
+    const errors = findConventionViolations(
+        root,
+        { app: true, conventions: {} },
+        { today: '2026-11-24' },
+    ).join('\n');
+
+    assert.match(errors, /docs\/beta-readiness\.md is missing/);
+    assert.match(errors, /no `excubia:install` command/);
+    assert.match(errors, /`excubia_app`, the app's one database/);
+    assert.match(errors, /phpunit\.xml does not pin DB_DATABASE/);
+});
+
+test('F13 lets a pre-release depend on a pre-release, never a stable release', () => {
+    const repoWith = (version, constraint) =>
+        makeRepo({
+            ...conformingPackage,
+            'CHANGELOG.md': `## [Unreleased]\n\n## [${version}] - 2026-11-24\n\n[${version}]: https://example.test/compare\n`,
+            'UPGRADING.md': `## ${version}\n`,
+            'composer.json': JSON.stringify({
+                name: 'qiick/laravel-demo',
+                require: { 'qiick/laravel-oidc': constraint },
+            }),
+        });
+
+    assert.deepEqual(brokenIds(repoWith('1.0.0-beta.2', '^1.0@beta')), []);
+    assert.deepEqual(brokenIds(repoWith('1.5.1', '^1.0@beta')), ['F13']);
+    assert.deepEqual(brokenIds(repoWith('0.4.0', '^0.1')), []);
 });
