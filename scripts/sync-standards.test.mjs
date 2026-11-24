@@ -152,6 +152,116 @@ test('the repo-owned conformance hooks file is written once and never overwritte
     assert.match(read(root, 'tests/Conformance/hooks.php'), /assertErasure/);
 });
 
+test('PHP repos get the erasure standard; only erasure:true repos get the suite', () => {
+    const appRepo = makeRepo({ php: true });
+    const packageRepo = makeRepo({ php: true, package: true });
+    const optedInPackageRepo = makeRepo({
+        php: true,
+        package: true,
+        erasure: true,
+    });
+    const optedOutPackageRepo = makeRepo({
+        php: true,
+        package: true,
+        erasure: false,
+    });
+
+    for (const root of [
+        appRepo,
+        packageRepo,
+        optedInPackageRepo,
+        optedOutPackageRepo,
+    ]) {
+        syncStandards(root, { isCheck: false });
+    }
+
+    assert.match(read(appRepo, 'AGENTS.md'), /^## Personal data erasure$/m);
+    assert.match(read(appRepo, '.qiick/standards/erasure.md'), /E14/);
+
+    for (const root of [appRepo, packageRepo, optedOutPackageRepo]) {
+        assert.equal(fs.existsSync(path.join(root, 'tests/Erasure')), false);
+    }
+
+    assert.match(
+        read(optedInPackageRepo, 'tests/Erasure/ErasureConformanceTest.php'),
+        /ErasureConformanceRunner::CHECKS/,
+    );
+    assert.ok(
+        fs.existsSync(
+            path.join(
+                optedInPackageRepo,
+                'tests/Erasure/Support/ErasureConformanceRunner.php',
+            ),
+        ),
+    );
+    assert.match(
+        read(optedInPackageRepo, 'tests/Erasure/fixture.php'),
+        /return null;/,
+    );
+    assert.deepEqual(
+        syncStandards(optedInPackageRepo, { isCheck: true }).filter((message) =>
+            message.includes('tests/Erasure'),
+        ),
+        [],
+    );
+});
+
+test('a package that has not opted in to erasure gets a warning, not an error', () => {
+    const undecidedPackageRepo = makeRepo({ php: true, package: true });
+    const decidedPackageRepo = makeRepo({
+        php: true,
+        package: true,
+        erasure: false,
+    });
+    const appRepo = makeRepo({ php: true });
+
+    for (const root of [undecidedPackageRepo, decidedPackageRepo, appRepo]) {
+        syncStandards(root, { isCheck: false });
+    }
+
+    /** @param {string} root */
+    const check = (root) => {
+        /** @type {string[]} */
+        const warnings = [];
+        const errors = syncStandards(root, { isCheck: true, warnings });
+
+        return { warnings, errors };
+    };
+    const undecided = check(undecidedPackageRepo);
+
+    assert.equal(undecided.warnings.length, 1);
+    assert.match(undecided.warnings[0], /"erasure": true/);
+    assert.deepEqual(
+        undecided.errors.filter((message) => message.includes('erasure')),
+        [],
+    );
+    assert.deepEqual(check(decidedPackageRepo).warnings, []);
+    assert.deepEqual(check(appRepo).warnings, []);
+});
+
+test('the repo-owned erasure fixture is written once and never overwritten', () => {
+    const root = makeRepo(
+        { php: true, package: true, erasure: true },
+        {
+            'tests/Erasure/fixture.php':
+                '<?php\n\ndeclare(strict_types=1);\n\nreturn new PackageErasureFixture();\n',
+        },
+    );
+
+    syncStandards(root, { isCheck: false });
+
+    assert.match(
+        read(root, 'tests/Erasure/fixture.php'),
+        /PackageErasureFixture/,
+    );
+    assert.deepEqual(
+        syncStandards(root, { isCheck: true }).filter((message) =>
+            message.includes('tests/Erasure'),
+        ),
+        [],
+    );
+});
+
 test('non-kebab-case frontend names fail the check', () => {
     const root = makeRepo(
         { frontendRoots: ['resources/js'] },

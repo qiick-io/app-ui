@@ -17,6 +17,7 @@
  *         "eslint": true,                  // repos still on ESLint: the shared ESLint config
  *         "app": true,                     // self-hosted app: stack and distribution rules
  *         "package": true,                 // Composer package: must consume package-matrix.yml
+ *         "erasure": true,                 // package with an eraser: gets tests/Erasure (false: no personal data)
  *         "patterns": ["command-palette"], // optional UI patterns it adopts (standards/patterns.json)
  *         "requiredItems": ["page-layout"], // registry items it must install (check-drift.mjs)
  *         "divergences": {                  // registry strings and/or conformance objects
@@ -225,9 +226,12 @@ function renderRulePages(config, catalogue) {
         ...(config.app ? { stack: readSource('rules/stack.md') } : {}),
         code: readSource('rules/code.md'),
         graphify: readSource('rules/graphify.md'),
-        ...(config.php ? { backend: readSource('rules/backend.md') } : {}),
         ...(config.php
-            ? { conventions: readSource('rules/conventions.md') }
+            ? {
+                  backend: readSource('rules/backend.md'),
+                  conventions: readSource('rules/conventions.md'),
+                  erasure: readSource('rules/erasure.md'),
+              }
             : {}),
         testing: readSource('rules/testing.md'),
         git: readSource('rules/git.md'),
@@ -344,7 +348,7 @@ const cursorRule = (description, frontmatter, body) =>
 
 /**
  * Everything the pack writes into a repo with this config.
- * @param {{ uiPreset?: string, php?: boolean, eslint?: boolean, oxlint?: boolean, app?: boolean, frontendRoots?: string[], patterns?: string[] }} config
+ * @param {{ uiPreset?: string, php?: boolean, eslint?: boolean, oxlint?: boolean, app?: boolean, frontendRoots?: string[], patterns?: string[], package?: boolean, erasure?: boolean }} config
  * @param {PatternCatalogue} [catalogue] - Defaults to `standards/patterns.json`
  * @returns {{ path: string, kind: 'file' | 'block' | 'template', content: string }[]}
  */
@@ -479,6 +483,26 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
                 path: `tests/Conformance/${posixRelative}`,
                 kind: 'file',
                 content: readSource(`php/conformance/${posixRelative}`),
+            });
+        }
+    }
+
+    // Package erasure suite (E1–E14): opt-in, so a re-sync never turns a package
+    // red before it has an eraser; each package sets `"erasure": true` in the PR
+    // that adds its eraser. fixture.php is the package's own.
+    if (config.php && config.erasure === true) {
+        const erasureRoot = path.join(standardsRoot, 'php/erasure');
+
+        for (const absolutePath of listFilesRecursive(erasureRoot)) {
+            const posixRelative = path
+                .relative(erasureRoot, absolutePath)
+                .split(path.sep)
+                .join('/');
+
+            outputs.push({
+                path: `tests/Erasure/${posixRelative}`,
+                kind: posixRelative === 'fixture.php' ? 'template' : 'file',
+                content: readSource(`php/erasure/${posixRelative}`),
             });
         }
     }
@@ -786,13 +810,13 @@ export function findNonKebabCaseNames(targetRoot, frontendRoots) {
 
 /**
  * @param {string} targetRoot
- * @param {{ isCheck: boolean, catalogue?: PatternCatalogue }} options
+ * @param {{ isCheck: boolean, catalogue?: PatternCatalogue, warnings?: string[] }} options - `warnings` collects non-blocking findings in check mode
  * @returns {string[]} Errors (check mode) or written paths (sync mode)
  * @throws {Error} In sync mode, when `patterns` names an unknown pattern or variant
  */
 export function syncStandards(
     targetRoot,
-    { isCheck, catalogue = readPatternCatalogue() },
+    { isCheck, catalogue = readPatternCatalogue(), warnings = [] },
 ) {
     const configPath = path.join(targetRoot, CONFIG_FILE);
 
@@ -801,6 +825,18 @@ export function syncStandards(
     }
 
     const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+
+    // A warning, not an error: packages turn the erasure suite on one by one.
+    if (
+        isCheck &&
+        config.package === true &&
+        typeof config.erasure !== 'boolean'
+    ) {
+        warnings.push(
+            `erasure: this package has not opted in yet. Set "erasure": true in ${CONFIG_FILE} in the PR that adds its eraser, or "erasure": false if it holds no personal data (.qiick/standards/erasure.md).`,
+        );
+    }
+
     const patternErrors = validatePatterns(config, catalogue);
 
     if (patternErrors.length > 0) {
@@ -904,7 +940,18 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         targetFlag === -1 ? process.cwd() : process.argv[targetFlag + 1],
     );
     const isCheck = process.argv.includes('--check');
-    const messages = syncStandards(targetRoot, { isCheck });
+    /** @type {string[]} */
+    const warnings = [];
+    const messages = syncStandards(targetRoot, { isCheck, warnings });
+
+    for (const warning of warnings) {
+        // GitHub Actions shows `::warning::` lines as annotations on the run.
+        console.warn(
+            process.env.GITHUB_ACTIONS === 'true'
+                ? `::warning::${warning}`
+                : `warning: ${warning}`,
+        );
+    }
 
     if (isCheck && messages.length > 0) {
         console.error(`check-standards:\n\n${messages.join('\n')}`);

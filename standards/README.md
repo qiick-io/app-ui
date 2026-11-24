@@ -4,29 +4,31 @@ One public source for the rules every qiick repo follows (Externa, Excubia, Sign
 
 ## What a repo gets
 
-| File in the repo                                  | Read by                         | Managed                          |
-| ------------------------------------------------- | ------------------------------- | -------------------------------- |
-| `AGENTS.md`                                       | Codex, Cursor, Copilot agent, … | the `qiick-standards` block only |
-| `CLAUDE.md` (`@AGENTS.md` import)                 | Claude Code                     | the `qiick-standards` block only |
-| `.github/copilot-instructions.md`                 | GitHub Copilot                  | the `qiick-standards` block only |
-| `.qiick/standards/<page>.md`                      | agents, when a pointer says so  | whole file                       |
-| `.cursor/rules/code-craftsmanship.mdc`            | Cursor, always                  | whole file                       |
-| `.cursor/rules/no-auto-release.mdc`               | Cursor, always                  | whole file                       |
-| `.cursor/rules/testing.mdc`                       | Cursor, on test files           | whole file                       |
-| `.cursor/rules/accessibility-and-theme.mdc`       | Cursor, on `.tsx` (UI repos)    | whole file                       |
-| `.cursor/commands/code-comments.md`               | Cursor `/code-comments`         | whole file                       |
-| `tests/Arch/NamingArchitectureTest.php`           | Pest, in CI (PHP repos)         | whole file                       |
-| `tests/Arch/naming-architecture.php`              | the test above                  | **the repo's own**, written once |
-| `tests/Conformance/*` (except `hooks.php`)        | Pest fleet conformance suite    | whole files                      |
-| `tests/Conformance/hooks.php`                     | behaviour hooks for the suite   | **the repo's own**, written once |
-| `.oxlintrc.standards.json`, `.oxlintrc.i18n.json` | Oxlint (Vite+ apps)             | whole file                       |
-| `qiick-standards.eslint.js`                       | ESLint (repos not on Vite+ yet) | whole file                       |
-| `scripts/check-ui-tokens.mjs`                     | `npm run lint`, CI (UI apps)    | whole file                       |
-| `scripts/ui-token-baseline.txt`                   | the check above                 | **the repo's own**, written once |
-| `scripts/check-legacy-web.mjs`                    | `npm run lint:legacy`, CI       | whole file                       |
-| `legacy-scan-baseline.json`                       | the check above                 | **the repo's own**, written once |
+| File in the repo                                  | Read by                              | Managed                          |
+| ------------------------------------------------- | ------------------------------------ | -------------------------------- |
+| `AGENTS.md`                                       | Codex, Cursor, Copilot agent, …      | the `qiick-standards` block only |
+| `CLAUDE.md` (`@AGENTS.md` import)                 | Claude Code                          | the `qiick-standards` block only |
+| `.github/copilot-instructions.md`                 | GitHub Copilot                       | the `qiick-standards` block only |
+| `.qiick/standards/<page>.md`                      | agents, when a pointer says so       | whole file                       |
+| `.cursor/rules/code-craftsmanship.mdc`            | Cursor, always                       | whole file                       |
+| `.cursor/rules/no-auto-release.mdc`               | Cursor, always                       | whole file                       |
+| `.cursor/rules/testing.mdc`                       | Cursor, on test files                | whole file                       |
+| `.cursor/rules/accessibility-and-theme.mdc`       | Cursor, on `.tsx` (UI repos)         | whole file                       |
+| `.cursor/commands/code-comments.md`               | Cursor `/code-comments`              | whole file                       |
+| `tests/Arch/NamingArchitectureTest.php`           | Pest, in CI (PHP repos)              | whole file                       |
+| `tests/Arch/naming-architecture.php`              | the test above                       | **the repo's own**, written once |
+| `tests/Conformance/*` (except `hooks.php`)        | Pest fleet conformance suite         | whole files                      |
+| `tests/Conformance/hooks.php`                     | behaviour hooks for the suite        | **the repo's own**, written once |
+| `tests/Erasure/*` (except `fixture.php`)          | Pest erasure suite (`erasure: true`) | whole files                      |
+| `tests/Erasure/fixture.php`                       | the package's stores, for E1–E14     | **the repo's own**, written once |
+| `.oxlintrc.standards.json`, `.oxlintrc.i18n.json` | Oxlint (Vite+ apps)                  | whole file                       |
+| `qiick-standards.eslint.js`                       | ESLint (repos not on Vite+ yet)      | whole file                       |
+| `scripts/check-ui-tokens.mjs`                     | `npm run lint`, CI (UI apps)         | whole file                       |
+| `scripts/ui-token-baseline.txt`                   | the check above                      | **the repo's own**, written once |
+| `scripts/check-legacy-web.mjs`                    | `npm run lint:legacy`, CI            | whole file                       |
+| `legacy-scan-baseline.json`                       | the check above                      | **the repo's own**, written once |
 
-The rules themselves are in [`rules/`](rules): [stack](rules/stack.md) (only in repos with `"app": true`), [conventions](rules/conventions.md) (the fleet conventions F1–F18; only in PHP repos), [code](rules/code.md) (casing, full-word names, boolean prefixes, role suffixes, the five layers, PHPDoc / JSDoc, contracts and refactoring guardrails), [graphify](rules/graphify.md) (query the local knowledge graph first; `graphify-out/` never in git), [backend](rules/backend.md) (requests, permissions and policies, API, security, logging, realtime, AI, health; only in PHP repos), [testing](rules/testing.md), [git](rules/git.md) (English, Conventional Commits, branches, squash), [releases](rules/release.md) (nothing ships without the maintainer), [automated checks](rules/checks.md) (knip, `noUnused*`, strict models, the PHPStan level floor, the coverage, Larastan, i18n and legacy web platform ratchets), [UI](rules/ui.md) (the app-ui rules, only in repos with a `uiPreset`) and [self-hosted distribution](rules/distribution.md) (only in repos with `"app": true`).
+The rules themselves are in [`rules/`](rules): [stack](rules/stack.md) (only in repos with `"app": true`), [conventions](rules/conventions.md) (the fleet conventions F1–F18; only in PHP repos), [code](rules/code.md) (casing, full-word names, boolean prefixes, role suffixes, the five layers, PHPDoc / JSDoc, contracts and refactoring guardrails), [graphify](rules/graphify.md) (query the local knowledge graph first; `graphify-out/` never in git), [backend](rules/backend.md) (requests, permissions and policies, API, security, logging, realtime, AI, health; only in PHP repos), [erasure](rules/erasure.md) (the same-shape package eraser, the E1–E14 package suite and the resumable product orchestrator; only in PHP repos), [testing](rules/testing.md), [git](rules/git.md) (English, Conventional Commits, branches, squash), [releases](rules/release.md) (nothing ships without the maintainer), [automated checks](rules/checks.md) (knip, `noUnused*`, strict models, the PHPStan level floor, the coverage, Larastan, i18n and legacy web platform ratchets), [UI](rules/ui.md) (the app-ui rules, only in repos with a `uiPreset`) and [self-hosted distribution](rules/distribution.md) (only in repos with `"app": true`).
 
 ## Core and details
 
