@@ -275,4 +275,10 @@ return [
         'description' => 'Access group tables + indexes (incl. nullable organisation_id, is_instance, XOR); Spatie bidirectional allowlist; migration scan extra signal (usesLaravelAccess)',
         'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
     ],
+    [
+        'id' => 'C76',
+        'tag' => 'schema',
+        'description' => 'Every foreign key is served by an index: its columns lead an index, unique index or primary key of its table (every engine; PostgreSQL and SQLite never add one themselves)',
+        'decision' => 'knowledge/decisions/2026-11-24-fleet-conventions',
+    ],
 ];

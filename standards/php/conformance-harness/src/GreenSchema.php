@@ -49,7 +49,7 @@ final class GreenSchema
 
         Schema::create('user_identities', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('user_id')->index()->constrained('users')->cascadeOnDelete();
 
             if (Schema::getConnection()->getDriverName() === 'mysql'
                 || Schema::getConnection()->getDriverName() === 'mariadb') {
@@ -150,9 +150,9 @@ final class GreenSchema
             $table->uuid('uuid')->unique();
             $table->string('key_prefix', 32);
             $table->string('key_hash', 64)->unique();
-            $table->uuid('owner_principal_id');
+            $table->uuid('owner_principal_id')->index();
             $table->foreign('owner_principal_id')->references('id')->on('principals')->restrictOnDelete();
-            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('created_by')->nullable()->index()->constrained('users')->nullOnDelete();
             $table->json('scopes');
             $table->json('ip_allowlist')->nullable();
             $table->unsignedInteger('rate_limit_per_minute')->nullable();

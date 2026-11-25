@@ -311,6 +311,15 @@ test('every repo gets the repository rules; adopting the conventions writes thei
     assert.match(read(appRepo, 'docs/privacy.md'), /^## Telemetry$/m);
     assert.ok(!fs.existsSync(path.join(packageRepo, 'docs/runbooks')));
     assert.match(
+        read(packageRepo, 'tests/Feature/ForeignKeyIndexTest.php'),
+        /foreignKeysWithoutIndex\(\)/,
+    );
+    assert.ok(
+        !fs.existsSync(
+            path.join(appRepo, 'tests/Feature/ForeignKeyIndexTest.php'),
+        ),
+    );
+    assert.match(
         read(frontendOnlyRepo, 'AGENTS.md'),
         /^## Security, data and operations$/m,
     );

@@ -84,6 +84,56 @@ final class SchemaInspector
         return $this->schema()->getForeignKeys($table);
     }
 
+    /**
+     * Every foreign key in the migrated database that no index can serve: its
+     * columns are not the leading columns (in any order) of an index, unique
+     * index or primary key of its table. PostgreSQL and SQLite never index a
+     * foreign key by themselves; MySQL and MariaDB do, so a gap shows there
+     * only when the index was dropped. Without the index a delete or update of
+     * the parent row scans the whole child table, holding its locks.
+     *
+     * @return list<string> `table(column, …) -> referenced_table`, sorted
+     */
+    public function foreignKeysWithoutIndex(): array
+    {
+        $unindexedForeignKeys = [];
+
+        foreach ($this->schema()->getTableListing(schemaQualified: false) as $table) {
+            $indexedColumnLists = array_map(
+                static fn (array $index): array => array_values($index['columns'] ?? []),
+                $this->indexes($table),
+            );
+
+            foreach ($this->foreignKeys($table) as $foreignKey) {
+                $foreignKeyColumns = array_values($foreignKey['columns'] ?? []);
+                $isServedByAnIndex = false;
+
+                foreach ($indexedColumnLists as $indexedColumns) {
+                    $leadingColumns = array_slice($indexedColumns, 0, count($foreignKeyColumns));
+
+                    if (count($leadingColumns) === count($foreignKeyColumns)
+                        && array_diff($foreignKeyColumns, $leadingColumns) === []) {
+                        $isServedByAnIndex = true;
+                        break;
+                    }
+                }
+
+                if (! $isServedByAnIndex) {
+                    $unindexedForeignKeys[] = sprintf(
+                        '%s(%s) -> %s',
+                        $table,
+                        implode(', ', $foreignKeyColumns),
+                        $foreignKey['foreign_table'] ?? '?',
+                    );
+                }
+            }
+        }
+
+        sort($unindexedForeignKeys);
+
+        return $unindexedForeignKeys;
+    }
+
     public function hasUniqueIndexCovering(string $table, string ...$columns): bool
     {
         $wanted = array_values($columns);

@@ -96,8 +96,21 @@ final class ConformanceRunner
             'C73' => $this->c73AccessExpiredMembership(),
             'C74' => $this->c74AccessActivityUuids(),
             'C75' => $this->c75AccessGroupMigrations(),
+            'C76' => $this->c76ForeignKeysIndexed(),
             default => throw new \RuntimeException("No runner for {$check['id']}."),
         };
+    }
+
+    private function c76ForeignKeysIndexed(): void
+    {
+        $unindexedForeignKeys = $this->schema->foreignKeysWithoutIndex();
+
+        if ($unindexedForeignKeys !== []) {
+            throw new \RuntimeException(
+                'Foreign keys without an index (add ->index() or make the column lead an existing index): '
+                .implode('; ', $unindexedForeignKeys).'.',
+            );
+        }
     }
 
     private function c1UsersBaseline(): void
