@@ -26,6 +26,8 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Fixed
 
+- `check-repo-settings.mjs` (F16) reads a repo's project link from the organisation projects' `repositories` too: a repository's own `projectsV2` field stayed empty for repos linked with `gh project link`, so linked repos were reported as unlinked.
+
 - Conformance C75 (AC17): require nullable `user_groups.organisation_id`, non-null `is_instance`, and the XOR constraint (`is_instance` true only with `organisation_id` NULL), matching qiick/laravel-access#8. Externa 1.x keeps the columns unused and stays green.
 
 ## [0.13.0] - 2026-11-22

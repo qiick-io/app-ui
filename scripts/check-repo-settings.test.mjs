@@ -3,6 +3,7 @@ import { test } from 'node:test';
 
 import {
     findSettingsViolations,
+    projectTitlesByRepository,
     readStandard,
 } from './check-repo-settings.mjs';
 
@@ -107,4 +108,25 @@ test('an unprotected private repo is reported as convention only', () => {
         findSettingsViolations(state, standard).join('\n'),
         /F19/,
     );
+});
+
+test('a repo counts as linked when an organisation project lists it', () => {
+    const titlesByRepository = projectTitlesByRepository([
+        {
+            title: 'Excubia',
+            repositories: {
+                nodes: [{ name: 'excubia-core' }, { name: 'excubia-app' }],
+            },
+        },
+        {
+            title: 'laravel-access',
+            repositories: { nodes: [{ name: 'laravel-access' }] },
+        },
+    ]);
+
+    assert.deepEqual(titlesByRepository.get('excubia-app'), ['Excubia']);
+    assert.deepEqual(titlesByRepository.get('laravel-access'), [
+        'laravel-access',
+    ]);
+    assert.equal(titlesByRepository.get('externa-bruno'), undefined);
 });
