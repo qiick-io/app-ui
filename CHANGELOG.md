@@ -15,6 +15,8 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 - Standards: the fleet conventions F1–F11 and F14 (decision of 2026-11-24) in a new rule page `standards/rules/conventions.md`, synced into every PHP repo: published config with nested defaults and fail-fast validation, `<package>:check`, off means off, no static state, `*Event` names, `<package>:<verb>` commands with `--dry-run`, env prefix, standard columns, retention, log keys, one error shape. `standards/scripts/check-conventions.mjs` checks them statically from the standards drift check, only in repos whose `qiick-standards.json` has a `conventions` object; exceptions are `conventions.divergences` with reason, decision and review date. `standards/error-codes.json` is the fleet registry of machine `error` codes (#227).
 
+- Standards: package dependency register in `docs/dependencies.md`, with a template and standards-drift coverage check for every runtime `composer.json` `require` entry. Affects Composer packages on the next standards pin bump and re-sync; fill in the generated register.
+
 ### Fixed
 
 - Conformance C75 (AC17): require nullable `user_groups.organisation_id`, non-null `is_instance`, and the XOR constraint (`is_instance` true only with `organisation_id` NULL), matching qiick/laravel-access#8. Externa 1.x keeps the columns unused and stays green.
