@@ -38,17 +38,42 @@ function makeRepo(config, files = {}) {
 
 const read = (root, file) => fs.readFileSync(path.join(root, file), 'utf8');
 
+/** A package CI that consumes the shared matrix and its pull request plan. */
 const packageMatrixWorkflow = `
+on:
+  pull_request:
+  schedule:
+    - cron: '17 3 * * *'
+concurrency:
+  group: ci-\${{ github.event_name }}-\${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   package-matrix:
     uses: qiick-io/app-ui/.github/workflows/package-matrix.yml@v0.13.0
   tests:
     needs: package-matrix
-    matrix: \${{ fromJSON(needs.package-matrix.outputs.matrix) }}
+    strategy:
+      matrix: \${{ fromJSON(needs.package-matrix.outputs.matrix) }}
+    steps:
+      - if: \${{ !matrix.skip }}
+        run: vendor/bin/pest
   databases:
     needs: package-matrix
-    matrix:
-      database: \${{ fromJSON(needs.package-matrix.outputs.databases) }}
+    strategy:
+      matrix:
+        database: \${{ fromJSON(needs.package-matrix.outputs.databases) }}
+    steps:
+      - if: needs.package-matrix.outputs.run-databases == 'true'
+        run: vendor/bin/pest
+  phpstan:
+    needs: package-matrix
+    steps:
+      - if: needs.package-matrix.outputs.docs-only != 'true'
+        run: vendor/bin/phpstan analyse
+  nightly-failure:
+    if: failure() && github.event_name == 'schedule'
+    steps:
+      - run: gh issue create --title "Nightly CI failed"
 `;
 
 test('a synced repo passes the check', () => {
@@ -664,20 +689,7 @@ test('a package:true repo that consumes the shared matrix passes that check', ()
     const root = makeRepo(
         { ref: 'develop', php: true, package: true },
         {
-            '.github/workflows/ci.yml': `
-jobs:
-  package-matrix:
-    uses: qiick-io/app-ui/.github/workflows/package-matrix.yml@v0.13.0
-  tests:
-    needs: package-matrix
-    strategy:
-      matrix: \${{ fromJSON(needs.package-matrix.outputs.matrix) }}
-  databases:
-    needs: package-matrix
-    strategy:
-      matrix:
-        database: \${{ fromJSON(needs.package-matrix.outputs.databases) }}
-`,
+            '.github/workflows/ci.yml': packageMatrixWorkflow,
         },
     );
 

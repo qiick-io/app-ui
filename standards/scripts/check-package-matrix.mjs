@@ -6,7 +6,14 @@
  * A package must:
  * 1. call `qiick-io/app-ui/.github/workflows/package-matrix.yml@…`;
  * 2. expand `fromJSON(needs.<job>.outputs.matrix)`;
- * 3. expand `fromJSON(needs.<job>.outputs.databases)`.
+ * 3. expand `fromJSON(needs.<job>.outputs.databases)`;
+ * 4. honour the pull request variant: skip a cell's steps on `matrix.skip`,
+ *    the database steps unless `outputs.run-databases`, and mutate only
+ *    `outputs.mutate-classes` (when it has a mutation job);
+ * 5. cancel superseded runs, run the full variant nightly, and open an issue
+ *    when the nightly run fails (`gh issue create`);
+ * 6. skip steps, never a whole job, on the plan's outputs, so every
+ *    required check reports on a pull request.
  *
  * Used by `scripts/sync-standards.mjs --check` when `qiick-standards.json`
  * has `"package": true`. Docs: docs/package-matrix.md.
@@ -53,6 +60,10 @@ export function readWorkflowsText(targetRoot) {
         .join('\n');
 }
 
+/** A job-level `if:` (four spaces, under `jobs:`) on a plan output. */
+const JOB_LEVEL_PLAN_CONDITION =
+    /^ {4}if:.*(?:run-databases|mutate-classes|mutate-scope)/m;
+
 /**
  * Errors when the package does not consume the shared matrix; empty when ok.
  * @param {string} targetRoot
@@ -86,6 +97,54 @@ export function findPackageMatrixViolations(targetRoot) {
     if (!FROM_JSON_DATABASES.test(workflowsText)) {
         errors.push(
             'package matrix: no job expands fromJSON(needs.<job>.outputs.databases).',
+        );
+    }
+
+    /** Signals of the reduced pull request run (docs/package-matrix.md, "Pull requests"). */
+    const pullRequestSignals = [
+        [
+            /matrix\.skip\b/,
+            'no test step honours `matrix.skip` (a docs-only pull request runs nothing).',
+        ],
+        [
+            /outputs\.run-databases\b/,
+            'the database jobs ignore `needs.<job>.outputs.run-databases`.',
+        ],
+        [
+            /outputs\.docs-only\b/,
+            'no job reads `needs.<job>.outputs.docs-only` (lint and PHPStan skip their steps on a docs-only pull request).',
+        ],
+        [
+            /cancel-in-progress:/,
+            'no `concurrency` with `cancel-in-progress` (a superseded pull request run keeps paying).',
+        ],
+        [
+            /schedule:\s*\n\s*-\s*cron:/,
+            'no nightly `schedule: - cron:` run of the full variant.',
+        ],
+        [
+            /gh issue create/,
+            'a failed nightly run opens no issue (`gh issue create`).',
+        ],
+    ];
+
+    if (/mutat/i.test(workflowsText)) {
+        pullRequestSignals.push([
+            /outputs\.mutate-classes\b/,
+            'the mutation job ignores `needs.<job>.outputs.mutate-classes` (a pull request mutates only the classes it changed).',
+        ]);
+    }
+
+    for (const [signal, message] of pullRequestSignals) {
+        if (!signal.test(workflowsText)) {
+            errors.push(`package matrix: ${message}`);
+        }
+    }
+
+    // A job skipped by its own `if:` reports no check, so a required check would wait forever.
+    if (JOB_LEVEL_PLAN_CONDITION.test(workflowsText)) {
+        errors.push(
+            'package matrix: a job skips itself on the pull request plan (`if:` at job level); skip its steps instead so its required check reports.',
         );
     }
 

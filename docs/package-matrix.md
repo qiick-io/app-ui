@@ -39,6 +39,102 @@ Exact image digests and service settings live in
 when it adopts the matrix; package-specific Redis and Memcached checks remain
 in the packages that use them.
 
+## Pull requests: only what the change can break
+
+The org's Actions queue is shared by every repo, so a pull request runs a
+reduced plan (decision of 2026-11-24) and the full matrix runs after the merge.
+`package-matrix.yml` picks the variant itself (`variant: auto`): `pr` on
+`pull_request`, `full` on push, schedule and manual runs. The `pr` rules are
+data in `standards/package-matrix.json` (`pr`), applied to the files the PR
+changes:
+
+| The PR changes                                   | It runs                                                                                     |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| only docs (`*.md`, `docs/`, `LICENSE`)           | nothing: every job reports success with its steps skipped                                   |
+| anything else                                    | lint, PHPStan and Pest on the highest cell (highest PHP, highest Laravel, `stable`, SQLite) |
+| `composer.json` or `src/`                        | also the lowest cell (lowest PHP, lowest Laravel, `lowest`)                                 |
+| `database/`, models, stores, queries, migrations | also the server databases (PostgreSQL, MySQL, MariaDB)                                      |
+| classes in `src/` (not `src/Testing/`)           | mutation on those classes only, with the per-class gate; a deleted class is not mutated     |
+
+On push to `develop` and `main`, nightly and on `workflow_dispatch`, the
+`full` variant runs everything: the whole matrix, the databases, mutation on
+every class. A nightly failure opens an issue, so nobody has to watch the
+nightly run.
+
+**Never skip a job, skip its steps.** A required check that never reports
+stays pending forever (`rules/checks.md`, CI cost), so the jobs always run:
+the test cell carries `skip: true` on a docs-only PR, the databases job reads
+`run-databases`, the mutation job reads `mutate-classes` (an empty list passes
+at once), and lint, PHPStan and every other required job read `docs-only`.
+A docs-only PR runs no tests, yet every required check reports success under
+its usual name. Never use `paths:` or `paths-ignore:`.
+
+**Required checks are the jobs a PR always reports:** the highest cell
+(`PHP 8.5 Laravel 13 stable`), the database jobs, the mutation gate
+(`Mutation (per-class ≥95%)`), lint and PHPStan. The lowest cell and the other
+full-matrix cells are not required: they run on the PRs that touch code and
+after every merge, and a red one on `develop` is fixed first.
+
+```yaml
+on:
+    push:
+        branches: [main, develop]
+    pull_request:
+    schedule:
+        - cron: '17 3 * * *' # nightly full run
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+    tests:
+        # …as below, and every step guarded:
+        steps:
+            - if: ${{ !matrix.skip }}
+              uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+    databases:
+        services:
+            database:
+                # An empty image starts no container on a PR that does not need it.
+                image: ${{ needs.package-matrix.outputs.run-databases == 'true' && matrix.database.image || '' }}
+        steps:
+            - if: needs.package-matrix.outputs.run-databases == 'true'
+              run: vendor/bin/pest
+
+    phpstan:
+        name: PHPStan
+        needs: package-matrix
+        steps:
+            - if: needs.package-matrix.outputs.docs-only != 'true'
+              run: vendor/bin/phpstan analyse
+
+    mutation:
+        name: Mutation (per-class ≥95%)
+        needs: package-matrix
+        steps:
+            # scripts/mutate-per-class.sh mutates the classes in MUTATE_CLASSES
+            # (a JSON array; empty means nothing to mutate), or every class when
+            # MUTATE_SCOPE is `all`.
+            - run: bash scripts/mutate-per-class.sh
+              env:
+                  MUTATE_SCOPE: ${{ needs.package-matrix.outputs.mutate-scope }}
+                  MUTATE_CLASSES: ${{ needs.package-matrix.outputs.mutate-classes }}
+
+    nightly-failure:
+        needs: [tests, databases, mutation]
+        if: failure() && github.event_name == 'schedule'
+        runs-on: ubuntu-latest
+        permissions:
+            issues: write
+        steps:
+            - run: gh issue create --repo "$GITHUB_REPOSITORY" --title "Nightly CI failed on $(date -u +%F)" --body "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --label bug
+              env:
+                  GH_TOKEN: ${{ github.token }}
+```
+
 ## Required check names
 
 The exporter is a separate, small check (`package-matrix / export`). The PHP and
@@ -152,5 +248,7 @@ when changing their matrices.
 When `qiick-standards.json` has `"package": true`,
 `scripts/sync-standards.mjs --check` (run by
 [`drift-check.yml`](../.github/workflows/drift-check.yml) with `standards: true`)
-requires a call to this workflow and `fromJSON` use of both outputs. Packages
-that have not opted in are unaffected.
+requires a call to this workflow, `fromJSON` use of both outputs, and the pull
+request plan: `matrix.skip`, `run-databases`, `mutate-classes` (with a mutation
+job), `cancel-in-progress`, a nightly `cron` and the nightly-failure issue.
+Packages that have not opted in are unaffected.
