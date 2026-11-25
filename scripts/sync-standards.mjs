@@ -23,7 +23,8 @@
  *             "page-layout": "Why",
  *             "C12": { "reason": "…", "decision": "knowledge/decisions/…", "review_by": "YYYY-MM-DD" }
  *         },
- *         "conformance": { "userModel": "App\\Models\\User", "apiPrefix": "api/v1" }
+ *         "conformance": { "userModel": "App\\Models\\User", "apiPrefix": "api/v1" },
+ *         "conventions": { "divergences": {} } // fleet conventions F1-F18 (check-conventions.mjs)
  *     }
  *
  * Managed files are of two kinds:
@@ -41,12 +42,14 @@
  * hygiene (`.gitignore` must ignore `graphify-out/`, no tracked `graphify-out/`
  * path, and `.gitattributes` must not contain `merge=graphify`), and — when
  * `"package": true` — on a CI matrix that does not consume package-matrix.yml
- * (see docs/package-matrix.md).
+ * (see docs/package-matrix.md), and — with a `conventions` object — on a fleet
+ * convention its source breaks (standards/rules/conventions.md).
  */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findConventionViolations } from '../standards/scripts/check-conventions.mjs';
 import { findPackageMatrixViolations } from '../standards/scripts/check-package-matrix.mjs';
 
 const CONFIG_FILE = 'qiick-standards.json';
@@ -223,6 +226,9 @@ function renderRulePages(config, catalogue) {
         code: readSource('rules/code.md'),
         graphify: readSource('rules/graphify.md'),
         ...(config.php ? { backend: readSource('rules/backend.md') } : {}),
+        ...(config.php
+            ? { conventions: readSource('rules/conventions.md') }
+            : {}),
         testing: readSource('rules/testing.md'),
         git: readSource('rules/git.md'),
         release: readSource('rules/release.md'),
@@ -380,6 +386,7 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
                     pages.code,
                     pages.graphify,
                     pages.backend,
+                    pages.conventions,
                     pages.checks,
                     pages.git,
                     pages.distribution,
@@ -884,6 +891,8 @@ export function syncStandards(
         if (config.package === true) {
             messages.push(...findPackageMatrixViolations(targetRoot));
         }
+
+        messages.push(...findConventionViolations(targetRoot, config));
     }
 
     return messages;
