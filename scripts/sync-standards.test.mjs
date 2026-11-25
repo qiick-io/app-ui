@@ -502,6 +502,19 @@ test('every repo gets the repository rules; adopting the conventions writes thei
         read(appRepo, 'docs/beta-readiness.md'),
         /^## 7\. Shared qiick packages$/m,
     );
+    assert.match(
+        read(appRepo, 'docs/runbooks/secrets.md'),
+        /^## After a leak$/m,
+    );
+    assert.match(
+        read(appRepo, 'docs/runbooks/backup.md'),
+        /^## Restore drills$/m,
+    );
+    assert.ok(!fs.existsSync(path.join(packageRepo, 'docs/runbooks')));
+    assert.match(
+        read(frontendOnlyRepo, 'AGENTS.md'),
+        /^## Security and data safety$/m,
+    );
     assert.ok(!fs.existsSync(path.join(frontendOnlyRepo, 'docs')));
 });
 

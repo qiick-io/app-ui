@@ -1,0 +1,15 @@
+# Release tags of app-ui itself: the signed tag check (F23) runs on every
+# `v*` tag the maintainer pushes. app-ui publishes nothing from CI, so the
+# check is the whole workflow.
+name: release tag
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  signed-tag:
+    uses: ./.github/workflows/signed-tag.yml

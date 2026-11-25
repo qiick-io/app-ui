@@ -131,6 +131,20 @@ Every qiick repo is configured the same way, so a check name, a label or a merge
 
 **Details:** `.qiick/standards/repository.md`. Read it before changing repository settings, branch protection, labels or a workflow's `uses:` pins, or writing agent instructions for a repo.
 
+## Security and data safety
+
+What every qiick repo does so a vulnerability can be reported, a leaked secret replaced, a schema changed without downtime, the data restored and a release trusted (fleet conventions F19–F23, maintainer request of 2026-11-25).
+
+- **F19 Security policy:** every repo has a `SECURITY.md` (supported versions, how to report, response time) and GitHub private vulnerability reporting switched on, because the policy sends reporters there.
+- **F20 Secrets runbook:** every product has `docs/runbooks/secrets.md`: each secret of `.env.example` and each key file, where it lives, who rotates it, how, what the rotation breaks, and what to do after a leak.
+- **F21 Expand / contract:** after the first stable release a schema change never breaks the code of the release before it. Add first (expand), move the data, switch the code, and drop or rename only in a later release (contract), with a `contract:` comment naming the release that stopped using the column.
+- **F22 Backup and restore drill:** every product documents what is backed up and how to restore it in `docs/runbooks/backup.md`, and records a restore drill there before its first stable release and at least every quarter after it.
+- **F23 Signed release tags:** the maintainer creates release tags locally with `git tag -s`; the release workflow runs `signed-tag / verified`, which fails unless GitHub shows the tag as Verified, and every publishing job needs it.
+
+With a `conventions` object in `qiick-standards.json`, the standards drift check runs the static checks of F19, F20, F22 and F23; `migrations-frozen / migrations-frozen` checks F21; `scripts/check-repo-settings.mjs` in app-ui checks that private vulnerability reporting is on. An exception is a `conventions.divergences` entry like any other convention.
+
+**Details:** `.qiick/standards/operations.md`. Read it before writing or changing SECURITY.md, a secret, a runbook, a migration that drops, renames or changes a column or table, a backup, or a release tag or release workflow.
+
 ## Releases: never without the maintainer
 
 `develop` is the integration branch. `main` holds releases only.
@@ -147,7 +161,7 @@ Agents must not, unless the maintainer explicitly says so in this conversation:
 - publish packages (Packagist, npm) or images (Docker Hub, GHCR);
 - change repository visibility.
 
-How a release goes, for reference: release PR → the maintainer merges it with a **merge commit** (never squash: `main` must stay an ancestor of `develop`) → tag `vX.Y.Z` on the merge commit → GitHub Release titled exactly with the tag, listing the included PRs → `main` is merged back into `develop` through a pull request, also with a merge commit.
+How a release goes, for reference: release PR → the maintainer merges it with a **merge commit** (never squash: `main` must stay an ancestor of `develop`) → the maintainer signs the tag `vX.Y.Z` on the merge commit on their own machine (`git tag -s`) and pushes it, and `signed-tag / verified` confirms GitHub shows it Verified (F23) → GitHub Release titled exactly with the tag, listing the included PRs → `main` is merged back into `develop` through a pull request, also with a merge commit.
 
 **Details:** `.qiick/standards/release.md`. Read it before preparing a release PR or the CHANGELOG, bumping a version, or asking for required checks.
 
