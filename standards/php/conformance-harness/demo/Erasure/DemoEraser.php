@@ -12,12 +12,13 @@ use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Qiick\Demo\Events\SubjectErasedEvent;
 use RuntimeException;
+use Throwable;
 
 /**
  * The reference eraser the harness proves the erasure suite against.
  *
  * It owns two demo stores: `demo_profiles`, scoped by organisation, and
- * `demo_links`, global. It also owns one cache entry. `$defect` switches on one
+ * `demo_links`, global. It also owns one cache entry, reported as `cache:demo`. `$defect` switches on one
  * deliberate rule break at a time, so each check can be shown RED on it and
  * GREEN without it.
  */
@@ -64,13 +65,25 @@ final class DemoEraser
         $profileCount = self::$defect === 'skip_scoped' && $organisationId !== null ? 0 : $profiles()->count();
         $linkCount = self::$defect === 'skip_links' ? 0 : $links()->count();
         $phantomChange = self::$defect === 'report_phantom_change' ? 1 : 0;
+        $cacheKey = "demo:{$userPublicId}";
+        $cacheCount = Cache::has($cacheKey) ? 1 : 0;
 
-        $report = new ErasureReport('qiick/demo', $mode, $dryRun, [
+        $stores = [
             'demo_profiles' => $this->counts($profileCount, $isDeleting, $phantomChange, null),
             'demo_links' => $isLinksInScope
                 ? $this->counts($linkCount, $isDeleting, 0, null)
                 : $this->counts(0, $isDeleting, 0, $linkCount > 0 ? 'outside_organisation_scope' : null, $linkCount),
-        ]);
+            // A forgotten cache entry counts as deleted in both modes; the cache is not organisation-scoped.
+            'cache:demo' => $organisationId === null
+                ? $this->counts($cacheCount, true, 0, null)
+                : $this->counts(0, true, 0, $cacheCount > 0 ? 'outside_organisation_scope' : null, $cacheCount),
+        ];
+
+        if (self::$defect === 'omit_cache_store') {
+            unset($stores['cache:demo']);
+        }
+
+        $report = new ErasureReport('qiick/demo', $mode, $dryRun, $stores);
 
         if (self::$defect === 'log_identifier' && $identifiers !== []) {
             Log::info('Erasing '.$identifiers[0]);
@@ -90,7 +103,8 @@ final class DemoEraser
             } elseif ($profileCount > 0 && $isDeleting) {
                 $profiles()->delete();
             } elseif ($profileCount > 0) {
-                $profiles()->update(['user_id' => 'erased', 'email' => null, 'ip_address' => null, 'anonymised_at' => now()]);
+                $scrubbedColumns = ['user_id' => 'erased', 'email' => null, 'ip_address' => null, 'anonymised_at' => now()];
+                $profiles()->update(self::$defect === 'keep_email' ? array_diff_key($scrubbedColumns, ['email' => true]) : $scrubbedColumns);
             }
 
             if ($isLinksInScope && $linkCount > 0 && $isDeleting) {
@@ -104,18 +118,28 @@ final class DemoEraser
             }
         };
 
+        if (self::$defect === 'event_before_writes') {
+            event(new SubjectErasedEvent($report));
+        }
+
         if (self::$defect === 'no_transaction') {
             $writeStores();
+        } elseif (self::$defect === 'swallow_failure') {
+            try {
+                DB::transaction($writeStores);
+            } catch (Throwable) {
+                // The defect: the failure is hidden from the caller.
+            }
         } else {
             DB::transaction($writeStores);
         }
 
-        DB::afterCommit(function () use ($userPublicId, $report, $organisationId): void {
+        DB::afterCommit(function () use ($cacheKey, $report, $organisationId): void {
             if ($organisationId === null && self::$defect !== 'keep_cache') {
-                Cache::forget("demo:{$userPublicId}");
+                Cache::forget($cacheKey);
             }
 
-            if (self::$defect !== 'event_inside_transaction') {
+            if (! in_array(self::$defect, ['event_inside_transaction', 'event_before_writes'], true)) {
                 event(new SubjectErasedEvent($report));
             }
         });

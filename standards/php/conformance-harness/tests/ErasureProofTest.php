@@ -81,3 +81,26 @@ it('RED: E3b fails on an unclassified column', function (): void {
 it('RED: E14 fails when an unsupported organisation scope does not throw', function (): void {
     expectErasureCheckFails(new ErasureConformanceRunner(new DemoErasureFixture(isOrganisationScopeSupported: false)), 'E14');
 });
+
+/*
+ * Cheats: a fixture that hides a store, misclassifies a column or seeds too
+ * little, or an eraser that only looks right, must still turn the suite red.
+ */
+it('RED: a cheat fails its check', function (string $checkId, ?string $defect, array $fixtureOptions): void {
+    DemoEraser::$defect = $defect;
+
+    expectErasureCheckFails(new ErasureConformanceRunner(new DemoErasureFixture(...$fixtureOptions)), $checkId);
+})->with([
+    'E3b: a personal table left out of tables()' => ['E3b', 'skip_links', ['omittedTables' => ['demo_links']]],
+    'E3b: a personal column classified other' => ['E3b', null, ['columnClasses' => ['demo_profiles.email' => 'other']]],
+    'E3: a retained column the report does not keep' => ['E3-anonymise', 'keep_email', ['columnClasses' => ['demo_profiles.email' => 'retained']]],
+    'E3: a store seed() leaves empty' => ['E3-delete', 'skip_links', ['skippedSeeds' => ['demo_links']]],
+    'E8: the event before the writes' => ['E8', 'event_before_writes', []],
+    'E9: a swallowed failure on a single write' => ['E9', 'swallow_failure', ['skippedSeeds' => ['demo_links']]],
+    'E9: nothing seeded to roll back' => ['E9', null, ['skippedSeeds' => ['demo_profiles', 'demo_links', 'cache']]],
+    'E12: organisation support with no scoped table' => ['E12', 'skip_scoped', ['organisationScopedTables' => []]],
+    'E12: no row seeded in the organisation' => ['E12', null, ['skippedSeeds' => ['demo_profiles']]],
+    'E13: a cache written but not declared' => ['E13', 'keep_cache', ['isCacheDeclared' => false]],
+    'E13: a declared cache seed() never wrote' => ['E13', null, ['skippedSeeds' => ['cache']]],
+    'E13: a cache the report does not list' => ['E13', 'omit_cache_store', []],
+]);

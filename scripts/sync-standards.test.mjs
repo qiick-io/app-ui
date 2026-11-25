@@ -239,6 +239,38 @@ test('a package that has not opted in to erasure gets a warning, not an error', 
     assert.deepEqual(check(appRepo).warnings, []);
 });
 
+test('from 1.0 on, a package that has not opted in to erasure fails the check', () => {
+    const changelog = (heading) =>
+        `# Changelog\n\n## [Unreleased]\n\n${heading}\n\n- Initial release.\n`;
+    const releasedRepo = makeRepo(
+        { php: true, package: true },
+        { 'CHANGELOG.md': changelog('## [1.0.0] - 2026-12-01') },
+    );
+    const betaRepo = makeRepo(
+        { php: true, package: true },
+        { 'CHANGELOG.md': changelog('## [1.0.0-beta.3] - 2026-11-20') },
+    );
+    const decidedReleasedRepo = makeRepo(
+        { php: true, package: true, erasure: true },
+        { 'CHANGELOG.md': changelog('## [1.2.0] - 2026-12-01') },
+    );
+
+    for (const root of [releasedRepo, betaRepo, decidedReleasedRepo]) {
+        syncStandards(root, { isCheck: false });
+    }
+
+    /** @param {string} root */
+    const erasureErrors = (root) =>
+        syncStandards(root, { isCheck: true }).filter((message) =>
+            message.startsWith('erasure:'),
+        );
+
+    assert.equal(erasureErrors(releasedRepo).length, 1);
+    assert.match(erasureErrors(releasedRepo)[0], /Required from 1\.0\.0 on/);
+    assert.deepEqual(erasureErrors(betaRepo), []);
+    assert.deepEqual(erasureErrors(decidedReleasedRepo), []);
+});
+
 test('the repo-owned erasure fixture is written once and never overwritten', () => {
     const root = makeRepo(
         { php: true, package: true, erasure: true },

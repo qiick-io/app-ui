@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Qiick\Standards\Erasure\Support;
 
+use Illuminate\Cache\Events\KeyWritten;
 use Illuminate\Database\Connection;
 use Illuminate\Log\Events\MessageLogged;
 
 /**
- * Records, while one erasure runs, the package's own events and every log
- * record, as flat lists of strings, so E5, E7 and E8 can inspect them.
+ * Records, while one erasure or one seeding runs, the package's own events
+ * and every log record, as flat lists of strings, and the cache keys written,
+ * so E5, E7, E8 and E13 can inspect them.
  *
  * It listens through a wildcard listener that cannot be removed again, so
  * stop() only disarms it.
@@ -21,6 +23,9 @@ final class ErasureRecording
 
     /** @var list<string> */
     private array $logStrings = [];
+
+    /** @var list<string> */
+    private array $writtenCacheKeys = [];
 
     private bool $isRecording = true;
 
@@ -45,6 +50,12 @@ final class ErasureRecording
             return;
         }
 
+        if ($eventName === KeyWritten::class && ($payload[0] ?? null) instanceof KeyWritten) {
+            $this->writtenCacheKeys[] = $payload[0]->key;
+
+            return;
+        }
+
         if (str_starts_with($eventName, $this->packageRootNamespace)) {
             $this->packageEvents[] = [
                 'name' => $eventName,
@@ -65,6 +76,14 @@ final class ErasureRecording
     public function packageEvents(): array
     {
         return $this->packageEvents;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function writtenCacheKeys(): array
+    {
+        return $this->writtenCacheKeys;
     }
 
     /**

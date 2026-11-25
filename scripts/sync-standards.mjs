@@ -809,6 +809,26 @@ export function findNonKebabCaseNames(targetRoot, frontendRoots) {
 }
 
 /**
+ * Whether CHANGELOG.md has a stable `## [X.Y.Z]` section with X >= 1: the repo
+ * has released 1.0, or its release PR is preparing it. The changelog, not the
+ * tags, because CI checks out without tags.
+ *
+ * @param {string} targetRoot
+ * @returns {boolean}
+ */
+function hasStableMajorRelease(targetRoot) {
+    const changelogPath = path.join(targetRoot, 'CHANGELOG.md');
+
+    if (!fs.existsSync(changelogPath)) {
+        return false;
+    }
+
+    return /^## \[v?[1-9]\d*\.\d+\.\d+\]/m.test(
+        fs.readFileSync(changelogPath, 'utf8'),
+    );
+}
+
+/**
  * @param {string} targetRoot
  * @param {{ isCheck: boolean, catalogue?: PatternCatalogue, warnings?: string[] }} options - `warnings` collects non-blocking findings in check mode
  * @returns {string[]} Errors (check mode) or written paths (sync mode)
@@ -826,15 +846,18 @@ export function syncStandards(
 
     const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
-    // A warning, not an error: packages turn the erasure suite on one by one.
-    if (
+    // A warning while packages turn the erasure suite on one by one, and an
+    // error from 1.0 on: the 1.0 release PR cannot pass without the decision.
+    const isErasureUndecided =
         isCheck &&
         config.package === true &&
-        typeof config.erasure !== 'boolean'
-    ) {
-        warnings.push(
-            `erasure: this package has not opted in yet. Set "erasure": true in ${CONFIG_FILE} in the PR that adds its eraser, or "erasure": false if it holds no personal data (.qiick/standards/erasure.md).`,
-        );
+        typeof config.erasure !== 'boolean';
+    const erasureOptInMessage = `erasure: this package has not opted in yet. Set "erasure": true in ${CONFIG_FILE} in the PR that adds its eraser, or "erasure": false if it holds no personal data (.qiick/standards/erasure.md).`;
+    const isErasureOptInRequired =
+        isErasureUndecided && hasStableMajorRelease(targetRoot);
+
+    if (isErasureUndecided && !isErasureOptInRequired) {
+        warnings.push(erasureOptInMessage);
     }
 
     const patternErrors = validatePatterns(config, catalogue);
@@ -848,7 +871,9 @@ export function syncStandards(
     }
 
     /** @type {string[]} */
-    const messages = [];
+    const messages = isErasureOptInRequired
+        ? [`${erasureOptInMessage} Required from 1.0.0 on.`]
+        : [];
 
     for (const output of renderOutputs(config, catalogue)) {
         const absolutePath = path.join(targetRoot, output.path);

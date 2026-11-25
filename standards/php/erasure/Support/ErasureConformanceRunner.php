@@ -37,13 +37,13 @@ final class ErasureConformanceRunner
         'E2' => 'erasing a person with no data changes nothing and reports zeros',
         'E3-delete' => 'a delete run leaves no personal value in a personal column',
         'E3-anonymise' => 'an anonymise run leaves no personal value in a personal column',
-        'E3b' => 'every column of every package table is classified',
+        'E3b' => 'every table of the migrated schema is classified, and no seeded value sits in an other column',
         'E4' => 'a second run changes nothing',
         'E5' => 'a dry run writes nothing, fires nothing and predicts the real run',
         'E6' => 'another person\'s data is left byte-identical',
         'E7' => 'no seeded identifier reaches the report, package events or logs',
         'E8' => 'a real run dispatches exactly one SubjectErasedEvent, after commit',
-        'E9' => 'a failure inside the run rolls the package\'s writes back',
+        'E9' => 'a failure at the last write rolls every write back and is rethrown',
         'E10' => 'an organisation-scoped run leaves other organisations and out-of-scope tables alone',
         'E11' => 'invalid input throws InvalidArgumentException without echoing it',
         'E12' => 'an organisation-scoped run erases that organisation\'s rows',
@@ -59,6 +59,23 @@ final class ErasureConformanceRunner
         'encrypted_until_expiry',
         'cache_ttl',
         'outside_organisation_scope',
+    ];
+
+    /**
+     * Laravel skeleton tables a package's test database may hold. None is a
+     * package store, so E3b skips them unless the fixture classifies them.
+     */
+    private const array FRAMEWORK_TABLES = [
+        'migrations',
+        'users',
+        'password_reset_tokens',
+        'password_resets',
+        'sessions',
+        'cache',
+        'cache_locks',
+        'jobs',
+        'job_batches',
+        'failed_jobs',
     ];
 
     /** Seeded values shorter than this are compared for equality only, never as substrings. */
@@ -137,7 +154,7 @@ final class ErasureConformanceRunner
             $this->fail('E2', 'erasing a person with no data threw '.$exception::class);
         }
 
-        $this->assertReport('E2', $report, 'delete', false);
+        $this->assertReport('E2', $report, $person, 'delete', false);
 
         foreach ($report->stores as $storeName => $counts) {
             if ($counts['deleted'] + $counts['anonymised'] + $counts['kept'] !== 0) {
@@ -152,16 +169,35 @@ final class ErasureConformanceRunner
     {
         $person = $this->fixture->makePerson();
         $this->fixture->seed($person, $this->seedOrganisationId());
-        $this->assertReport($checkId, $this->erase($person, $mode), $mode, false);
-        $leftovers = $this->personalLeftovers($person, array_keys($this->fixture->tables()));
+        $this->assertSeeded($checkId, $person, $this->personalTables());
+        $report = $this->erase($person, $mode);
+        $this->assertReport($checkId, $report, $person, $mode, false);
+        $tableNames = array_keys($this->fixture->tables());
+        $leftovers = $this->seededColumns($person, $tableNames, ['personal']);
 
         if ($leftovers !== []) {
             $this->fail($checkId, "after a {$mode} run, personal values remain in ".implode(', ', $leftovers));
+        }
+
+        // A retained value survives by design only when the report says why.
+        foreach ($this->seededColumns($person, $tableNames, ['retained']) as $retainedColumn) {
+            $tableName = Str::before($retainedColumn, '.');
+
+            if ($report->stores[$tableName]['kept'] === 0) {
+                $this->fail($checkId, "{$retainedColumn} keeps a personal value, but the report keeps no row of {$tableName}");
+            }
         }
     }
 
     private function checkEveryColumnClassified(): void
     {
+        // The inventory comes from the migrated schema, not from the fixture's word.
+        $unclassifiedTables = array_diff($this->schemaTables(), array_keys($this->fixture->tables()));
+
+        if ($unclassifiedTables !== []) {
+            $this->fail('E3b', 'the migrated schema has unclassified tables ['.implode(', ', $unclassifiedTables).']');
+        }
+
         foreach ($this->fixture->tables() as $tableName => $classifiedColumns) {
             if (! $this->schema()->hasTable($tableName)) {
                 $this->fail('E3b', "the classified table {$tableName} does not exist");
@@ -181,6 +217,15 @@ final class ErasureConformanceRunner
                 }
             }
         }
+
+        // A classification is proved, not trusted: no seeded value may sit in an `other` column.
+        $person = $this->fixture->makePerson();
+        $this->fixture->seed($person, $this->seedOrganisationId());
+        $misclassifiedColumns = $this->seededColumns($person, array_keys($this->fixture->tables()), ['other'], false);
+
+        if ($misclassifiedColumns !== []) {
+            $this->fail('E3b', 'seeded personal values sit in columns classified other: '.implode(', ', $misclassifiedColumns));
+        }
     }
 
     private function checkIdempotent(): void
@@ -190,7 +235,7 @@ final class ErasureConformanceRunner
             $this->fixture->seed($person, $this->seedOrganisationId());
             $this->erase($person, $mode);
             $secondReport = $this->erase($person, $mode);
-            $this->assertReport('E4', $secondReport, $mode, false);
+            $this->assertReport('E4', $secondReport, $person, $mode, false);
 
             if ($secondReport->changed() !== 0) {
                 $this->fail('E4', "a second {$mode} run changed {$secondReport->changed()} rows");
@@ -211,7 +256,7 @@ final class ErasureConformanceRunner
             $recording->stop();
         }
 
-        $this->assertReport('E5', $dryReport, 'delete', true);
+        $this->assertReport('E5', $dryReport, $person, 'delete', true);
         $this->assertSnapshotsEqual('E5', $before, $this->snapshot());
 
         if ($recording->packageEvents() !== []) {
@@ -273,6 +318,24 @@ final class ErasureConformanceRunner
         $person = $this->fixture->makePerson();
         $this->fixture->seed($person, $this->seedOrganisationId());
         $baseTransactionLevel = $this->connection()->transactionLevel();
+
+        // Inside a caller's transaction that is rolled back, the writes never
+        // commit, so the event must never come: neither before the writes nor
+        // inside the eraser's own transaction.
+        $rolledBackRecording = $this->startRecording();
+        $this->connection()->beginTransaction();
+
+        try {
+            $this->erase($person, 'delete');
+        } finally {
+            $this->connection()->rollBack();
+            $rolledBackRecording->stop();
+        }
+
+        if ($this->erasedEvents($rolledBackRecording) !== []) {
+            $this->fail('E8', 'SubjectErasedEvent was dispatched although the caller\'s transaction rolled the writes back');
+        }
+
         $recording = $this->startRecording();
 
         try {
@@ -281,10 +344,7 @@ final class ErasureConformanceRunner
             $recording->stop();
         }
 
-        $erasedEvents = array_values(array_filter(
-            $recording->packageEvents(),
-            fn (array $event): bool => $event['name'] === $this->packageEventClass(),
-        ));
+        $erasedEvents = $this->erasedEvents($recording);
 
         if (count($erasedEvents) !== 1) {
             $this->fail('E8', 'a real run dispatched '.count($erasedEvents).' SubjectErasedEvent events instead of one');
@@ -301,21 +361,39 @@ final class ErasureConformanceRunner
         $this->fixture->seed($person, $this->seedOrganisationId());
         $before = $this->snapshot();
         $writeCount = 0;
+        $failingWrite = null;
         $isArmed = true;
 
         // The listener cannot be removed again, so it is disarmed through the flag.
-        $this->connection()->beforeExecuting(function (string $query) use (&$writeCount, &$isArmed): void {
+        $this->connection()->beforeExecuting(function (string $query) use (&$writeCount, &$failingWrite, &$isArmed): void {
             if (! $isArmed || preg_match('/^\s*(insert|update|delete)\b/i', $query) !== 1) {
                 return;
             }
 
             $writeCount++;
 
-            if ($writeCount === 2) {
+            if ($writeCount === $failingWrite) {
                 throw new InjectedErasureFailureException('Injected by erasure check E9.');
             }
         });
 
+        // A probe run inside a transaction that is rolled back counts the writes.
+        $this->connection()->beginTransaction();
+
+        try {
+            $this->erase($person, 'delete');
+        } finally {
+            $this->connection()->rollBack();
+        }
+
+        if ($writeCount === 0) {
+            $isArmed = false;
+            $this->fail('E9', 'a real run on the seeded data wrote nothing, so there is no failure to roll back');
+        }
+
+        // The failure comes at the last write, so every earlier write must roll back.
+        $failingWrite = $writeCount;
+        $writeCount = 0;
         $isFailureSeen = false;
 
         try {
@@ -326,12 +404,16 @@ final class ErasureConformanceRunner
             $isArmed = false;
         }
 
-        if (! $isFailureSeen && $writeCount >= 2) {
-            $this->fail('E9', 'the eraser swallowed a failure raised inside its transaction');
+        if (! $isFailureSeen) {
+            $this->fail('E9', 'the eraser swallowed a failure raised at its last write');
         }
 
-        if ($isFailureSeen) {
-            $this->assertSnapshotsEqual('E9', $before, $this->snapshot());
+        $this->assertSnapshotsEqual('E9', $before, $this->snapshot());
+
+        foreach ($this->fixture->cacheKeys($person) as $cacheKey) {
+            if (! Cache::has($cacheKey)) {
+                $this->fail('E9', 'a run that failed forgot a cache entry');
+            }
         }
     }
 
@@ -344,15 +426,12 @@ final class ErasureConformanceRunner
         $scopedTables = $this->fixture->organisationScopedTables();
         $erasedOrganisationId = (string) Str::uuid();
         $person = $this->fixture->makePerson();
-        $this->fixture->seed($person, $scopedTables === [] ? null : (string) Str::uuid());
+        $this->fixture->seed($person, (string) Str::uuid());
+        $this->assertSeeded('E10', $person, $scopedTables);
         $otherOrganisationRows = $this->snapshot();
-
-        if ($scopedTables !== []) {
-            $this->fixture->seed($person, $erasedOrganisationId);
-        }
-
+        $this->fixture->seed($person, $erasedOrganisationId);
         $beforeErase = $this->snapshot();
-        $this->assertReport('E10', $this->erase($person, 'delete', $erasedOrganisationId), 'delete', false);
+        $this->assertReport('E10', $this->erase($person, 'delete', $erasedOrganisationId), $person, 'delete', false);
         $afterErase = $this->snapshot();
         $this->assertRowsSurvive('E10', $otherOrganisationRows, $afterErase, 'rows of another organisation changed');
 
@@ -400,17 +479,22 @@ final class ErasureConformanceRunner
 
     private function checkOrganisationRowsErased(): void
     {
+        if (! $this->fixture->supportsOrganisationScope()) {
+            return;
+        }
+
         $scopedTables = $this->fixture->organisationScopedTables();
 
-        if (! $this->fixture->supportsOrganisationScope() || $scopedTables === []) {
-            return;
+        if ($scopedTables === []) {
+            $this->fail('E12', 'the fixture supports an organisation scope but declares no organisation-scoped table');
         }
 
         $organisationId = (string) Str::uuid();
         $person = $this->fixture->makePerson();
         $this->fixture->seed($person, $organisationId);
+        $this->assertSeeded('E12', $person, $scopedTables);
         $this->erase($person, 'delete', $organisationId);
-        $leftovers = $this->personalLeftovers($person, $scopedTables);
+        $leftovers = $this->seededColumns($person, $scopedTables, ['personal']);
 
         if ($leftovers !== []) {
             $this->fail('E12', 'after an organisation-scoped run, personal values remain in '.implode(', ', $leftovers));
@@ -420,8 +504,20 @@ final class ErasureConformanceRunner
     private function checkCacheForgotten(): void
     {
         $person = $this->fixture->makePerson();
-        $this->fixture->seed($person, $this->seedOrganisationId());
+        $seedRecording = $this->startRecording();
+
+        try {
+            $this->fixture->seed($person, $this->seedOrganisationId());
+        } finally {
+            $seedRecording->stop();
+        }
+
         $cacheKeys = $this->fixture->cacheKeys($person);
+        $undeclaredKeyCount = count(array_diff($seedRecording->writtenCacheKeys(), $cacheKeys));
+
+        if ($undeclaredKeyCount > 0) {
+            $this->fail('E13', "seeding wrote {$undeclaredKeyCount} cache keys that cacheKeys() does not declare");
+        }
 
         foreach ($cacheKeys as $cacheKey) {
             if (! Cache::has($cacheKey)) {
@@ -429,7 +525,16 @@ final class ErasureConformanceRunner
             }
         }
 
-        $this->erase($person, 'delete');
+        $report = $this->erase($person, 'delete');
+        $this->assertReport('E13', $report, $person, 'delete', false);
+        $forgottenCount = array_sum(array_map(
+            fn (string $storeName): int => str_starts_with($storeName, 'cache:') ? $report->stores[$storeName]['deleted'] : 0,
+            array_keys($report->stores),
+        ));
+
+        if ($cacheKeys !== [] && $forgottenCount === 0) {
+            $this->fail('E13', 'the report counts no forgotten cache entry');
+        }
 
         foreach ($cacheKeys as $cacheKey) {
             if (Cache::has($cacheKey)) {
@@ -533,7 +638,7 @@ final class ErasureConformanceRunner
     /**
      * The checks every report must pass, whatever the run.
      */
-    private function assertReport(string $checkId, object $report, string $mode, bool $isDryRun): void
+    private function assertReport(string $checkId, object $report, ErasurePerson $person, string $mode, bool $isDryRun): void
     {
         $reportClass = $this->reportClass();
 
@@ -572,10 +677,16 @@ final class ErasureConformanceRunner
             $changedRows += $counts['deleted'] + $counts['anonymised'];
         }
 
-        $missingStores = array_diff(array_keys($this->fixture->tables()), array_keys($report->stores));
+        $missingStores = array_diff($this->personalTables(), array_keys($report->stores));
 
         if ($missingStores !== []) {
             $this->fail($checkId, 'the report does not list the tables '.implode(', ', $missingStores));
+        }
+
+        $cacheStoreNames = array_filter(array_keys($report->stores), fn (string $storeName): bool => str_starts_with($storeName, 'cache:'));
+
+        if ($this->fixture->cacheKeys($person) !== [] && $cacheStoreNames === []) {
+            $this->fail($checkId, 'the package caches the person\'s data, but the report lists no cache:<name> store');
         }
 
         if ($report->changed() !== $changedRows) {
@@ -652,41 +763,95 @@ final class ErasureConformanceRunner
     }
 
     /**
-     * `table.column` for every personal column that still holds a value of the person.
+     * `table.column` for every column of the given classes that holds a value of the person.
      *
      * @param  list<string>  $tableNames
+     * @param  list<string>  $columnClasses
+     * @param  bool  $isUserIdCompared  false for `other` columns, where a short user key equals ordinary ids by chance
      * @return list<string>
      */
-    private function personalLeftovers(ErasurePerson $person, array $tableNames): array
+    private function seededColumns(ErasurePerson $person, array $tableNames, array $columnClasses, bool $isUserIdCompared = true): array
     {
-        $leftovers = [];
+        $seededColumns = [];
 
         foreach ($tableNames as $tableName) {
-            $personalColumns = array_keys(array_filter(
+            $columnNames = array_keys(array_filter(
                 $this->fixture->tables()[$tableName] ?? [],
-                fn (string $columnClass): bool => $columnClass === 'personal',
+                fn (string $columnClass): bool => in_array($columnClass, $columnClasses, true),
             ));
 
-            if ($personalColumns === []) {
+            if ($columnNames === []) {
                 continue;
             }
 
-            foreach ($this->connection()->table($tableName)->get($personalColumns) as $row) {
-                foreach ($personalColumns as $columnName) {
+            foreach ($this->connection()->table($tableName)->get($columnNames) as $row) {
+                foreach ($columnNames as $columnName) {
                     $value = $row->{$columnName};
 
                     if ($value === null) {
                         continue;
                     }
 
-                    if ((string) $value === $person->userId || $this->containsSeededValue([(string) $value], $person)) {
-                        $leftovers[] = "{$tableName}.{$columnName}";
+                    if (($isUserIdCompared && (string) $value === $person->userId) || $this->containsSeededValue([(string) $value], $person)) {
+                        $seededColumns[] = "{$tableName}.{$columnName}";
                     }
                 }
             }
         }
 
-        return array_values(array_unique($leftovers));
+        return array_values(array_unique($seededColumns));
+    }
+
+    /**
+     * A check proves nothing on empty tables: every given table with a
+     * personal column must hold a value of the person before the run.
+     *
+     * @param  list<string>  $tableNames
+     */
+    private function assertSeeded(string $checkId, ErasurePerson $person, array $tableNames): void
+    {
+        foreach (array_intersect($tableNames, $this->personalTables()) as $tableName) {
+            if ($this->seededColumns($person, [$tableName], ['personal']) === []) {
+                $this->fail($checkId, "seed() wrote nothing of the person into {$tableName}, so there is nothing to check");
+            }
+        }
+    }
+
+    /**
+     * Classified tables with a personal or retained column: the stores every report lists.
+     *
+     * @return list<string>
+     */
+    private function personalTables(): array
+    {
+        return array_keys(array_filter(
+            $this->fixture->tables(),
+            fn (array $classifiedColumns): bool => array_intersect($classifiedColumns, ['personal', 'retained']) !== [],
+        ));
+    }
+
+    /**
+     * Every table of the migrated schema on the package's connection, skeleton tables left out.
+     *
+     * @return list<string>
+     */
+    private function schemaTables(): array
+    {
+        return array_values(array_filter(
+            array_column($this->schema()->getTables(), 'name'),
+            fn (string $tableName): bool => ! in_array($tableName, self::FRAMEWORK_TABLES, true),
+        ));
+    }
+
+    /**
+     * @return list<array{name: string, transactionLevel: int, strings: list<string>}>
+     */
+    private function erasedEvents(ErasureRecording $recording): array
+    {
+        return array_values(array_filter(
+            $recording->packageEvents(),
+            fn (array $event): bool => $event['name'] === $this->packageEventClass(),
+        ));
     }
 
     /**
@@ -715,9 +880,7 @@ final class ErasureConformanceRunner
 
     private function seedOrganisationId(): ?string
     {
-        return $this->fixture->supportsOrganisationScope() && $this->fixture->organisationScopedTables() !== []
-            ? (string) Str::uuid()
-            : null;
+        return $this->fixture->supportsOrganisationScope() ? (string) Str::uuid() : null;
     }
 
     private function erasureNamespace(): string

@@ -54,7 +54,7 @@ final readonly class ErasureReport
 }
 ```
 
-- **Stores.** Every table the eraser touches is listed, with zero counts too. A cache the package writes with the person's data is listed as `cache:<name>`.
+- **Stores.** Every table with a personal or retained column is listed, with zero counts too. A cache the package writes with the person's data is listed as `cache:<name>`; a forgotten entry counts as `deleted`.
 - **Reasons.** A store with `kept > 0` names one of these reasons, and a store with `kept = 0` has `reason = null`:
 
 | Reason                       | Meaning                                                         |
@@ -87,39 +87,39 @@ Names and logs follow the [fleet conventions](conventions.md): the event ends wi
 - `ErasureConformanceTest.php` and `Support/`: managed, never edited in the package;
 - `fixture.php`: written once and owned by the package.
 
-`erasure` is a top-level flag like `package`, not a key of `conventions`: it turns on a synced test suite, as `php` turns on the architecture test, while `conventions` only scopes the static F-checks and their divergences. A package with no personal data sets `"erasure": false` and says why in the PR. While a package (`"package": true`) has set neither, the standards check prints a warning, not an error. Once it opts in, the suite has one red test until `fixture.php` returns a fixture. The package's `tests/Pest.php` extends its test case into `tests/Erasure` (for example `pest()->extend(PackageTestCase::class)->in('Feature', 'Unit', 'Erasure')`), and that test case gives every test a freshly migrated database.
+`erasure` is a top-level flag like `package`, not a key of `conventions`: it turns on a synced test suite, as `php` turns on the architecture test, while `conventions` only scopes the static F-checks and their divergences. A package with no personal data sets `"erasure": false` and says why in the PR. While a package (`"package": true`) has set neither, the standards check prints a warning; once `CHANGELOG.md` has a stable `## [1.x.y]` section (the 1.0 release PR adds it), it is an error, so no package reaches 1.0 undecided. Once it opts in, the suite has one red test until `fixture.php` returns a fixture. The package's `tests/Pest.php` extends its test case into `tests/Erasure` (for example `pest()->extend(PackageTestCase::class)->in('Feature', 'Unit', 'Erasure')`), and that test case gives every test a freshly migrated database.
 
 **The fixture** implements `Qiick\Standards\Erasure\Support\ErasureFixture`:
 
-| Method                                                         | What it gives the suite                                                                                                                                             |
-| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packageName()`                                                | the Composer name                                                                                                                                                   |
-| `eraserClass()`                                                | the eraser class                                                                                                                                                    |
-| `connectionName()`                                             | the connection of the package's stores                                                                                                                              |
-| `tables()`                                                     | every column of every table the eraser touches, classified `personal`, `retained` (survives by design: a reference to a tombstone, an encrypted payload) or `other` |
-| `makePerson()`                                                 | an `ErasurePerson::fresh($userId)` plus the user row when the package needs one                                                                                     |
-| `seed()`                                                       | the person's data in every store, in an organisation when given                                                                                                     |
-| `supportsOrganisationScope()` and `organisationScopedTables()` | how organisation-scoped runs behave                                                                                                                                 |
-| `cacheKeys()`                                                  | the cache keys a real run must forget                                                                                                                               |
-| `call()`                                                       | `$erase()` for most packages; access wraps it in the transaction that also deletes the user                                                                         |
+| Method                                                         | What it gives the suite                                                                                                                                                                                                                            |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packageName()`                                                | the Composer name                                                                                                                                                                                                                                  |
+| `eraserClass()`                                                | the eraser class                                                                                                                                                                                                                                   |
+| `connectionName()`                                             | the connection of the package's stores                                                                                                                                                                                                             |
+| `tables()`                                                     | every column of every table of the migrated schema (Laravel skeleton tables such as `users` and `migrations` may be left out), classified `personal`, `retained` (survives by design: a reference to a tombstone, an encrypted payload) or `other` |
+| `makePerson()`                                                 | an `ErasurePerson::fresh($userId)` plus the user row when the package needs one                                                                                                                                                                    |
+| `seed()`                                                       | the person's data in every store, in an organisation when given                                                                                                                                                                                    |
+| `supportsOrganisationScope()` and `organisationScopedTables()` | how organisation-scoped runs behave                                                                                                                                                                                                                |
+| `cacheKeys()`                                                  | every cache key `seed()` writes, all of which a real run must forget                                                                                                                                                                               |
+| `call()`                                                       | `$erase()` for most packages; access wraps it in the transaction that also deletes the user                                                                                                                                                        |
 
-| Check | Fails when                                                                                                      |
-| ----- | --------------------------------------------------------------------------------------------------------------- |
-| E1    | the eraser, `ErasureReport`, the constants or `Events\SubjectErasedEvent` differ from the pinned shape          |
-| E2    | a person with no data throws, writes, or reports a non-zero count                                               |
-| E3    | after a `delete` or `anonymise` run a seeded value remains in a `personal` column                               |
-| E3b   | a column of a classified table is unclassified, or a classified column does not exist                           |
-| E4    | a second run reports `changed() > 0`                                                                            |
-| E5    | a dry run writes, forgets a cache entry, dispatches a package event, or predicts other counts than the real run |
-| E6    | another person's rows change                                                                                    |
-| E7    | a seeded identifier or public id reaches the report, a package event or a log record                            |
-| E8    | a real run does not dispatch exactly one `SubjectErasedEvent`, at the caller's transaction level                |
-| E9    | a failure injected at the second write leaves a change behind, or is swallowed                                  |
-| E10   | an organisation-scoped run changes another organisation's rows or an out-of-scope table                         |
-| E11   | invalid input is accepted, throws another exception, or is echoed in the message                                |
-| E12   | an organisation-scoped run leaves personal values in that organisation's scoped tables                          |
-| E13   | a declared cache key survives a real run                                                                        |
-| E14   | without organisation support, a scoped run does not throw `OrganisationScopeUnsupportedException`, or writes    |
+| Check | Fails when                                                                                                                                                                                     |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| E1    | the eraser, `ErasureReport`, the constants or `Events\SubjectErasedEvent` differ from the pinned shape                                                                                         |
+| E2    | a person with no data throws, writes, or reports a non-zero count                                                                                                                              |
+| E3    | `seed()` left a personal table empty; after a `delete` or `anonymise` run a seeded value remains in a `personal` column, or in a `retained` column of a table the report keeps no row of       |
+| E3b   | a table of the migrated schema or one of its columns is unclassified, a classified column does not exist, or a seeded value sits in an `other` column                                          |
+| E4    | a second run reports `changed() > 0`                                                                                                                                                           |
+| E5    | a dry run writes, forgets a cache entry, dispatches a package event, or predicts other counts than the real run                                                                                |
+| E6    | another person's rows change                                                                                                                                                                   |
+| E7    | a seeded identifier or public id reaches the report, a package event or a log record                                                                                                           |
+| E8    | inside a caller's transaction that rolls back, a run dispatches `SubjectErasedEvent`; or a real run does not dispatch exactly one, at the caller's transaction level                           |
+| E9    | a run on the seeded data writes nothing; or a failure injected at its last write leaves a change behind, forgets a cache entry, or is swallowed                                                |
+| E10   | `seed()` left a scoped table empty, or an organisation-scoped run changes another organisation's rows or an out-of-scope table                                                                 |
+| E11   | invalid input is accepted, throws another exception, or is echoed in the message                                                                                                               |
+| E12   | the fixture supports an organisation scope with no scoped table, `seed()` left a scoped table empty, or an organisation-scoped run leaves personal values in that organisation's scoped tables |
+| E13   | `seed()` writes an undeclared cache key or misses a declared one, the report lists no `cache:<name>` store or counts nothing forgotten, or a declared key survives a real run                  |
+| E14   | without organisation support, a scoped run does not throw `OrganisationScopeUnsupportedException`, or writes                                                                                   |
 
 The suite proves one package's eraser. It is not an Art. 17 certificate: the product's C17 check proves the whole erasure.
 

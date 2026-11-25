@@ -21,19 +21,34 @@ use Qiick\Standards\Erasure\Support\ErasurePerson;
 final class DemoErasureFixture implements ErasureFixture
 {
     /**
-     * @param  list<string>  $unclassifiedColumns  profile columns left out of tables(), for the E3b RED proof
+     * Every option after the first two lets a proof make the fixture cheat, so
+     * the suite shows it does not trust the fixture's own word.
+     *
+     * @param  list<string>  $unclassifiedColumns  profile columns left out of tables()
+     * @param  list<string>  $omittedTables  tables left out of tables()
+     * @param  array<string, 'personal'|'retained'|'other'>  $columnClasses  `table.column` => a class that overrides the honest one
+     * @param  list<string>  $skippedSeeds  stores seed() leaves empty: `demo_profiles`, `demo_links`, `cache`
+     * @param  ?list<string>  $organisationScopedTables  overrides the honest `['demo_profiles']`
      */
     public function __construct(
         private readonly string $eraserClass = DemoEraser::class,
         private readonly bool $isOrganisationScopeSupported = true,
         private readonly array $unclassifiedColumns = [],
+        private readonly array $omittedTables = [],
+        private readonly array $columnClasses = [],
+        private readonly array $skippedSeeds = [],
+        private readonly ?array $organisationScopedTables = null,
+        private readonly bool $isCacheDeclared = true,
     ) {}
 
-    /** Recreates the demo stores; the harness has no RefreshDatabase. */
+    /**
+     * Recreates the demo stores on an empty schema, as a package's freshly
+     * migrated test database; the harness has no RefreshDatabase, and E3b
+     * reads the whole schema.
+     */
     public static function migrate(): void
     {
-        Schema::dropIfExists('demo_profiles');
-        Schema::dropIfExists('demo_links');
+        Schema::dropAllTables();
 
         Schema::create('demo_profiles', function (Blueprint $table): void {
             $table->id();
@@ -79,10 +94,17 @@ final class DemoErasureFixture implements ErasureFixture
             'anonymised_at' => 'other',
         ];
 
-        return [
+        $tables = [
             'demo_profiles' => array_diff_key($profileColumns, array_flip($this->unclassifiedColumns)),
             'demo_links' => ['id' => 'other', 'owner_public_id' => 'personal', 'label' => 'other'],
         ];
+
+        foreach ($this->columnClasses as $qualifiedColumn => $columnClass) {
+            [$tableName, $columnName] = explode('.', $qualifiedColumn);
+            $tables[$tableName][$columnName] = $columnClass;
+        }
+
+        return array_diff_key($tables, array_flip($this->omittedTables));
     }
 
     public function makePerson(): ErasurePerson
@@ -92,15 +114,23 @@ final class DemoErasureFixture implements ErasureFixture
 
     public function seed(ErasurePerson $person, ?string $organisationId): void
     {
-        DB::table('demo_profiles')->insert([
-            'user_id' => $person->userId,
-            'organisation_id' => $organisationId,
-            'email' => $person->identifiers[0],
-            'ip_address' => $person->otherPersonalValues[0],
-            'note' => 'seeded profile',
-        ]);
-        DB::table('demo_links')->insert(['owner_public_id' => $person->publicIds[0], 'label' => 'seeded link']);
-        Cache::put("demo:{$person->userPublicId}", $person->identifiers[0], 3600);
+        if (! in_array('demo_profiles', $this->skippedSeeds, true)) {
+            DB::table('demo_profiles')->insert([
+                'user_id' => $person->userId,
+                'organisation_id' => $organisationId,
+                'email' => $person->identifiers[0],
+                'ip_address' => $person->otherPersonalValues[0],
+                'note' => 'seeded profile',
+            ]);
+        }
+
+        if (! in_array('demo_links', $this->skippedSeeds, true)) {
+            DB::table('demo_links')->insert(['owner_public_id' => $person->publicIds[0], 'label' => 'seeded link']);
+        }
+
+        if (! in_array('cache', $this->skippedSeeds, true)) {
+            Cache::put("demo:{$person->userPublicId}", $person->identifiers[0], 3600);
+        }
     }
 
     public function supportsOrganisationScope(): bool
@@ -110,12 +140,12 @@ final class DemoErasureFixture implements ErasureFixture
 
     public function organisationScopedTables(): array
     {
-        return ['demo_profiles'];
+        return $this->organisationScopedTables ?? ['demo_profiles'];
     }
 
     public function cacheKeys(ErasurePerson $person): array
     {
-        return ["demo:{$person->userPublicId}"];
+        return $this->isCacheDeclared ? ["demo:{$person->userPublicId}"] : [];
     }
 
     public function call(Closure $erase): object
