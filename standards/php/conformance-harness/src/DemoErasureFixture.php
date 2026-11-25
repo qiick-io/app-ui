@@ -36,6 +36,7 @@ final class DemoErasureFixture implements ErasureFixture
      * @param  array<string, 'personal'|'retained'|'other'>  $columnClasses  `table.column` => a class that overrides the honest one
      * @param  list<string>  $skippedSeeds  what seed() leaves empty: `demo_profiles`, `demo_links`, `cache`, `disk`, `archive`, or the `national_id` column
      * @param  array<string, string>  $retainedCleartextColumns  `table.column` => kept reason
+     * @param  bool  $isSecondCacheStoreSeeded  seed() also writes the person's key to the undeclared `second` store
      * @param  ?list<string>  $organisationScopedTables  overrides the honest `['demo_profiles']`
      * @param  ?string  $userId  a fixed user key instead of a fresh six-digit one
      */
@@ -50,7 +51,11 @@ final class DemoErasureFixture implements ErasureFixture
         private readonly bool $isCacheDeclared = true,
         private readonly ?string $userId = null,
         private readonly array $retainedCleartextColumns = [],
+        private readonly bool $isSecondCacheStoreSeeded = false,
     ) {}
+
+    /** Fresh, distinct user keys: two random keys in one check could collide and look like one person. */
+    private static int $issuedUserKeyCount = 0;
 
     /**
      * Recreates the demo stores on an empty schema, as a package's freshly
@@ -132,7 +137,7 @@ final class DemoErasureFixture implements ErasureFixture
 
     public function makePerson(): ErasurePerson
     {
-        return ErasurePerson::fresh($this->userId ?? (string) random_int(100000, 999999));
+        return ErasurePerson::fresh($this->userId ?? (string) (100000 + ++self::$issuedUserKeyCount));
     }
 
     public function seed(ErasurePerson $person, ?string $organisationId): void
@@ -169,6 +174,10 @@ final class DemoErasureFixture implements ErasureFixture
         if (! in_array('cache', $this->skippedSeeds, true)) {
             Cache::put("demo:{$person->userPublicId}", $person->identifiers[0], 3600);
         }
+
+        if ($this->isSecondCacheStoreSeeded) {
+            Cache::store('second')->put("demo:{$person->userPublicId}", $person->identifiers[0], 3600);
+        }
     }
 
     public function supportsOrganisationScope(): bool
@@ -183,7 +192,7 @@ final class DemoErasureFixture implements ErasureFixture
 
     public function cacheKeys(ErasurePerson $person): array
     {
-        return $this->isCacheDeclared ? ["demo:{$person->userPublicId}"] : [];
+        return $this->isCacheDeclared ? [Cache::getDefaultDriver() => ["demo:{$person->userPublicId}"]] : [];
     }
 
     public function retainedCleartextColumns(): array

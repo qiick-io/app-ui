@@ -6,6 +6,7 @@ namespace Qiick\Standards\Erasure\Support;
 
 use Illuminate\Cache\Events\KeyWritten;
 use Illuminate\Database\Connection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Log\Events\MessageLogged;
 
 /**
@@ -25,7 +26,7 @@ final class ErasureRecording
     private array $logStrings = [];
 
     /** @var list<string> */
-    private array $writtenCacheKeys = [];
+    private array $writtenCacheEntries = [];
 
     private bool $isRecording = true;
 
@@ -51,7 +52,7 @@ final class ErasureRecording
         }
 
         if ($eventName === KeyWritten::class && ($payload[0] ?? null) instanceof KeyWritten) {
-            $this->writtenCacheKeys[] = $payload[0]->key;
+            $this->writtenCacheEntries[] = ($payload[0]->storeName ?? Cache::getDefaultDriver()).'|'.$payload[0]->key;
 
             return;
         }
@@ -81,9 +82,9 @@ final class ErasureRecording
     /**
      * @return list<string>
      */
-    public function writtenCacheKeys(): array
+    public function writtenCacheEntries(): array
     {
-        return $this->writtenCacheKeys;
+        return $this->writtenCacheEntries;
     }
 
     /**

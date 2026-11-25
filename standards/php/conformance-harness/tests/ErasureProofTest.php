@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Facades\DB;
 use Qiick\ConformanceHarness\DemoErasureFixture;
 use Qiick\Demo\Erasure\DemoEraser;
 use Qiick\DemoBroken\Erasure\DemoBrokenEraser;
@@ -15,7 +16,7 @@ use Qiick\Standards\Erasure\Support\ErasureConformanceRunner;
  */
 
 beforeEach(function (): void {
-    config(['cache.default' => 'array']);
+    config(['cache.default' => 'array', 'cache.stores.second' => ['driver' => 'array']]);
     DemoErasureFixture::migrate();
     DemoEraser::$defect = null;
     DemoEraser::$isOrganisationScopeSupported = true;
@@ -120,6 +121,17 @@ it('RED: a cheat fails its check', function (string $checkId, ?string $defect, a
     'E12: a personal column that is no search marker survives the organisation run' => ['E12', 'org_scrub_keep_national_id', []],
     'E3: a retained column keeps a value that is no search marker, undeclared' => ['E3-anonymise', 'keep_national_id', ['columnClasses' => ['demo_profiles.national_id' => 'retained']]],
     'E3: a personal column on another connection survives' => ['E3-anonymise', 'keep_dossier', []],
+    'E3: an email copied into an other column' => ['E3-anonymise', 'copy_email_to_note', []],
+    'E3: a seeded value kept inside a longer string on another connection' => ['E3-anonymise', 'append_to_dossier', []],
+    'E12: a misspelled scoped table and an eraser that ignores scoped runs' => ['E12', 'ignore_scoped_runs', ['organisationScopedTables' => ['demo_profles']]],
+    'E12: a scoped anonymise run that does nothing' => ['E12', 'org_anonymise_noop', []],
+    'E13: a cache entry kept by anonymise' => ['E13', 'keep_cache_on_anonymise', []],
+    'E13: the same key in an undeclared second cache store' => ['E13', null, ['isSecondCacheStoreSeeded' => true]],
+    'E7: a seeded personal value that is no marker in a log record' => ['E7', 'log_national_id', []],
+    'E7: an identifier logged only by anonymise' => ['E7', 'log_identifier_on_anonymise', []],
+    'E5: a dry run that replaces a declared file' => ['E5', 'dry_run_replaces_avatar', []],
+    'E9: a row on another connection deleted before the failing write' => ['E9', 'archive_before_primary', []],
+    'E11: an identifier trimmed before its type is checked' => ['E11', 'trim_before_type_check', []],
 ]);
 
 it('GREEN: a retained column declared cleartext, with its reason and its report entry, passes E3', function (): void {
@@ -131,3 +143,9 @@ it('GREEN: a retained column declared cleartext, with its reason and its report 
 
     expect(true)->toBeTrue();
 });
+
+it('RED: E3b fails on a system-versioned personal table, whose history keeps the erased rows', function (): void {
+    DB::statement('ALTER TABLE demo_profiles ADD SYSTEM VERSIONING');
+
+    expectErasureCheckFails(new ErasureConformanceRunner(new DemoErasureFixture()), 'E3b');
+})->skip(fn (): bool => DB::connection()->getDriverName() !== 'mariadb', 'system versioning is MariaDB only');

@@ -82,11 +82,13 @@ interface ErasureFixture
     public function organisationScopedTables(): array;
 
     /**
-     * Cache keys the package wrote for the person and a real run must forget (E13).
-     * E13 sees only keys `seed()` writes, so the fixture's docblock lists every
-     * cache the package uses with the person's data, and `seed()` writes each one.
+     * Cache entries the package wrote for the person and a real run must
+     * forget (E13), by store name (the default store too, by its name): the
+     * same key in two stores is two entries. E13 sees only entries `seed()`
+     * writes, so the fixture's docblock lists every cache the package uses
+     * with the person's data, and `seed()` writes each one.
      *
-     * @return list<string>
+     * @return array<string, list<string>> store => keys
      */
     public function cacheKeys(ErasurePerson $person): array;
 

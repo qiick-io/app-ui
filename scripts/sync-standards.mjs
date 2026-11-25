@@ -536,7 +536,7 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
     // Package erasure suite (E1–E14): opt-in, so a re-sync never turns a package
     // red before it has an eraser; each package sets `"erasure": true` in the PR
     // that adds its eraser. fixture.php is the package's own.
-    if (config.php && config.erasure === true) {
+    if (isErasureSuiteInstalled(config)) {
         const erasureRoot = path.join(standardsRoot, 'php/erasure');
 
         for (const absolutePath of listFilesRecursive(erasureRoot)) {
@@ -949,6 +949,51 @@ export function findDependencyRegisterViolations(targetRoot) {
 }
 
 /**
+ * One predicate for rendering the erasure suite and for removing it again.
+ *
+ * @param {{ php?: boolean, erasure?: boolean }} config
+ * @returns {boolean}
+ */
+function isErasureSuiteInstalled(config) {
+    return config.php === true && config.erasure === true;
+}
+
+/**
+ * The installed suite proves nothing unless Pest runs it: phpunit.xml (or
+ * phpunit.xml.dist) must list `tests` or `tests/Erasure` as a directory, so a
+ * package's ordinary `vendor/bin/pest` cannot skip it.
+ *
+ * @param {string} targetRoot
+ * @returns {string[]} Errors, empty when the suite is discovered
+ */
+export function findErasureDiscoveryViolations(targetRoot) {
+    const configPath = ['phpunit.xml', 'phpunit.xml.dist']
+        .map((fileName) => path.join(targetRoot, fileName))
+        .find((candidatePath) => fs.existsSync(candidatePath));
+    const directories =
+        configPath === undefined
+            ? []
+            : [
+                  ...fs
+                      .readFileSync(configPath, 'utf8')
+                      .matchAll(/<directory[^>]*>([^<]+)<\/directory>/g),
+              ].map((match) =>
+                  match[1].trim().replace(/^\.\//, '').replace(/\/+$/, ''),
+              );
+
+    if (
+        directories.includes('tests') ||
+        directories.includes('tests/Erasure')
+    ) {
+        return [];
+    }
+
+    return [
+        'erasure: phpunit.xml does not discover tests/Erasure, so `vendor/bin/pest` would skip the suite. Add <directory>tests/Erasure</directory> to a test suite (or list tests/).',
+    ];
+}
+
+/**
  * The synced, never hand-edited files of the erasure suite, as repo paths.
  *
  * @returns {string[]}
@@ -1038,6 +1083,17 @@ export function syncStandards(
         ? [`${erasureDecisionMessage} Required from 1.0.0 on.`]
         : [];
 
+    // The suite is PHP: an opt-in without "php": true would install nothing and pass.
+    if (config.erasure === true && config.php !== true) {
+        const message = `erasure: "erasure": true needs "php": true in ${CONFIG_FILE}; without it the suite is never installed.`;
+
+        if (!isCheck) {
+            throw new Error(message);
+        }
+
+        messages.push(message);
+    }
+
     for (const output of renderOutputs(config, catalogue)) {
         const absolutePath = path.join(targetRoot, output.path);
         const hasFile = fs.existsSync(absolutePath);
@@ -1102,7 +1158,7 @@ export function syncStandards(
 
     // A package that opts out loses the managed erasure suite; its own
     // fixture.php stays, since Pest runs only *Test.php files.
-    if (config.erasure !== true) {
+    if (!isErasureSuiteInstalled(config)) {
         for (const managedPath of managedErasurePaths()) {
             const absolutePath = path.join(targetRoot, managedPath);
 
@@ -1152,6 +1208,10 @@ export function syncStandards(
         }
 
         messages.push(...findConventionViolations(targetRoot, config));
+
+        if (isErasureSuiteInstalled(config)) {
+            messages.push(...findErasureDiscoveryViolations(targetRoot));
+        }
     }
 
     return messages;

@@ -190,14 +190,68 @@ test('the repo-owned conformance hooks file is written once and never overwritte
     assert.match(read(root, 'tests/Conformance/hooks.php'), /assertErasure/);
 });
 
-test('PHP repos get the erasure standard; only erasure:true repos get the suite', () => {
-    const appRepo = makeRepo({ php: true });
-    const packageRepo = makeRepo({ php: true, package: true });
-    const optedInPackageRepo = makeRepo({
+/** A phpunit.xml whose suite discovers every folder under tests/. */
+const PHPUNIT_WITH_TESTS =
+    '<phpunit><testsuites><testsuite name="All"><directory>./tests</directory></testsuite></testsuites></phpunit>\n';
+
+test('an opted-in package must let Pest discover the erasure suite', () => {
+    /** @param {string} directories */
+    const phpunit = (directories) =>
+        `<phpunit><testsuites><testsuite name="Package">${directories}</testsuite></testsuites></phpunit>\n`;
+    const hiddenSuiteRepo = makeRepo(
+        { php: true, package: true, erasure: true },
+        {
+            'phpunit.xml': phpunit(
+                '<directory>tests/Arch</directory><directory>tests/Feature</directory>',
+            ),
+        },
+    );
+    const missingConfigRepo = makeRepo({
         php: true,
         package: true,
         erasure: true,
     });
+    const listedSuiteRepo = makeRepo(
+        { php: true, package: true, erasure: true },
+        {
+            'phpunit.xml.dist': phpunit(
+                '<directory>tests/Feature</directory><directory>./tests/Erasure/</directory>',
+            ),
+        },
+    );
+
+    /** @param {string} root */
+    const discoveryErrors = (root) => {
+        syncStandards(root, { isCheck: false });
+
+        return syncStandards(root, { isCheck: true }).filter((message) =>
+            message.includes('discover'),
+        );
+    };
+
+    assert.equal(discoveryErrors(hiddenSuiteRepo).length, 1);
+    assert.equal(discoveryErrors(missingConfigRepo).length, 1);
+    assert.deepEqual(discoveryErrors(listedSuiteRepo), []);
+});
+
+test('erasure:true without php:true is an error, not a silent no-op', () => {
+    const root = makeRepo({ php: false, package: true, erasure: true });
+
+    assert.throws(() => syncStandards(root, { isCheck: false }), /erasure/);
+    assert.ok(
+        syncStandards(root, { isCheck: true }).some((message) =>
+            message.includes('"php": true'),
+        ),
+    );
+});
+
+test('PHP repos get the erasure standard; only erasure:true repos get the suite', () => {
+    const appRepo = makeRepo({ php: true });
+    const packageRepo = makeRepo({ php: true, package: true });
+    const optedInPackageRepo = makeRepo(
+        { php: true, package: true, erasure: true },
+        { 'phpunit.xml': PHPUNIT_WITH_TESTS },
+    );
     const optedOutPackageRepo = makeRepo({
         php: true,
         package: true,
@@ -291,7 +345,10 @@ test('from 1.0 on, a package that has not opted in to erasure fails the check', 
     );
     const decidedReleasedRepo = makeRepo(
         { php: true, package: true, erasure: true },
-        { 'CHANGELOG.md': changelog('## [1.2.0] - 2026-12-01') },
+        {
+            'CHANGELOG.md': changelog('## [1.2.0] - 2026-12-01'),
+            'phpunit.xml': PHPUNIT_WITH_TESTS,
+        },
     );
 
     for (const root of [releasedRepo, betaRepo, decidedReleasedRepo]) {
@@ -419,6 +476,7 @@ test('the repo-owned erasure fixture is written once and never overwritten', () 
     const root = makeRepo(
         { php: true, package: true, erasure: true },
         {
+            'phpunit.xml': PHPUNIT_WITH_TESTS,
             'tests/Erasure/fixture.php':
                 '<?php\n\ndeclare(strict_types=1);\n\nreturn new PackageErasureFixture();\n',
         },

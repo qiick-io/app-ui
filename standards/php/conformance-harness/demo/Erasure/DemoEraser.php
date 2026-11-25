@@ -55,6 +55,19 @@ final class DemoEraser
         }
 
         $isDeleting = $mode === self::DELETE;
+        $isScopedRunSkipped = $organisationId !== null
+            && (self::$defect === 'ignore_scoped_runs' || (self::$defect === 'org_anonymise_noop' && ! $isDeleting));
+
+        if ($isScopedRunSkipped) {
+            return new ErasureReport('qiick/demo', $mode, $dryRun, [
+                'demo_profiles' => $this->counts(0, $isDeleting, 0, null),
+                'demo_links' => $this->counts(0, $isDeleting, 0, null),
+                'cache:demo' => $this->counts(0, true, 0, null),
+                'disk:demo' => $this->counts(0, true, 0, null),
+                'connection:demo_archive' => $this->counts(0, $isDeleting, 0, null),
+            ]);
+        }
+
         $profiles = fn (): Builder => DB::table('demo_profiles')
             ->where('user_id', $userId)
             ->when(
@@ -115,17 +128,37 @@ final class DemoEraser
             Log::info("Erasing user {$userId}");
         }
 
+        if (self::$defect === 'log_national_id') {
+            Log::info('Erasing a profile', ['national_id' => $profiles()->value('national_id')]);
+        }
+
+        if (self::$defect === 'log_identifier_on_anonymise' && ! $isDeleting && $identifiers !== []) {
+            Log::info('Anonymising '.$identifiers[0]);
+        }
+
         if (self::$defect === 'throw_when_empty' && $profileCount + $linkCount === 0) {
             throw new RuntimeException('Nothing to erase.');
         }
 
         $isDryRunWriting = self::$defect === 'dry_run_writes' || (self::$defect === 'anonymise_dry_run_writes' && ! $isDeleting);
 
+        if ($dryRun && self::$defect === 'dry_run_replaces_avatar' && $avatarCount > 0) {
+            Storage::disk('demo')->put($avatarPath, 'replaced by a dry run');
+        }
+
         if ($dryRun && ! $isDryRunWriting) {
             return $report;
         }
 
-        $writeStores = function () use ($profiles, $links, $profileCount, $linkCount, $isDeleting, $isLinksInScope, $organisationId): void {
+        $writeStores = function () use ($profiles, $links, $profileCount, $linkCount, $isDeleting, $isLinksInScope, $organisationId, $archiveEntries): void {
+            if (self::$defect === 'archive_before_primary') {
+                $archiveEntries()->delete();
+            }
+
+            if (self::$defect === 'copy_email_to_note' && ! $isDeleting) {
+                $profiles()->update(['note' => DB::raw('email')]);
+            }
+
             if (self::$defect === 'erase_everyone') {
                 DB::table('demo_profiles')->delete();
             } elseif ($profileCount > 0 && self::$defect === 'org_scrub_keep_national_id' && $organisationId !== null) {
@@ -171,7 +204,9 @@ final class DemoEraser
 
         // Stores outside the package's transaction follow only once it commits.
         DB::afterCommit(function () use ($cacheKey, $report, $isGlobalRun, $avatarPath, $archiveEntries, $isDeleting): void {
-            if ($isGlobalRun && self::$defect !== 'keep_cache') {
+            $isCacheKept = self::$defect === 'keep_cache' || (self::$defect === 'keep_cache_on_anonymise' && ! $isDeleting);
+
+            if ($isGlobalRun && ! $isCacheKept) {
                 Cache::forget($cacheKey);
             }
 
@@ -180,7 +215,12 @@ final class DemoEraser
             }
 
             if ($isGlobalRun && self::$defect !== 'keep_archive') {
-                $isDeleting ? $archiveEntries()->delete() : $archiveEntries()->update(self::$defect === 'keep_dossier' ? ['owner_public_id' => 'erased', 'email' => null] : ['owner_public_id' => 'erased', 'email' => null, 'dossier' => null]);
+                $scrubbedArchive = match (self::$defect) {
+                    'keep_dossier' => ['owner_public_id' => 'erased', 'email' => null],
+                    'append_to_dossier' => ['owner_public_id' => 'erased', 'email' => null, 'dossier' => DB::raw("dossier || '|erased'")],
+                    default => ['owner_public_id' => 'erased', 'email' => null, 'dossier' => null],
+                };
+                $isDeleting ? $archiveEntries()->delete() : $archiveEntries()->update($scrubbedArchive);
             }
 
             $isEventSkipped = self::$defect === 'skip_event_when_empty' && $report->changed() === 0;
@@ -210,9 +250,17 @@ final class DemoEraser
         }
 
         foreach ($identifiers as $identifier) {
+            if (self::$defect === 'trim_before_type_check' && trim($identifier) === '') {
+                throw new InvalidArgumentException('Every identifier must be a non-empty string.');
+            }
+
+            if (! is_string($identifier)) {
+                throw new InvalidArgumentException('Every identifier must be a non-empty string.');
+            }
+
             $isBlank = self::$defect === 'accept_blank_identifier' ? $identifier === '' : trim($identifier) === '';
 
-            if (! is_string($identifier) || $isBlank) {
+            if ($isBlank) {
                 throw new InvalidArgumentException('Every identifier must be a non-empty string.');
             }
         }
