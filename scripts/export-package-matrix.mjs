@@ -8,7 +8,8 @@
  * whole matrix; `pr` runs only what the files a pull request touches can break
  * (`pr` in package-matrix.json). Every job keeps its name in both, so a
  * required check always reports: a part the PR does not need runs with its
- * steps skipped (`matrix.skip`, `run-databases`) instead of not at all.
+ * steps skipped (`matrix.skip`, `docs-only`, `run-databases`) instead of not
+ * at all.
  *
  * Environment: EXCLUDE_PHP_VERSIONS (JSON array), VARIANT (`pr` | `full`),
  * CHANGED_FILES (newline-separated paths, `pr` only), PACKAGE_ROOT (the package
@@ -82,7 +83,7 @@ const touches = (files, patterns) =>
  * @param {{pr: {always: Record<string, string>, whenCodeChanges: Record<string, string>, paths: Record<'docsOnly' | 'code' | 'database' | 'mutation', string[]>}}} packageMatrixDocument
  * @param {{php: string[], laravel: string[], include: {laravel: string, testbench: string}[]}} fullMatrix - After PHP exclusions
  * @param {string[]} changedFiles
- * @returns {{matrix: {include: Record<string, string | boolean>[]}, runDatabases: boolean, mutateClasses: string[]}}
+ * @returns {{matrix: {include: Record<string, string | boolean>[]}, isDocsOnly: boolean, runDatabases: boolean, mutateClasses: string[]}}
  */
 export function createPullRequestPlan(
     packageMatrixDocument,
@@ -119,6 +120,7 @@ export function createPullRequestPlan(
 
     return {
         matrix: { include },
+        isDocsOnly,
         runDatabases:
             !isDocsOnly && touches(changedFiles, paths.database).length > 0,
         mutateClasses: isDocsOnly ? [] : touches(changedFiles, paths.mutation),
@@ -157,6 +159,7 @@ if (process.argv[1] === scriptPath) {
           )
         : {
               matrix: packageMatrixOutputs.matrix,
+              isDocsOnly: false,
               runDatabases: true,
               mutateClasses: [],
           };
@@ -171,6 +174,7 @@ if (process.argv[1] === scriptPath) {
     process.stdout.write(
         `databases=${JSON.stringify(packageMatrixOutputs.databases)}\n`,
     );
+    process.stdout.write(`docs-only=${plan.isDocsOnly}\n`);
     process.stdout.write(`run-databases=${plan.runDatabases}\n`);
     // `all` on the full variant; the changed classes (possibly none) on a PR.
     process.stdout.write(`mutate-scope=${isPullRequest ? 'changed' : 'all'}\n`);

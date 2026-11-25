@@ -16,7 +16,7 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 - Standards: package dependency register in `docs/dependencies.md`, with a template and standards-drift coverage check for every runtime `composer.json` `require` entry. Affects Composer packages on the next standards pin bump and re-sync; fill in the generated register.
 
-- CI: the package matrix has a `pr` and a `full` variant. On a pull request `package-matrix.yml` plans from the changed files (docs only: nothing; otherwise the highest PHP / Laravel cell; the lowest cell for `composer.json` or `src/`; the server databases for database code; mutation on the changed classes) through the new outputs `variant`, `run-databases`, `mutate-scope` and `mutate-classes`; push, nightly and manual runs take the full matrix. With `"package": true` the standards check also requires the plan's signals, `cancel-in-progress`, a nightly `cron` and an issue on a failed nightly run (#231).
+- CI: the package matrix has a `pr` and a `full` variant. On a pull request `package-matrix.yml` plans from the changed files (docs only: nothing; otherwise the highest PHP / Laravel cell; the lowest cell for `composer.json` or `src/`; the server databases for database code; mutation on the changed classes) through the new outputs `variant`, `docs-only`, `run-databases`, `mutate-scope` and `mutate-classes` (a class the PR deleted is never mutated); push, nightly and manual runs take the full matrix. With `"package": true` the standards check also requires the plan's signals, `cancel-in-progress`, a nightly `cron` and an issue on a failed nightly run, and fails a job that skips itself on the plan instead of its steps, since its required check would never report (#231).
 
 ### Fixed
 

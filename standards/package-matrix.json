@@ -33,7 +33,6 @@
             "code": ["^composer\\.json$", "^src/"],
             "database": [
                 "^database/",
-                "^config/",
                 "^src/(?:.*/)?(?:Models?|Migrations?|Database|Eloquent|Stores?|Repositories|Queries|Builders|Schema)/",
                 "^src/.*(?:Model|Migration|Store|Repository|Query|Builder|Schema)\\.php$"
             ],

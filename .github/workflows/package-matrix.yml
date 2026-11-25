@@ -63,6 +63,9 @@ on:
       variant:
         description: The variant that ran, pr or full
         value: ${{ jobs.export.outputs.variant }}
+      docs-only:
+        description: "'true' when a pull request changes only docs: lint, PHPStan and the other non-matrix jobs skip their steps"
+        value: ${{ jobs.export.outputs.docs-only }}
       run-databases:
         description: "'true' when the database jobs run their steps (always on full)"
         value: ${{ jobs.export.outputs.run-databases }}
@@ -94,6 +97,7 @@ jobs:
       variant: ${{ steps.read.outputs.variant }}
       matrix: ${{ steps.read.outputs.matrix }}
       databases: ${{ steps.read.outputs.databases }}
+      docs-only: ${{ steps.read.outputs.docs-only }}
       run-databases: ${{ steps.read.outputs.run-databases }}
       mutate-scope: ${{ steps.read.outputs.mutate-scope }}
       mutate-classes: ${{ steps.read.outputs.mutate-classes }}

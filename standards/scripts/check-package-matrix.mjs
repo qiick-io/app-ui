@@ -11,7 +11,9 @@
  *    the database steps unless `outputs.run-databases`, and mutate only
  *    `outputs.mutate-classes` (when it has a mutation job);
  * 5. cancel superseded runs, run the full variant nightly, and open an issue
- *    when the nightly run fails (`gh issue create`).
+ *    when the nightly run fails (`gh issue create`);
+ * 6. skip steps, never a whole job, on the plan's outputs, so every
+ *    required check reports on a pull request.
  *
  * Used by `scripts/sync-standards.mjs --check` when `qiick-standards.json`
  * has `"package": true`. Docs: docs/package-matrix.md.
@@ -57,6 +59,10 @@ export function readWorkflowsText(targetRoot) {
         .map((filePath) => fs.readFileSync(filePath, 'utf8'))
         .join('\n');
 }
+
+/** A job-level `if:` (four spaces, under `jobs:`) on a plan output. */
+const JOB_LEVEL_PLAN_CONDITION =
+    /^ {4}if:.*(?:run-databases|mutate-classes|mutate-scope)/m;
 
 /**
  * Errors when the package does not consume the shared matrix; empty when ok.
@@ -105,6 +111,10 @@ export function findPackageMatrixViolations(targetRoot) {
             'the database jobs ignore `needs.<job>.outputs.run-databases`.',
         ],
         [
+            /outputs\.docs-only\b/,
+            'no job reads `needs.<job>.outputs.docs-only` (lint and PHPStan skip their steps on a docs-only pull request).',
+        ],
+        [
             /cancel-in-progress:/,
             'no `concurrency` with `cancel-in-progress` (a superseded pull request run keeps paying).',
         ],
@@ -129,6 +139,13 @@ export function findPackageMatrixViolations(targetRoot) {
         if (!signal.test(workflowsText)) {
             errors.push(`package matrix: ${message}`);
         }
+    }
+
+    // A job skipped by its own `if:` reports no check, so a required check would wait forever.
+    if (JOB_LEVEL_PLAN_CONDITION.test(workflowsText)) {
+        errors.push(
+            'package matrix: a job skips itself on the pull request plan (`if:` at job level); skip its steps instead so its required check reports.',
+        );
     }
 
     return errors;

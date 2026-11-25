@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -68,6 +69,11 @@ jobs:
     steps:
       - if: needs.package-matrix.outputs.run-databases == 'true'
         run: vendor/bin/pest
+  phpstan:
+    needs: package-matrix
+    steps:
+      - if: needs.package-matrix.outputs.docs-only != 'true'
+        run: vendor/bin/phpstan analyse
   nightly-failure:
     if: failure() && github.event_name == 'schedule'
     needs: [tests, databases]
@@ -179,13 +185,13 @@ jobs:
     });
     const errors = findPackageMatrixViolations(root);
 
-    assert.equal(errors.length, 8);
+    assert.equal(errors.length, 9);
     assert.match(errors[0], /package-matrix\.yml/);
     assert.match(errors[1], /outputs\.matrix/);
     assert.match(errors[2], /outputs\.databases/);
     assert.match(
         errors.slice(3).join('\n'),
-        /matrix\.skip[\s\S]*run-databases[\s\S]*cancel-in-progress[\s\S]*cron[\s\S]*gh issue create/,
+        /matrix\.skip[\s\S]*run-databases[\s\S]*docs-only[\s\S]*cancel-in-progress[\s\S]*cron[\s\S]*gh issue create/,
     );
 });
 
@@ -229,6 +235,26 @@ test('a mutation job must mutate only the classes a pull request changed', () =>
     );
 });
 
+test('a job that skips itself on the plan fails: its required check would never report', () => {
+    const root = makePackageFixture({
+        'ci.yml': consumingWorkflow.replace(
+            '  databases:\n    needs: package-matrix\n',
+            "  databases:\n    needs: package-matrix\n    if: needs.package-matrix.outputs.run-databases == 'true'\n",
+        ),
+    });
+
+    assert.match(
+        findPackageMatrixViolations(root).join('\n'),
+        /skips itself on the pull request plan/,
+    );
+    assert.deepEqual(
+        findPackageMatrixViolations(
+            makePackageFixture({ 'ci.yml': consumingWorkflow }),
+        ),
+        [],
+    );
+});
+
 test('the pull request variant runs only what the changed files can break', () => {
     const document = JSON.parse(fs.readFileSync(packageMatrixJsonPath, 'utf8'));
     const fullMatrix = createPackageMatrixOutputs(document, []).matrix;
@@ -244,6 +270,8 @@ test('the pull request variant runs only what the changed files can break', () =
         'PHP 8.5 Laravel 13 stable (skipped)',
     ]);
     assert.equal(plan(['docs/install.md']).runDatabases, false);
+    assert.equal(plan(['docs/install.md']).isDocsOnly, true);
+    assert.equal(plan(['docs/install.md', 'src/Token.php']).isDocsOnly, false);
     assert.deepEqual(plan(['docs/install.md']).mutateClasses, []);
 
     // Tests only: the highest cell, no lowest, no databases.
@@ -286,4 +314,36 @@ test('the lowest cell follows a package PHP exclusion', () => {
         testbench: '10',
         skip: false,
     });
+});
+
+test('the exporter leaves the classes a pull request deleted out of mutate-classes', () => {
+    const packageRoot = fs.mkdtempSync(
+        path.join(os.tmpdir(), 'qiick-package-checkout-'),
+    );
+
+    fs.mkdirSync(path.join(packageRoot, 'src'));
+    fs.writeFileSync(path.join(packageRoot, 'src/Kept.php'), '<?php\n');
+
+    const output = execFileSync(
+        process.execPath,
+        [
+            fileURLToPath(
+                new URL('./export-package-matrix.mjs', import.meta.url),
+            ),
+        ],
+        {
+            encoding: 'utf8',
+            env: {
+                ...process.env,
+                VARIANT: 'pr',
+                CHANGED_FILES: 'src/Kept.php\nsrc/Deleted.php\n',
+                PACKAGE_ROOT: packageRoot,
+                EXCLUDE_PHP_VERSIONS: '[]',
+            },
+        },
+    );
+
+    assert.match(output, /^mutate-classes=\["src\/Kept\.php"\]$/m);
+    assert.match(output, /^docs-only=false$/m);
+    assert.match(output, /^mutate-scope=changed$/m);
 });

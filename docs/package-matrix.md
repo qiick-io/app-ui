@@ -48,13 +48,13 @@ reduced plan (decision of 2026-11-24) and the full matrix runs after the merge.
 data in `standards/package-matrix.json` (`pr`), applied to the files the PR
 changes:
 
-| The PR changes                                              | It runs                                                                                     |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| only docs (`*.md`, `docs/`, `LICENSE`)                      | nothing: every job reports success with its steps skipped                                   |
-| anything else                                               | lint, PHPStan and Pest on the highest cell (highest PHP, highest Laravel, `stable`, SQLite) |
-| `composer.json` or `src/`                                   | also the lowest cell (lowest PHP, lowest Laravel, `lowest`)                                 |
-| `database/`, `config/`, models, stores, queries, migrations | also the server databases (PostgreSQL, MySQL, MariaDB)                                      |
-| classes in `src/` (not `src/Testing/`)                      | mutation on those classes only, with the per-class gate                                     |
+| The PR changes                                   | It runs                                                                                     |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| only docs (`*.md`, `docs/`, `LICENSE`)           | nothing: every job reports success with its steps skipped                                   |
+| anything else                                    | lint, PHPStan and Pest on the highest cell (highest PHP, highest Laravel, `stable`, SQLite) |
+| `composer.json` or `src/`                        | also the lowest cell (lowest PHP, lowest Laravel, `lowest`)                                 |
+| `database/`, models, stores, queries, migrations | also the server databases (PostgreSQL, MySQL, MariaDB)                                      |
+| classes in `src/` (not `src/Testing/`)           | mutation on those classes only, with the per-class gate; a deleted class is not mutated     |
 
 On push to `develop` and `main`, nightly and on `workflow_dispatch`, the
 `full` variant runs everything: the whole matrix, the databases, mutation on
@@ -65,7 +65,9 @@ nightly run.
 stays pending forever (`rules/checks.md`, CI cost), so the jobs always run:
 the test cell carries `skip: true` on a docs-only PR, the databases job reads
 `run-databases`, the mutation job reads `mutate-classes` (an empty list passes
-at once). Never use `paths:` or `paths-ignore:`.
+at once), and lint, PHPStan and every other required job read `docs-only`.
+A docs-only PR runs no tests, yet every required check reports success under
+its usual name. Never use `paths:` or `paths-ignore:`.
 
 **Required checks are the jobs a PR always reports:** the highest cell
 (`PHP 8.5 Laravel 13 stable`), the database jobs, the mutation gate
@@ -101,6 +103,13 @@ jobs:
         steps:
             - if: needs.package-matrix.outputs.run-databases == 'true'
               run: vendor/bin/pest
+
+    phpstan:
+        name: PHPStan
+        needs: package-matrix
+        steps:
+            - if: needs.package-matrix.outputs.docs-only != 'true'
+              run: vendor/bin/phpstan analyse
 
     mutation:
         name: Mutation (per-class ≥95%)
