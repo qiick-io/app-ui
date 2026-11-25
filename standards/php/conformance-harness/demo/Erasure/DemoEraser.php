@@ -89,11 +89,17 @@ final class DemoEraser
             Log::info('Erasing '.$identifiers[0]);
         }
 
+        if (self::$defect === 'log_user_id') {
+            Log::info("Erasing user {$userId}");
+        }
+
         if (self::$defect === 'throw_when_empty' && $profileCount + $linkCount === 0) {
             throw new RuntimeException('Nothing to erase.');
         }
 
-        if ($dryRun && self::$defect !== 'dry_run_writes') {
+        $isDryRunWriting = self::$defect === 'dry_run_writes' || (self::$defect === 'anonymise_dry_run_writes' && ! $isDeleting);
+
+        if ($dryRun && ! $isDryRunWriting) {
             return $report;
         }
 

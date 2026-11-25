@@ -33,7 +33,7 @@ interface ErasureFixture
      */
     public function tables(): array;
 
-    /** Creates a person, and the user row when the package needs one. */
+    /** Creates a person, and the user row when the package needs one; a user key of 6+ characters (E7). */
     public function makePerson(): ErasurePerson;
 
     /** Seeds the person's data in every store; in this organisation when it is not null. */
@@ -52,6 +52,8 @@ interface ErasureFixture
 
     /**
      * Cache keys the package wrote for the person and a real run must forget (E13).
+     * E13 sees only keys `seed()` writes, so the fixture's docblock lists every
+     * cache the package uses with the person's data, and `seed()` writes each one.
      *
      * @return list<string>
      */

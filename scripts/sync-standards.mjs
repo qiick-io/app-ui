@@ -18,6 +18,7 @@
  *         "app": true,                     // self-hosted app: stack and distribution rules
  *         "package": true,                 // Composer package: must consume package-matrix.yml
  *         "erasure": true,                 // package with an eraser: gets tests/Erasure (false: no personal data)
+ *         "erasureExemptReason": "…",      // required with "erasure": false: why the package holds no personal data
  *         "patterns": ["command-palette"], // optional UI patterns it adopts (standards/patterns.json)
  *         "requiredItems": ["page-layout"], // registry items it must install (check-drift.mjs)
  *         "divergences": {                  // registry strings and/or conformance objects
@@ -972,17 +973,24 @@ export function syncStandards(
     const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
     // A warning while packages turn the erasure suite on one by one, and an
-    // error from 1.0 on: the 1.0 release PR cannot pass without the decision.
-    const isErasureUndecided =
-        isCheck &&
-        config.package === true &&
-        typeof config.erasure !== 'boolean';
-    const erasureOptInMessage = `erasure: this package has not opted in yet. Set "erasure": true in ${CONFIG_FILE} in the PR that adds its eraser, or "erasure": false if it holds no personal data (.qiick/standards/erasure.md).`;
-    const isErasureOptInRequired =
-        isErasureUndecided && hasStableMajorRelease(targetRoot);
+    // error from 1.0 on: the 1.0 release PR cannot pass without the decision,
+    // and an exemption (`"erasure": false`) only counts with its reason written down.
+    const hasErasureExemptReason =
+        typeof config.erasureExemptReason === 'string' &&
+        config.erasureExemptReason.trim() !== '';
+    const erasureDecisionMessage =
+        !isCheck || config.package !== true
+            ? null
+            : typeof config.erasure !== 'boolean'
+              ? `erasure: this package has not opted in yet. Set "erasure": true in ${CONFIG_FILE} in the PR that adds its eraser, or "erasure": false with an "erasureExemptReason" if it holds no personal data (.qiick/standards/erasure.md).`
+              : config.erasure === false && !hasErasureExemptReason
+                ? `erasure: "erasure": false needs an "erasureExemptReason" in ${CONFIG_FILE} that says why the package holds no personal data (.qiick/standards/erasure.md).`
+                : null;
+    const isErasureDecisionRequired =
+        erasureDecisionMessage !== null && hasStableMajorRelease(targetRoot);
 
-    if (isErasureUndecided && !isErasureOptInRequired) {
-        warnings.push(erasureOptInMessage);
+    if (erasureDecisionMessage !== null && !isErasureDecisionRequired) {
+        warnings.push(erasureDecisionMessage);
     }
 
     const patternErrors = validatePatterns(config, catalogue);
@@ -996,8 +1004,8 @@ export function syncStandards(
     }
 
     /** @type {string[]} */
-    const messages = isErasureOptInRequired
-        ? [`${erasureOptInMessage} Required from 1.0.0 on.`]
+    const messages = isErasureDecisionRequired
+        ? [`${erasureDecisionMessage} Required from 1.0.0 on.`]
         : [];
 
     for (const output of renderOutputs(config, catalogue)) {

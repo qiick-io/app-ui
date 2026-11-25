@@ -17,6 +17,9 @@ use Qiick\Standards\Erasure\Support\ErasurePerson;
  * The erasure fixture of the harness's demo package, written the way a real
  * package writes its `tests/Erasure/fixture.php`. The options let a proof
  * break the fixture itself (E1, E3b, E14).
+ *
+ * Caches the package uses with the person's data, each written by seed():
+ * - `demo:{userPublicId}`: the person's email, forgotten after a real run.
  */
 final class DemoErasureFixture implements ErasureFixture
 {
@@ -29,6 +32,7 @@ final class DemoErasureFixture implements ErasureFixture
      * @param  array<string, 'personal'|'retained'|'other'>  $columnClasses  `table.column` => a class that overrides the honest one
      * @param  list<string>  $skippedSeeds  stores seed() leaves empty: `demo_profiles`, `demo_links`, `cache`
      * @param  ?list<string>  $organisationScopedTables  overrides the honest `['demo_profiles']`
+     * @param  ?string  $userId  a fixed user key instead of a fresh six-digit one
      */
     public function __construct(
         private readonly string $eraserClass = DemoEraser::class,
@@ -39,6 +43,7 @@ final class DemoErasureFixture implements ErasureFixture
         private readonly array $skippedSeeds = [],
         private readonly ?array $organisationScopedTables = null,
         private readonly bool $isCacheDeclared = true,
+        private readonly ?string $userId = null,
     ) {}
 
     /**
@@ -109,7 +114,7 @@ final class DemoErasureFixture implements ErasureFixture
 
     public function makePerson(): ErasurePerson
     {
-        return ErasurePerson::fresh((string) random_int(100000, 999999));
+        return ErasurePerson::fresh($this->userId ?? (string) random_int(100000, 999999));
     }
 
     public function seed(ErasurePerson $person, ?string $organisationId): void

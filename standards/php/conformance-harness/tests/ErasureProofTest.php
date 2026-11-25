@@ -103,4 +103,7 @@ it('RED: a cheat fails its check', function (string $checkId, ?string $defect, a
     'E13: a cache written but not declared' => ['E13', 'keep_cache', ['isCacheDeclared' => false]],
     'E13: a declared cache seed() never wrote' => ['E13', null, ['skippedSeeds' => ['cache']]],
     'E13: a cache the report does not list' => ['E13', 'omit_cache_store', []],
+    'E5: a dry run that writes in anonymise mode only' => ['E5', 'anonymise_dry_run_writes', []],
+    'E7: the user key in a log record' => ['E7', 'log_user_id', []],
+    'E7: a user key too short to search for' => ['E7', null, ['userId' => '42']],
 ]);

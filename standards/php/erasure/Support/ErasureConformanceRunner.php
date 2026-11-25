@@ -39,9 +39,9 @@ final class ErasureConformanceRunner
         'E3-anonymise' => 'an anonymise run leaves no personal value in a personal column',
         'E3b' => 'every table of the migrated schema is classified, and no seeded value sits in an other column',
         'E4' => 'a second run changes nothing',
-        'E5' => 'a dry run writes nothing, fires nothing and predicts the real run',
+        'E5' => 'a dry run, in both modes, writes nothing, fires nothing and predicts the real run',
         'E6' => 'another person\'s data is left byte-identical',
-        'E7' => 'no seeded identifier reaches the report, package events or logs',
+        'E7' => 'no user key, public id or seeded identifier reaches the report, package events or logs',
         'E8' => 'a real run dispatches exactly one SubjectErasedEvent, after commit',
         'E9' => 'a failure at the last write rolls every write back and is rethrown',
         'E10' => 'an organisation-scoped run leaves other organisations and out-of-scope tables alone',
@@ -245,34 +245,36 @@ final class ErasureConformanceRunner
 
     private function checkDryRun(): void
     {
-        $person = $this->fixture->makePerson();
-        $this->fixture->seed($person, $this->seedOrganisationId());
-        $before = $this->snapshot();
-        $recording = $this->startRecording();
+        foreach (['delete', 'anonymise'] as $mode) {
+            $person = $this->fixture->makePerson();
+            $this->fixture->seed($person, $this->seedOrganisationId());
+            $before = $this->snapshot();
+            $recording = $this->startRecording();
 
-        try {
-            $dryReport = $this->erase($person, 'delete', null, true);
-        } finally {
-            $recording->stop();
-        }
-
-        $this->assertReport('E5', $dryReport, $person, 'delete', true);
-        $this->assertSnapshotsEqual('E5', $before, $this->snapshot());
-
-        if ($recording->packageEvents() !== []) {
-            $this->fail('E5', 'a dry run dispatched a package event');
-        }
-
-        foreach ($this->fixture->cacheKeys($person) as $cacheKey) {
-            if (! Cache::has($cacheKey)) {
-                $this->fail('E5', 'a dry run forgot a cache entry');
+            try {
+                $dryReport = $this->erase($person, $mode, null, true);
+            } finally {
+                $recording->stop();
             }
-        }
 
-        $realReport = $this->erase($person, 'delete');
+            $this->assertReport('E5', $dryReport, $person, $mode, true);
+            $this->assertSnapshotsEqual('E5', $before, $this->snapshot());
 
-        if ($dryReport->toArray()['stores'] !== $realReport->toArray()['stores']) {
-            $this->fail('E5', 'the dry run counts differ from the real run that follows');
+            if ($recording->packageEvents() !== []) {
+                $this->fail('E5', "a {$mode} dry run dispatched a package event");
+            }
+
+            foreach ($this->fixture->cacheKeys($person) as $cacheKey) {
+                if (! Cache::has($cacheKey)) {
+                    $this->fail('E5', "a {$mode} dry run forgot a cache entry");
+                }
+            }
+
+            $realReport = $this->erase($person, $mode);
+
+            if ($dryReport->toArray()['stores'] !== $realReport->toArray()['stores']) {
+                $this->fail('E5', "the {$mode} dry run counts differ from the real run that follows");
+            }
         }
     }
 
@@ -291,6 +293,12 @@ final class ErasureConformanceRunner
     private function checkNoIdentifierLeaks(): void
     {
         $person = $this->fixture->makePerson();
+
+        // A short key ('42') matches ordinary numbers, so the search would prove nothing.
+        if (mb_strlen($person->userId) < self::MINIMUM_SEARCH_LENGTH) {
+            $this->fail('E7', 'makePerson() must give a user key of at least '.self::MINIMUM_SEARCH_LENGTH.' characters, so the suite can search for it');
+        }
+
         $this->fixture->seed($person, $this->seedOrganisationId());
         $recording = $this->startRecording();
 
@@ -306,9 +314,15 @@ final class ErasureConformanceRunner
             'a log record' => $recording->logStrings(),
         ];
 
+        $userIdPattern = '/(?<![[:alnum:]])'.preg_quote($person->userId, '/').'(?![[:alnum:]])/u';
+
         foreach ($surfaces as $surfaceName => $strings) {
             if ($this->containsSeededValue($strings, $person)) {
                 $this->fail('E7', "a seeded identifier or public id appears in {$surfaceName}");
+            }
+
+            if (preg_grep($userIdPattern, $strings) !== []) {
+                $this->fail('E7', "the user key appears in {$surfaceName}");
             }
         }
     }

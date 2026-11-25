@@ -225,6 +225,7 @@ test('a package that has not opted in to erasure gets a warning, not an error', 
         php: true,
         package: true,
         erasure: false,
+        erasureExemptReason: 'The package stores no personal data.',
     });
     const appRepo = makeRepo({ php: true });
 
@@ -282,6 +283,70 @@ test('from 1.0 on, a package that has not opted in to erasure fails the check', 
     assert.match(erasureErrors(releasedRepo)[0], /Required from 1\.0\.0 on/);
     assert.deepEqual(erasureErrors(betaRepo), []);
     assert.deepEqual(erasureErrors(decidedReleasedRepo), []);
+});
+
+test('erasure:false needs a written reason, and from 1.0 on the check fails without one', () => {
+    const releasedChangelog =
+        '# Changelog\n\n## [1.0.0] - 2026-12-01\n\n- Initial release.\n';
+    const unexplainedReleasedRepo = makeRepo(
+        { php: true, package: true, erasure: false },
+        { 'CHANGELOG.md': releasedChangelog },
+    );
+    const blankReasonReleasedRepo = makeRepo(
+        {
+            php: true,
+            package: true,
+            erasure: false,
+            erasureExemptReason: '  ',
+        },
+        { 'CHANGELOG.md': releasedChangelog },
+    );
+    const explainedReleasedRepo = makeRepo(
+        {
+            php: true,
+            package: true,
+            erasure: false,
+            erasureExemptReason: 'The package stores no personal data.',
+        },
+        { 'CHANGELOG.md': releasedChangelog },
+    );
+    const unexplainedBetaRepo = makeRepo({
+        php: true,
+        package: true,
+        erasure: false,
+    });
+
+    for (const root of [
+        unexplainedReleasedRepo,
+        blankReasonReleasedRepo,
+        explainedReleasedRepo,
+        unexplainedBetaRepo,
+    ]) {
+        syncStandards(root, { isCheck: false });
+    }
+
+    /** @param {string} root */
+    const check = (root) => {
+        /** @type {string[]} */
+        const warnings = [];
+        const errors = syncStandards(root, { isCheck: true, warnings }).filter(
+            (message) => message.startsWith('erasure:'),
+        );
+
+        return { warnings, errors };
+    };
+
+    for (const root of [unexplainedReleasedRepo, blankReasonReleasedRepo]) {
+        assert.equal(check(root).errors.length, 1);
+        assert.match(check(root).errors[0], /erasureExemptReason/);
+    }
+
+    assert.deepEqual(check(explainedReleasedRepo), {
+        warnings: [],
+        errors: [],
+    });
+    assert.deepEqual(check(unexplainedBetaRepo).errors, []);
+    assert.match(check(unexplainedBetaRepo).warnings[0], /erasureExemptReason/);
 });
 
 test('the repo-owned erasure fixture is written once and never overwritten', () => {
