@@ -8,6 +8,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Added
+
+- Standards: every foreign key is served by an index (fleet convention F8): its columns lead an index, unique index or primary key of its table. Conformance C76 checks it in products on the migrated database (`SchemaInspector::foreignKeysWithoutIndex()`); packages, whose test suites exclude the app-scoped conformance suite, get a repo-owned `tests/Feature/ForeignKeyIndexTest.php` that runs the same code under the package matrix (SQLite, MySQL, MariaDB, PostgreSQL), and F8 fails a package with foreign keys and no such test. The harness proves C76 on SQLite, PostgreSQL, MySQL and MariaDB (MariaDB added to the harness CI matrix); its green fixture gained the three indexes it lacked.
+
 ## [0.14.0] - 2026-11-25
 
 ### Added
@@ -27,8 +31,6 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 - Standards: security and data safety, fleet conventions F19–F23, in a new rule page for every repo, `rules/operations.md`. F19 `SECURITY.md` and GitHub private vulnerability reporting (16 of 19 policies sent reporters there; it was on in 3 repos); F20 `docs/runbooks/secrets.md` listing every secret of `.env.example` with rotation and an "After a leak" section; F21 expand / contract after the first stable release, checked by `migrations-frozen.sh` through `standards/scripts/check-expand-contract.mjs` (`// contract: <column> unused since vX.Y.Z` or `// expand-safe:`); F22 `docs/runbooks/backup.md` with a restore drill at most 92 days old once a product is stable; F23 signed release tags, created locally with `git tag -s` and verified by the new reusable `signed-tag.yml` (`signed-tag / verified`), which app-ui runs on its own tags (every fleet tag was lightweight). Adopting the conventions writes both runbooks in products; `check-repo-settings.mjs` reports private vulnerability reporting; app-ui gets its `SECURITY.md` (#235).
 
 - Standards: the second part of the second block, fleet conventions F24–F30, with static checks in `check-conventions.mjs`. In `rules/operations.md` (retitled "Security, data and operations"): F24 supply chain (`composer audit` and `npm audit` in CI, Dependabot for every ecosystem, lock files in products, build provenance for pushed images), F26 observability with Excubia (`qiick/excubia-core` required, `excubia.json` without a token, `excubia:check` scheduled, `/health/live` and `/health/ready`), F29 privacy (`docs/privacy.md`) and F30 runbooks (`docs/runbooks/deploy.md` with a rollback, `docs/runbooks/incident.md`). In `rules/conventions.md`: F25 strict Laravel (boot calls in products, `Http::preventStrayRequests()` and `Process::preventStrayProcesses()` in every PHP repo's tests), F27 public APIs (path versions, OpenAPI with a test, `Deprecation` / `Sunset` before a version ends) and F28 UI quality (`ui-quality.yml`, drift and browser tests). Adopting the conventions writes the privacy page and the deploy and incident runbooks in products (#234).
-
-- Standards: every foreign key is served by an index (fleet convention F8): its columns lead an index, unique index or primary key of its table. Conformance C76 checks it in products on the migrated database (`SchemaInspector::foreignKeysWithoutIndex()`); packages, whose test suites exclude the app-scoped conformance suite, get a repo-owned `tests/Feature/ForeignKeyIndexTest.php` that runs the same code under the package matrix (SQLite, MySQL, MariaDB, PostgreSQL), and F8 fails a package with foreign keys and no such test. The harness proves C76 on SQLite, PostgreSQL, MySQL and MariaDB (MariaDB added to the harness CI matrix); its green fixture gained the three indexes it lacked.
 
 ### Fixed
 
