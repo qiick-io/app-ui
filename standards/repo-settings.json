@@ -1,0 +1,139 @@
+{
+    "$comment": "Fleet repository settings (standards/rules/repository.md, F15 and F16), read by scripts/check-repo-settings.mjs through gh api.",
+    "repository": {
+        "default_branch": "develop",
+        "allow_squash_merge": true,
+        "allow_merge_commit": true,
+        "allow_rebase_merge": false,
+        "delete_branch_on_merge": true,
+        "squash_merge_commit_title": "PR_TITLE",
+        "squash_merge_commit_message": "PR_BODY"
+    },
+    "protectedBranches": ["develop", "main"],
+    "branchProtection": {
+        "strict": true,
+        "enforceAdmins": true,
+        "requiredApprovingReviewCount": 0,
+        "allowForcePushes": false,
+        "allowDeletions": false
+    },
+    "requiredChecks": ["pr-title / commitlint", "app-ui-drift / standards"],
+    "requiredChecksExceptions": {
+        "app-ui": "The source of the standards: it checks PR titles with its own `pr-title` job and runs no drift check against itself (rules/release.md)."
+    },
+    "rulesets": [
+        "main: merge commits only",
+        "release tags: created by admins only",
+        "release tags: immutable"
+    ],
+    "actions": {
+        "sha_pinning_required": true
+    },
+    "labels": [
+        {
+            "name": "bug",
+            "color": "d73a4a",
+            "description": "Something isn't working"
+        },
+        {
+            "name": "enhancement",
+            "color": "a2eeef",
+            "description": "New feature or request"
+        },
+        {
+            "name": "documentation",
+            "color": "0075ca",
+            "description": "Improvements or additions to documentation"
+        },
+        {
+            "name": "security",
+            "color": "b60205",
+            "description": "Security finding or hardening"
+        },
+        {
+            "name": "schema",
+            "color": "1d76db",
+            "description": "Changes a table, column, index or migration"
+        },
+        {
+            "name": "dependencies",
+            "color": "0366d6",
+            "description": "Pull requests that update a dependency file"
+        },
+        {
+            "name": "github_actions",
+            "color": "000000",
+            "description": "Pull requests that update GitHub Actions code"
+        },
+        {
+            "name": "priority:P0",
+            "color": "b60205",
+            "description": "Blocks a release or production: drop everything"
+        },
+        {
+            "name": "priority:P1",
+            "color": "d93f0b",
+            "description": "Before the next release"
+        },
+        {
+            "name": "priority:P2",
+            "color": "fbca04",
+            "description": "Recommended before the next release"
+        },
+        {
+            "name": "priority:P3",
+            "color": "c2e0c6",
+            "description": "After the next release, or optional"
+        },
+        {
+            "name": "needs-decision",
+            "color": "d93f0b",
+            "description": "Proposal awaiting a maintainer decision"
+        },
+        {
+            "name": "needs-luca",
+            "color": "d93f0b",
+            "description": "Waiting on a decision or action from the maintainer"
+        },
+        {
+            "name": "agent:free",
+            "color": "0e8a16",
+            "description": "Mechanical, well-scoped task a free LLM worker may do (public repos only)"
+        },
+        {
+            "name": "agent:strong",
+            "color": "5319e7",
+            "description": "Needs a strong worker (Claude, Codex, Cursor) or the maintainer"
+        },
+        {
+            "name": "duplicate",
+            "color": "cfd3d7",
+            "description": "This issue or pull request already exists"
+        },
+        {
+            "name": "invalid",
+            "color": "e4e669",
+            "description": "This doesn't seem right"
+        },
+        {
+            "name": "question",
+            "color": "d876e3",
+            "description": "Further information is requested"
+        },
+        {
+            "name": "wontfix",
+            "color": "ffffff",
+            "description": "This will not be worked on"
+        },
+        {
+            "name": "good first issue",
+            "color": "7057ff",
+            "description": "Good for newcomers"
+        },
+        {
+            "name": "help wanted",
+            "color": "008672",
+            "description": "Extra attention is needed"
+        }
+    ]
+}

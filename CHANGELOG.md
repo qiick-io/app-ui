@@ -17,6 +17,8 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 - Standards: package dependency register in `docs/dependencies.md`, with a template and standards-drift coverage check for every runtime `composer.json` `require` entry. Affects Composer packages on the next standards pin bump and re-sync; fill in the generated register.
 
+- Standards: the fleet conventions F12, F13 and F15–F18. F12 (the same files in every package), F13 (release order) and F18 (one product structure, with the fleet beta checklist taken from signaculum-core) join `rules/conventions.md` and the static checks; adopting the conventions writes `docs/public-api.md` and `docs/security-checklist.md` (packages) or `docs/beta-readiness.md` (products) once. A new rule page for every repo, `rules/repository.md`, holds F15 (settings and action pins), F16 (labels and project) and F17 (agent rules: CI watchers at most every 3 minutes, no `pkill`, read the `.env` before `migrate`, only your worktree's database, `gh` as the maintainer's account). `scripts/check-repo-settings.mjs` compares every public `qiick-io` repo with `standards/repo-settings.json` through `gh api` (#228).
+
 ### Fixed
 
 - Conformance C75 (AC17): require nullable `user_groups.organisation_id`, non-null `is_instance`, and the XOR constraint (`is_instance` true only with `organisation_id` NULL), matching qiick/laravel-access#8. Externa 1.x keeps the columns unused and stays green.

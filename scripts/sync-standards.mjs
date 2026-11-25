@@ -238,6 +238,7 @@ function renderRulePages(config, catalogue) {
             : {}),
         testing: readSource('rules/testing.md'),
         git: readSource('rules/git.md'),
+        repository: readSource('rules/repository.md'),
         release: readSource('rules/release.md'),
         checks: readSource('rules/checks.md'),
     };
@@ -351,7 +352,7 @@ const cursorRule = (description, frontmatter, body) =>
 
 /**
  * Everything the pack writes into a repo with this config.
- * @param {{ uiPreset?: string, php?: boolean, eslint?: boolean, oxlint?: boolean, app?: boolean, frontendRoots?: string[], patterns?: string[], package?: boolean, erasure?: boolean }} config
+ * @param {{ uiPreset?: string, php?: boolean, eslint?: boolean, oxlint?: boolean, app?: boolean, package?: boolean, conventions?: object, frontendRoots?: string[], patterns?: string[], erasure?: boolean }} config
  * @param {PatternCatalogue} [catalogue] - Defaults to `standards/patterns.json`
  * @returns {{ path: string, kind: 'file' | 'block' | 'template', content: string }[]}
  */
@@ -397,6 +398,7 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
                     pages.dependencies,
                     pages.checks,
                     pages.git,
+                    pages.repository,
                     pages.distribution,
                 ]
                     .filter(Boolean)
@@ -438,6 +440,23 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
             kind: 'template',
             content: readSource('templates/dependencies.md'),
         });
+    }
+
+    // Fleet convention F12 / F18 starting points, written once when a repo adopts the conventions.
+    if (config.conventions) {
+        const conventionTemplates = config.package
+            ? ['public-api.md', 'security-checklist.md']
+            : config.app
+              ? ['beta-readiness.md']
+              : [];
+
+        for (const template of conventionTemplates) {
+            outputs.push({
+                path: `docs/${template}`,
+                kind: 'template',
+                content: readSource(`templates/${template}`),
+            });
+        }
     }
 
     for (const [name, page] of Object.entries(pages)) {

@@ -387,6 +387,34 @@ test('PHP repos get the backend conventions', () => {
     );
 });
 
+test('every repo gets the repository rules; adopting the conventions writes their starting files once', () => {
+    const frontendOnlyRepo = makeRepo({});
+    const packageRepo = makeRepo({ php: true, package: true, conventions: {} });
+    const appRepo = makeRepo({ php: true, app: true, conventions: {} });
+
+    for (const root of [frontendOnlyRepo, packageRepo, appRepo]) {
+        syncStandards(root, { isCheck: false });
+    }
+
+    assert.match(
+        read(frontendOnlyRepo, 'AGENTS.md'),
+        /^## Repository settings and agent rules$/m,
+    );
+    assert.match(
+        read(packageRepo, 'docs/public-api.md'),
+        /^## Deprecation policy$/m,
+    );
+    assert.ok(
+        fs.existsSync(path.join(packageRepo, 'docs/security-checklist.md')),
+    );
+    assert.ok(!fs.existsSync(path.join(packageRepo, 'docs/beta-readiness.md')));
+    assert.match(
+        read(appRepo, 'docs/beta-readiness.md'),
+        /^## 7\. Shared qiick packages$/m,
+    );
+    assert.ok(!fs.existsSync(path.join(frontendOnlyRepo, 'docs')));
+});
+
 test('the fleet convention checks run only in a repo that adopted them', () => {
     const files = {
         'composer.json': JSON.stringify({ name: 'qiick/laravel-demo' }),
