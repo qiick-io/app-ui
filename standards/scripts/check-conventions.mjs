@@ -30,9 +30,9 @@ const standardsRoot = path.join(
     '..',
 );
 
-/** Every convention id the decisions number, automated or not (F19–F23: `rules/operations.md`). */
+/** Every convention id the decisions number, automated or not (F19–F24, F26, F29, F30: `rules/operations.md`). */
 export const CONVENTION_IDS = Array.from(
-    { length: 23 },
+    { length: 30 },
     (_unused, index) => `F${index + 1}`,
 );
 
@@ -98,6 +98,7 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
  *     migrationFiles: { path: string, text: string }[],
  *     configFiles: { path: string, text: string }[],
  *     scheduleFiles: { path: string, text: string }[],
+ *     hasUi: boolean,
  *     today?: string,
  * }} RepoSnapshot
  */
@@ -159,7 +160,7 @@ function readPhpFiles(root, relativeDirectories, rootForNames) {
 /**
  * The repo as the checks see it.
  * @param {string} targetRoot
- * @param {{ package?: boolean, app?: boolean }} config
+ * @param {{ package?: boolean, app?: boolean, uiPreset?: string }} config
  * @returns {RepoSnapshot}
  */
 export function readRepo(targetRoot, config) {
@@ -179,6 +180,7 @@ export function readRepo(targetRoot, config) {
     return {
         root: targetRoot,
         kind,
+        hasUi: typeof config.uiPreset === 'string',
         repoName,
         shortName,
         sourceFiles: readPhpFiles(targetRoot, [sourceDirectory], targetRoot),
@@ -703,13 +705,77 @@ export const CONVENTION_CHECKS = [
         title: 'release tags verified as signed',
         appliesTo: ['package', 'app'],
         run: (repo) =>
-            listFiles(path.join(repo.root, '.github/workflows'), /\.ya?ml$/)
-                .map((workflowPath) => fs.readFileSync(workflowPath, 'utf8'))
-                .some((workflowText) => SIGNED_TAG_WORKFLOW.test(workflowText))
+            SIGNED_TAG_WORKFLOW.test(readWorkflowsText(repo.root))
                 ? []
                 : [
                       'no workflow calls qiick-io/app-ui/.github/workflows/signed-tag.yml on a tag push (job id `signed-tag`).',
                   ],
+    },
+    {
+        id: 'F24',
+        title: 'audited, updated and attested dependencies',
+        appliesTo: ['package', 'app'],
+        run: (repo) => findSupplyChainViolations(repo),
+    },
+    {
+        id: 'F25',
+        title: 'strict Laravel',
+        appliesTo: ['package', 'app'],
+        run: (repo) => findStrictLaravelViolations(repo),
+    },
+    {
+        id: 'F26',
+        title: 'observability with Excubia',
+        appliesTo: ['app'],
+        run: (repo) => findObservabilityViolations(repo),
+    },
+    {
+        id: 'F27',
+        title: 'a versioned public API described in OpenAPI',
+        appliesTo: ['app'],
+        run: (repo) => findPublicApiViolations(repo),
+    },
+    {
+        id: 'F28',
+        title: 'the shared UI checks and browser tests',
+        appliesTo: ['app'],
+        run: (repo) => findUiQualityViolations(repo),
+    },
+    {
+        id: 'F29',
+        title: 'a privacy page',
+        appliesTo: ['app'],
+        run: (repo) =>
+            findMissingSections(
+                repo.root,
+                'docs/privacy.md',
+                [
+                    'Personal data',
+                    'Processors and outbound destinations',
+                    'Export and erasure',
+                    'Telemetry',
+                ],
+                'privacy.md',
+            ),
+    },
+    {
+        id: 'F30',
+        title: 'deploy and incident runbooks',
+        appliesTo: ['app'],
+        run: (repo) => [
+            ...findMissingSections(
+                repo.root,
+                'docs/runbooks/deploy.md',
+                ['Rollback'],
+                'runbook-deploy.md',
+            ),
+            ...findMissingSections(
+                repo.root,
+                'docs/runbooks/incident.md',
+                ['First steps', 'After the incident'],
+                'runbook-incident.md',
+            ),
+        ],
     },
 ];
 
@@ -1259,6 +1325,259 @@ export function findExpandContractViolations(
 }
 
 /**
+ * Every workflow of the repo as one text (`.github/workflows/*.yml`).
+ * @param {string} root
+ */
+function readWorkflowsText(root) {
+    return listFiles(path.join(root, '.github/workflows'), /\.ya?ml$/)
+        .map((workflowPath) => fs.readFileSync(workflowPath, 'utf8'))
+        .join('\n');
+}
+
+/**
+ * The sections a Markdown page lacks, as errors naming the page.
+ * @param {string} root
+ * @param {string} relativePath
+ * @param {string[]} sections - Heading texts
+ * @param {string} template - Template under `standards/templates/`
+ */
+function findMissingSections(root, relativePath, sections, template) {
+    const page = readText(root, relativePath);
+
+    if (page === null) {
+        return [
+            `${relativePath} is missing (standards/templates/${template}).`,
+        ];
+    }
+
+    return sections
+        .filter(
+            (section) =>
+                !new RegExp(
+                    `^#+ ${section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+                    'im',
+                ).test(page),
+        )
+        .map((section) => `${relativePath} has no "${section}" section.`);
+}
+
+/**
+ * F24: audits in CI, Dependabot for every ecosystem, lock files in products,
+ * provenance for pushed images.
+ * @param {RepoSnapshot} repo
+ */
+export function findSupplyChainViolations(repo) {
+    /** @type {string[]} */
+    const errors = [];
+    const workflows = readWorkflowsText(repo.root);
+    const hasPackageJson = readText(repo.root, 'package.json') !== null;
+
+    if (!/composer audit/.test(workflows)) {
+        errors.push('no workflow runs `composer audit`.');
+    }
+
+    if (hasPackageJson && !/(?:npm|pnpm) audit/.test(workflows)) {
+        errors.push(
+            'no workflow runs `npm audit --omit=dev --audit-level=high`.',
+        );
+    }
+
+    const dependabot =
+        readText(repo.root, '.github/dependabot.yml') ??
+        readText(repo.root, '.github/dependabot.yaml');
+    const ecosystems = [
+        'composer',
+        'github-actions',
+        ...(hasPackageJson ? ['npm'] : []),
+    ];
+
+    if (dependabot === null) {
+        errors.push('.github/dependabot.yml is missing.');
+    } else {
+        for (const ecosystem of ecosystems) {
+            if (
+                !new RegExp(
+                    `package-ecosystem:\\s*["']?${ecosystem}["']?`,
+                ).test(dependabot)
+            ) {
+                errors.push(
+                    `.github/dependabot.yml does not update \`${ecosystem}\`.`,
+                );
+            }
+        }
+    }
+
+    if (repo.kind === 'app' && readText(repo.root, 'composer.lock') === null) {
+        errors.push('composer.lock is not committed.');
+    }
+
+    if (
+        /docker\/build-push-action@/.test(workflows) &&
+        /push:\s*(?:true|\$\{\{)/.test(workflows) &&
+        !/attest-build-provenance@/.test(workflows)
+    ) {
+        errors.push(
+            'a workflow pushes a Docker image without `actions/attest-build-provenance`.',
+        );
+    }
+
+    return errors;
+}
+
+/** Boot calls every product makes (F25), as `[pattern, call]`. */
+const STRICT_BOOT_CALLS = [
+    [
+        /Model::shouldBeStrict\(/,
+        'Model::shouldBeStrict(! app()->isProduction())',
+    ],
+    [
+        /DB::prohibitDestructiveCommands\(/,
+        'DB::prohibitDestructiveCommands(app()->isProduction())',
+    ],
+    [
+        /URL::forceHttps\(|URL::forceScheme\(\s*['"]https/,
+        'URL::forceHttps(app()->isProduction())',
+    ],
+    [
+        /Date::use\(\s*CarbonImmutable::class/,
+        'Date::use(CarbonImmutable::class)',
+    ],
+    [/Password::defaults\(/, 'Password::defaults(…)'],
+];
+
+/**
+ * F25: strict boot in products, no stray requests or processes in tests.
+ * @param {RepoSnapshot} repo
+ */
+export function findStrictLaravelViolations(repo) {
+    const providers = repo.sourceFiles
+        .filter((file) => file.path.startsWith('app/Providers/'))
+        .map((file) => file.text)
+        .join('\n');
+    const tests = repo.testFiles.map((file) => file.text).join('\n');
+
+    return [
+        ...(repo.kind === 'app'
+            ? STRICT_BOOT_CALLS.filter(
+                  ([pattern]) => !pattern.test(providers),
+              ).map(([, call]) => `app/Providers/ never calls ${call}.`)
+            : []),
+        ...['Http::preventStrayRequests()', 'Process::preventStrayProcesses()']
+            .filter((call) => !tests.includes(call.replace('()', '(')))
+            .map((call) => `the test setup never calls ${call}.`),
+    ];
+}
+
+/**
+ * F26: Excubia required, configured without a token, scheduled, and health routes.
+ * @param {RepoSnapshot} repo
+ */
+export function findObservabilityViolations(repo) {
+    /** @type {string[]} */
+    const errors = [];
+    const composer = JSON.parse(readText(repo.root, 'composer.json') ?? '{}');
+
+    if (!Object.hasOwn(composer.require ?? {}, 'qiick/excubia-core')) {
+        errors.push(
+            'composer.json does not require qiick/excubia-core (not in require-dev).',
+        );
+    }
+
+    const excubiaConfig = readText(repo.root, 'excubia.json');
+
+    if (excubiaConfig === null) {
+        errors.push('excubia.json is missing.');
+    } else if (/"token"\s*:/.test(excubiaConfig)) {
+        errors.push('excubia.json holds an app token: use EXCUBIA_APP_TOKEN.');
+    }
+
+    if (
+        !repo.scheduleFiles.some((file) =>
+            /excubia:(?:check|push)/.test(file.text),
+        )
+    ) {
+        errors.push('the schedule never runs `excubia:check`.');
+    }
+
+    const routes = listFiles(path.join(repo.root, 'routes'), /\.php$/)
+        .map((routePath) => fs.readFileSync(routePath, 'utf8'))
+        .join('\n');
+
+    for (const endpoint of ['health/live', 'health/ready']) {
+        if (!routes.includes(endpoint)) {
+            errors.push(`no route serves /${endpoint}.`);
+        }
+    }
+
+    return errors;
+}
+
+/**
+ * F27: a public API is versioned, described in OpenAPI and tested against it.
+ * @param {RepoSnapshot} repo
+ */
+export function findPublicApiViolations(repo) {
+    const apiRoutes = readText(repo.root, 'routes/api.php');
+
+    if (apiRoutes === null) {
+        return [];
+    }
+
+    /** @type {string[]} */
+    const errors = [];
+    const openApiFiles = listFiles(
+        path.join(repo.root, 'resources/openapi'),
+        /-v\d+\.(?:ya?ml|json)$/,
+    );
+
+    if (openApiFiles.length === 0) {
+        errors.push(
+            'routes/api.php exists but resources/openapi/<api>-v<N>.yaml does not.',
+        );
+    }
+
+    if (!repo.testFiles.some((file) => /openapi/i.test(file.text))) {
+        errors.push('no test compares the routes with the OpenAPI file.');
+    }
+
+    if (!/['"]v\d+['"]|\/v\d+\//.test(apiRoutes)) {
+        errors.push(
+            'routes/api.php has no `v<N>` prefix: version the API in its path.',
+        );
+    }
+
+    return errors;
+}
+
+/**
+ * F28: a product with a UI runs the shared UI checks and has browser tests.
+ * @param {RepoSnapshot} repo
+ */
+export function findUiQualityViolations(repo) {
+    if (!repo.hasUi) {
+        return [];
+    }
+
+    const workflows = readWorkflowsText(repo.root);
+
+    return [
+        ...['ui-quality.yml', 'drift-check.yml']
+            .filter(
+                (workflow) =>
+                    !new RegExp(
+                        `qiick-io/app-ui/\\.github/workflows/${workflow.replace('.', '\\.')}@`,
+                    ).test(workflows),
+            )
+            .map((workflow) => `no workflow calls the shared ${workflow}.`),
+        ...(repo.testFiles.some((file) =>
+            file.path.startsWith('tests/Browser/'),
+        )
+            ? []
+            : ['tests/Browser/ has no browser test.']),
+    ];
+}
+
+/**
  * Divergence errors: unknown id, missing metadata, past review date.
  * @param {Record<string, unknown>} divergences
  * @param {string} today - YYYY-MM-DD
@@ -1302,7 +1621,7 @@ export function findDivergenceErrors(divergences, today) {
  * Every convention error for a repo that adopted the conventions; empty when
  * the repo has no `conventions` object.
  * @param {string} targetRoot
- * @param {{ package?: boolean, app?: boolean, conventions?: { divergences?: Record<string, unknown> } }} config
+ * @param {{ package?: boolean, app?: boolean, uiPreset?: string, conventions?: { divergences?: Record<string, unknown> } }} config
  * @param {{ today?: string, checks?: ConventionCheck[] }} [options]
  * @returns {string[]}
  */
