@@ -217,12 +217,53 @@ function ghApi(apiArguments) {
 }
 
 /**
+ * Repo name => titles of the organisation projects linked to it, read from
+ * each project's `repositories`. That is the relation `gh project link`
+ * writes; a repository's own `projectsV2` field missed links made through it
+ * on 2026-11-25 (laravel-access stayed empty while project 9 listed it).
+ * @param {{ title: string, repositories: { nodes: { name: string }[] } }[]} projectNodes
+ * @returns {Map<string, string[]>}
+ */
+export function projectTitlesByRepository(projectNodes) {
+    /** @type {Map<string, string[]>} */
+    const titlesByRepository = new Map();
+
+    for (const project of projectNodes) {
+        for (const repository of project.repositories.nodes) {
+            titlesByRepository.set(repository.name, [
+                ...(titlesByRepository.get(repository.name) ?? []),
+                project.title,
+            ]);
+        }
+    }
+
+    return titlesByRepository;
+}
+
+/**
+ * Every organisation project with its linked repos (one GraphQL call).
+ * @returns {Map<string, string[]>}
+ */
+function fetchProjectTitlesByRepository() {
+    const response = ghApi([
+        'graphql',
+        '-f',
+        `query={organization(login:"${ORGANISATION}"){projectsV2(first:100){nodes{title repositories(first:100){nodes{name}}}}}}`,
+    ]);
+
+    return projectTitlesByRepository(
+        response?.data?.organization?.projectsV2?.nodes ?? [],
+    );
+}
+
+/**
  * The live state of one repo (several `gh api` calls).
  * @param {string} repoName
  * @param {RepoSettingsStandard} standard
+ * @param {Map<string, string[]>} linkedProjectTitles - From the projects' side
  * @returns {RepoState}
  */
-function fetchRepoState(repoName, standard) {
+function fetchRepoState(repoName, standard, linkedProjectTitles) {
     const repoPath = `repos/${ORGANISATION}/${repoName}`;
     const repository = ghApi([repoPath]) ?? {};
     const projects = ghApi([
@@ -249,10 +290,14 @@ function fetchRepoState(repoName, standard) {
             ghApi([`${repoPath}/private-vulnerability-reporting`])?.enabled ??
             null,
         labels: ghApi(['--paginate', `${repoPath}/labels?per_page=100`]) ?? [],
-        projectTitles:
-            projects?.data?.repository?.projectsV2?.nodes?.map(
-                (project) => project.title,
-            ) ?? [],
+        projectTitles: [
+            ...new Set([
+                ...(projects?.data?.repository?.projectsV2?.nodes?.map(
+                    (project) => project.title,
+                ) ?? []),
+                ...(linkedProjectTitles.get(repoName) ?? []),
+            ]),
+        ],
     };
 }
 
@@ -307,6 +352,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
               )
                   .map((repo) => repo.name)
                   .sort();
+    const linkedProjectTitles = fetchProjectTitlesByRepository();
     let violationCount = 0;
 
     for (const repoName of repoNames) {
@@ -315,7 +361,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         }
 
         const violations = findSettingsViolations(
-            fetchRepoState(repoName, standard),
+            fetchRepoState(repoName, standard, linkedProjectTitles),
             standard,
         );
 
