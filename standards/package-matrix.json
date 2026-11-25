@@ -1,5 +1,5 @@
 {
-    "$comment": "Canonical Laravel/PHP compatibility matrix and database targets for every qiick Composer package. The reusable .github/workflows/package-matrix.yml exports the PHP matrix with package exclusions and the non-SQLite database services; packages consume them with fromJSON. Docs: docs/package-matrix.md.",
+    "$comment": "Canonical Laravel/PHP compatibility matrix and database targets for every qiick Composer package. `matrix` is the full variant (push to develop and main, nightly); `pr` says which part of it a pull request runs, from the files it touches. The reusable .github/workflows/package-matrix.yml exports both; packages consume them with fromJSON. Docs: docs/package-matrix.md.",
     "matrix": {
         "php": ["8.3", "8.4", "8.5"],
         "laravel": ["12", "13"],
@@ -15,6 +15,29 @@
             }
         ],
         "exclude": []
+    },
+    "pr": {
+        "$comment": "Path patterns are regular expressions on repo-relative paths. A pull request that touches only docsOnly paths runs nothing (every job still reports success under its name). Otherwise: the highest cell always, the lowest cell when it touches code, the server databases when it touches database code, mutation on the src/ classes it changed.",
+        "always": {
+            "php": "highest",
+            "laravel": "highest",
+            "dependency-version": "stable"
+        },
+        "whenCodeChanges": {
+            "php": "lowest",
+            "laravel": "lowest",
+            "dependency-version": "lowest"
+        },
+        "paths": {
+            "docsOnly": ["\\.md$", "^docs/", "^LICENSE$"],
+            "code": ["^composer\\.json$", "^src/"],
+            "database": [
+                "^database/",
+                "^src/(?:.*/)?(?:Models?|Migrations?|Database|Eloquent|Stores?|Repositories|Queries|Builders|Schema)/",
+                "^src/.*(?:Model|Migration|Store|Repository|Query|Builder|Schema)\\.php$"
+            ],
+            "mutation": ["^src/(?!Testing/).*\\.php$"]
+        }
     },
     "databases": [
         {
