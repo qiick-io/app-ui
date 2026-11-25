@@ -33,6 +33,36 @@ interface ErasureFixture
      */
     public function tables(): array;
 
+    /**
+     * Columns classified `retained` that keep the person's value in cleartext
+     * by design, each with the standard kept reason. Every other retained
+     * column must hold no searchable value of the person after a real run, and
+     * the report lists each of these as `cleartext:<table>.<column>`.
+     *
+     * @return array<string, string> `table.column` => kept reason
+     */
+    public function retainedCleartextColumns(): array;
+
+    /**
+     * Files the package writes for the person, as glob patterns relative to
+     * each disk's root. seed() writes at least one file on each disk; a real
+     * run leaves no matching file and no file that names or holds a value of
+     * the person. The report lists each disk as `disk:<name>`.
+     *
+     * @return array<string, list<string>> disk => patterns
+     */
+    public function diskPaths(ErasurePerson $person): array;
+
+    /**
+     * Database connections besides connectionName() that hold the person's
+     * rows. seed() writes at least one row on each; after a real run no row
+     * of any of their tables holds a value of the person. The report lists
+     * each as `connection:<name>`.
+     *
+     * @return list<string>
+     */
+    public function additionalConnections(): array;
+
     /** Creates a person, and the user row when the package needs one; a user key of 6+ characters (E7). */
     public function makePerson(): ErasurePerson;
 

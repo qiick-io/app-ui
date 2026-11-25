@@ -374,6 +374,47 @@ test('erasure:false needs a written reason, and from 1.0 on the check fails with
     assert.match(check(unexplainedBetaRepo).warnings[0], /erasureExemptReason/);
 });
 
+test('opting out of erasure removes the managed suite and keeps the fixture', () => {
+    const root = makeRepo({ php: true, package: true, erasure: true });
+
+    syncStandards(root, { isCheck: false });
+    fs.writeFileSync(
+        path.join(root, 'qiick-standards.json'),
+        JSON.stringify({
+            php: true,
+            package: true,
+            erasure: false,
+            erasureExemptReason: 'The package stores no personal data.',
+        }),
+    );
+
+    assert.ok(
+        syncStandards(root, { isCheck: true }).some((message) =>
+            message.includes('tests/Erasure/ErasureConformanceTest.php'),
+        ),
+    );
+
+    syncStandards(root, { isCheck: false });
+
+    assert.equal(
+        fs.existsSync(
+            path.join(root, 'tests/Erasure/ErasureConformanceTest.php'),
+        ),
+        false,
+    );
+    assert.equal(
+        fs.existsSync(path.join(root, 'tests/Erasure/Support')),
+        false,
+    );
+    assert.ok(fs.existsSync(path.join(root, 'tests/Erasure/fixture.php')));
+    assert.deepEqual(
+        syncStandards(root, { isCheck: true }).filter((message) =>
+            message.includes('Erasure'),
+        ),
+        [],
+    );
+});
+
 test('the repo-owned erasure fixture is written once and never overwritten', () => {
     const root = makeRepo(
         { php: true, package: true, erasure: true },

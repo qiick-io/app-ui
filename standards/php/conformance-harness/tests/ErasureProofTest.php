@@ -106,4 +106,25 @@ it('RED: a cheat fails its check', function (string $checkId, ?string $defect, a
     'E5: a dry run that writes in anonymise mode only' => ['E5', 'anonymise_dry_run_writes', []],
     'E7: the user key in a log record' => ['E7', 'log_user_id', []],
     'E7: a user key too short to search for' => ['E7', null, ['userId' => '42']],
+    'E3: a personal column that is no search marker survives' => ['E3-anonymise', 'keep_national_id', []],
+    'E3: a personal column seed() leaves empty' => ['E3-delete', null, ['skippedSeeds' => ['national_id']]],
+    'E3: a retained column keeps cleartext under a kept reason' => ['E3-anonymise', 'keep_email_kept', ['columnClasses' => ['demo_profiles.email' => 'retained']]],
+    'E3: a declared cleartext column the report does not list' => ['E3-anonymise', 'keep_email_kept', ['columnClasses' => ['demo_profiles.email' => 'retained'], 'retainedCleartextColumns' => ['demo_profiles.email' => 'legal_obligation']]],
+    'E3b: a cleartext column with a reason outside the standard' => ['E3b', null, ['columnClasses' => ['demo_profiles.email' => 'retained'], 'retainedCleartextColumns' => ['demo_profiles.email' => 'because']]],
+    'E3: a file on a declared disk survives' => ['E3-delete', 'keep_files', []],
+    'E3: a declared disk seed() leaves empty' => ['E3-delete', null, ['skippedSeeds' => ['disk']]],
+    'E3: a row on another connection survives' => ['E3-anonymise', 'keep_archive', []],
+    'E3: a declared connection seed() leaves empty' => ['E3-delete', null, ['skippedSeeds' => ['archive']]],
+    'E2: no event for a person with no data' => ['E2', 'skip_event_when_empty', []],
+    'E11: a whitespace-only identifier accepted' => ['E11', 'accept_blank_identifier', []],
 ]);
+
+it('GREEN: a retained column declared cleartext, with its reason and its report entry, passes E3', function (): void {
+    DemoEraser::$defect = 'keep_email_cleartext';
+    $fixture = new DemoErasureFixture(columnClasses: ['demo_profiles.email' => 'retained'], retainedCleartextColumns: ['demo_profiles.email' => 'legal_obligation']);
+
+    (new ErasureConformanceRunner($fixture))->run('E3-anonymise');
+    (new ErasureConformanceRunner($fixture))->run('E3b');
+
+    expect(true)->toBeTrue();
+});

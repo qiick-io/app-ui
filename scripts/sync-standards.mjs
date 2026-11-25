@@ -946,6 +946,22 @@ export function findDependencyRegisterViolations(targetRoot) {
 }
 
 /**
+ * The synced, never hand-edited files of the erasure suite, as repo paths.
+ *
+ * @returns {string[]}
+ */
+function managedErasurePaths() {
+    const erasureRoot = path.join(standardsRoot, 'php/erasure');
+
+    return listFilesRecursive(erasureRoot)
+        .map((absolutePath) =>
+            path.relative(erasureRoot, absolutePath).split(path.sep).join('/'),
+        )
+        .filter((relativePath) => relativePath !== 'fixture.php')
+        .map((relativePath) => `tests/Erasure/${relativePath}`);
+}
+
+/**
  * Whether CHANGELOG.md has a stable `## [X.Y.Z]` section with X >= 1: the repo
  * has released 1.0, or its release PR is preparing it. The changelog, not the
  * tags, because CI checks out without tags.
@@ -1078,6 +1094,37 @@ export function syncStandards(
             fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
             fs.writeFileSync(absolutePath, content);
             messages.push(output.path);
+        }
+    }
+
+    // A package that opts out loses the managed erasure suite; its own
+    // fixture.php stays, since Pest runs only *Test.php files.
+    if (config.erasure !== true) {
+        for (const managedPath of managedErasurePaths()) {
+            const absolutePath = path.join(targetRoot, managedPath);
+
+            if (!fs.existsSync(absolutePath)) {
+                continue;
+            }
+
+            if (isCheck) {
+                messages.push(
+                    `${managedPath} belongs to the erasure suite, which this repo has not opted in to.`,
+                );
+            } else {
+                fs.rmSync(absolutePath);
+                messages.push(managedPath);
+            }
+        }
+
+        const supportDirectory = path.join(targetRoot, 'tests/Erasure/Support');
+
+        if (
+            !isCheck &&
+            fs.existsSync(supportDirectory) &&
+            fs.readdirSync(supportDirectory).length === 0
+        ) {
+            fs.rmdirSync(supportDirectory);
         }
     }
 

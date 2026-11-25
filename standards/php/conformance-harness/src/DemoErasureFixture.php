@@ -9,6 +9,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Qiick\Demo\Erasure\DemoEraser;
 use Qiick\Standards\Erasure\Support\ErasureFixture;
 use Qiick\Standards\Erasure\Support\ErasurePerson;
@@ -20,6 +21,9 @@ use Qiick\Standards\Erasure\Support\ErasurePerson;
  *
  * Caches the package uses with the person's data, each written by seed():
  * - `demo:{userPublicId}`: the person's email, forgotten after a real run.
+ *
+ * Other stores: the `demo` disk (`avatars/{userPublicId}.txt`) and the
+ * `demo_archive` connection (`demo_archive_entries`).
  */
 final class DemoErasureFixture implements ErasureFixture
 {
@@ -30,7 +34,8 @@ final class DemoErasureFixture implements ErasureFixture
      * @param  list<string>  $unclassifiedColumns  profile columns left out of tables()
      * @param  list<string>  $omittedTables  tables left out of tables()
      * @param  array<string, 'personal'|'retained'|'other'>  $columnClasses  `table.column` => a class that overrides the honest one
-     * @param  list<string>  $skippedSeeds  stores seed() leaves empty: `demo_profiles`, `demo_links`, `cache`
+     * @param  list<string>  $skippedSeeds  what seed() leaves empty: `demo_profiles`, `demo_links`, `cache`, `disk`, `archive`, or the `national_id` column
+     * @param  array<string, string>  $retainedCleartextColumns  `table.column` => kept reason
      * @param  ?list<string>  $organisationScopedTables  overrides the honest `['demo_profiles']`
      * @param  ?string  $userId  a fixed user key instead of a fresh six-digit one
      */
@@ -44,6 +49,7 @@ final class DemoErasureFixture implements ErasureFixture
         private readonly ?array $organisationScopedTables = null,
         private readonly bool $isCacheDeclared = true,
         private readonly ?string $userId = null,
+        private readonly array $retainedCleartextColumns = [],
     ) {}
 
     /**
@@ -54,6 +60,15 @@ final class DemoErasureFixture implements ErasureFixture
     public static function migrate(): void
     {
         Schema::dropAllTables();
+        Storage::fake('demo');
+        config(['database.connections.demo_archive' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '']]);
+        DB::purge('demo_archive');
+
+        Schema::connection('demo_archive')->create('demo_archive_entries', function (Blueprint $table): void {
+            $table->id();
+            $table->string('owner_public_id', 36)->index();
+            $table->string('email')->nullable();
+        });
 
         Schema::create('demo_profiles', function (Blueprint $table): void {
             $table->id();
@@ -61,6 +76,7 @@ final class DemoErasureFixture implements ErasureFixture
             $table->string('organisation_id', 36)->nullable();
             $table->string('email')->nullable();
             $table->string('ip_address', 45)->nullable();
+            $table->string('national_id', 32)->nullable();
             $table->string('note');
             $table->timestamp('anonymised_at')->nullable();
         });
@@ -95,6 +111,7 @@ final class DemoErasureFixture implements ErasureFixture
             'organisation_id' => 'other',
             'email' => 'personal',
             'ip_address' => 'personal',
+            'national_id' => 'personal',
             'note' => 'other',
             'anonymised_at' => 'other',
         ];
@@ -125,8 +142,18 @@ final class DemoErasureFixture implements ErasureFixture
                 'organisation_id' => $organisationId,
                 'email' => $person->identifiers[0],
                 'ip_address' => $person->otherPersonalValues[0],
+                // Not one of the person's search markers: E3 must still see it erased.
+                'national_id' => in_array('national_id', $this->skippedSeeds, true) ? null : 'NID'.random_int(10000000, 99999999),
                 'note' => 'seeded profile',
             ]);
+        }
+
+        if (! in_array('disk', $this->skippedSeeds, true)) {
+            Storage::disk('demo')->put("avatars/{$person->userPublicId}.txt", $person->identifiers[0]);
+        }
+
+        if (! in_array('archive', $this->skippedSeeds, true)) {
+            DB::connection('demo_archive')->table('demo_archive_entries')->insert(['owner_public_id' => $person->publicIds[0], 'email' => $person->identifiers[0]]);
         }
 
         if (! in_array('demo_links', $this->skippedSeeds, true)) {
@@ -151,6 +178,21 @@ final class DemoErasureFixture implements ErasureFixture
     public function cacheKeys(ErasurePerson $person): array
     {
         return $this->isCacheDeclared ? ["demo:{$person->userPublicId}"] : [];
+    }
+
+    public function retainedCleartextColumns(): array
+    {
+        return $this->retainedCleartextColumns;
+    }
+
+    public function diskPaths(ErasurePerson $person): array
+    {
+        return ['demo' => ["avatars/{$person->userPublicId}*"]];
+    }
+
+    public function additionalConnections(): array
+    {
+        return ['demo_archive'];
     }
 
     public function call(Closure $erase): object

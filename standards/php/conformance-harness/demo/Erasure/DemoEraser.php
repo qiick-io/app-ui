@@ -8,6 +8,7 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Qiick\Demo\Events\SubjectErasedEvent;
@@ -67,6 +68,11 @@ final class DemoEraser
         $phantomChange = self::$defect === 'report_phantom_change' ? 1 : 0;
         $cacheKey = "demo:{$userPublicId}";
         $cacheCount = Cache::has($cacheKey) ? 1 : 0;
+        $avatarPath = "avatars/{$userPublicId}.txt";
+        $avatarCount = Storage::disk('demo')->exists($avatarPath) ? 1 : 0;
+        $archiveEntries = fn (): Builder => DB::connection('demo_archive')->table('demo_archive_entries')->whereIn('owner_public_id', [$userPublicId, ...$publicIds]);
+        $archiveCount = $archiveEntries()->count();
+        $isGlobalRun = $organisationId === null;
 
         $stores = [
             'demo_profiles' => $this->counts($profileCount, $isDeleting, $phantomChange, null),
@@ -79,8 +85,24 @@ final class DemoEraser
                 : $this->counts(0, true, 0, $cacheCount > 0 ? 'outside_organisation_scope' : null, $cacheCount),
         ];
 
+        // The disk and the archive are not organisation-scoped either.
+        $stores['disk:demo'] = $isGlobalRun
+            ? $this->counts($avatarCount, true, 0, null)
+            : $this->counts(0, true, 0, $avatarCount > 0 ? 'outside_organisation_scope' : null, $avatarCount);
+        $stores['connection:demo_archive'] = $isGlobalRun
+            ? $this->counts($archiveCount, $isDeleting, 0, null)
+            : $this->counts(0, $isDeleting, 0, $archiveCount > 0 ? 'outside_organisation_scope' : null, $archiveCount);
+
         if (self::$defect === 'omit_cache_store') {
             unset($stores['cache:demo']);
+        }
+
+        if (self::$defect === 'keep_email_kept' && $profileCount > 0) {
+            $stores['demo_profiles'] = ['deleted' => 0, 'anonymised' => $isDeleting ? 0 : $profileCount, 'kept' => $profileCount, 'reason' => 'legal_obligation'];
+        }
+
+        if (self::$defect === 'keep_email_cleartext') {
+            $stores['cleartext:demo_profiles.email'] = $this->counts(0, true, 0, $isDeleting || $profileCount === 0 ? null : 'legal_obligation', $isDeleting ? 0 : $profileCount);
         }
 
         $report = new ErasureReport('qiick/demo', $mode, $dryRun, $stores);
@@ -109,8 +131,13 @@ final class DemoEraser
             } elseif ($profileCount > 0 && $isDeleting) {
                 $profiles()->delete();
             } elseif ($profileCount > 0) {
-                $scrubbedColumns = ['user_id' => 'erased', 'email' => null, 'ip_address' => null, 'anonymised_at' => now()];
-                $profiles()->update(self::$defect === 'keep_email' ? array_diff_key($scrubbedColumns, ['email' => true]) : $scrubbedColumns);
+                $scrubbedColumns = ['user_id' => 'erased', 'email' => null, 'ip_address' => null, 'national_id' => null, 'anonymised_at' => now()];
+                $keptColumns = match (self::$defect) {
+                    'keep_email', 'keep_email_kept', 'keep_email_cleartext' => ['email' => true],
+                    'keep_national_id' => ['national_id' => true],
+                    default => [],
+                };
+                $profiles()->update(array_diff_key($scrubbedColumns, $keptColumns));
             }
 
             if ($isLinksInScope && $linkCount > 0 && $isDeleting) {
@@ -140,12 +167,23 @@ final class DemoEraser
             DB::transaction($writeStores);
         }
 
-        DB::afterCommit(function () use ($cacheKey, $report, $organisationId): void {
-            if ($organisationId === null && self::$defect !== 'keep_cache') {
+        // Stores outside the package's transaction follow only once it commits.
+        DB::afterCommit(function () use ($cacheKey, $report, $isGlobalRun, $avatarPath, $archiveEntries, $isDeleting): void {
+            if ($isGlobalRun && self::$defect !== 'keep_cache') {
                 Cache::forget($cacheKey);
             }
 
-            if (! in_array(self::$defect, ['event_inside_transaction', 'event_before_writes'], true)) {
+            if ($isGlobalRun && self::$defect !== 'keep_files') {
+                Storage::disk('demo')->delete($avatarPath);
+            }
+
+            if ($isGlobalRun && self::$defect !== 'keep_archive') {
+                $isDeleting ? $archiveEntries()->delete() : $archiveEntries()->update(['owner_public_id' => 'erased', 'email' => null]);
+            }
+
+            $isEventSkipped = self::$defect === 'skip_event_when_empty' && $report->changed() === 0;
+
+            if (! $isEventSkipped && ! in_array(self::$defect, ['event_inside_transaction', 'event_before_writes'], true)) {
                 event(new SubjectErasedEvent($report));
             }
         });
@@ -170,7 +208,9 @@ final class DemoEraser
         }
 
         foreach ($identifiers as $identifier) {
-            if (! is_string($identifier) || trim($identifier) === '') {
+            $isBlank = self::$defect === 'accept_blank_identifier' ? $identifier === '' : trim($identifier) === '';
+
+            if (! is_string($identifier) || $isBlank) {
                 throw new InvalidArgumentException('Every identifier must be a non-empty string.');
             }
         }

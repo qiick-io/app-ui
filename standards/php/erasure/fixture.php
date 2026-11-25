@@ -9,8 +9,8 @@ declare(strict_types=1);
  * package's own. Return an object implementing
  * `Qiick\Standards\Erasure\Support\ErasureFixture` that seeds one person's data
  * in every store the eraser touches and classifies every column of those
- * tables. Its class docblock lists every cache the package uses with the
- * person's data, and seed() writes one entry in each. Until it does, the suite
+ * tables. Its class docblock lists every cache, disk and further connection
+ * the package uses with the person's data, and seed() writes one entry in each. Until it does, the suite
  * has one red test.
  *
  * Standard and an example: `.qiick/standards/erasure.md`.

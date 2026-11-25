@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use LogicException;
@@ -34,9 +35,9 @@ final class ErasureConformanceRunner
     /** @var array<string, string> check id => what it proves */
     public const array CHECKS = [
         'E1' => 'the eraser, its report and its event have the standard shape',
-        'E2' => 'erasing a person with no data changes nothing and reports zeros',
-        'E3-delete' => 'a delete run leaves no personal value in a personal column',
-        'E3-anonymise' => 'an anonymise run leaves no personal value in a personal column',
+        'E2' => 'erasing a person with no data changes nothing, reports zeros and still dispatches its event',
+        'E3-delete' => 'a delete run leaves no personal value in any store',
+        'E3-anonymise' => 'an anonymise run leaves no personal value in any store',
         'E3b' => 'every table of the migrated schema is classified, and no seeded value sits in an other column',
         'E4' => 'a second run changes nothing',
         'E5' => 'a dry run, in both modes, writes nothing, fires nothing and predicts the real run',
@@ -147,11 +148,19 @@ final class ErasureConformanceRunner
     {
         $person = $this->fixture->makePerson();
         $before = $this->snapshot();
+        $recording = $this->startRecording();
 
         try {
             $report = $this->erase($person, 'delete');
         } catch (Throwable $exception) {
             $this->fail('E2', 'erasing a person with no data threw '.$exception::class);
+        } finally {
+            $recording->stop();
+        }
+
+        // Listeners rely on one event per run, even when there was nothing to erase.
+        if (count($this->erasedEvents($recording)) !== 1) {
+            $this->fail('E2', 'erasing a person with no data did not dispatch exactly one SubjectErasedEvent');
         }
 
         $this->assertReport('E2', $report, $person, 'delete', false);
@@ -170,22 +179,45 @@ final class ErasureConformanceRunner
         $person = $this->fixture->makePerson();
         $this->fixture->seed($person, $this->seedOrganisationId());
         $this->assertSeeded($checkId, $person, $this->personalTables());
+        $this->assertOtherStoresSeeded($checkId, $person);
+        $valuesBefore = $this->personalColumnValues();
         $report = $this->erase($person, $mode);
         $this->assertReport($checkId, $report, $person, $mode, false);
+        $valuesAfter = $this->personalColumnValues();
+
+        // Every personal value seed() wrote must go, not only the person's search markers.
+        foreach ($valuesBefore as $qualifiedColumn => $values) {
+            if (array_intersect($values, $valuesAfter[$qualifiedColumn]) !== []) {
+                $this->fail($checkId, "after a real {$mode} run, {$qualifiedColumn} still holds a value seed() wrote");
+            }
+        }
+
         $tableNames = array_keys($this->fixture->tables());
         $leftovers = $this->seededColumns($person, $tableNames, ['personal']);
 
         if ($leftovers !== []) {
-            $this->fail($checkId, "after a {$mode} run, personal values remain in ".implode(', ', $leftovers));
+            $this->fail($checkId, "after a real {$mode} run, personal values remain in ".implode(', ', $leftovers));
         }
 
-        // A retained value survives by design only when the report says why.
-        foreach ($this->seededColumns($person, $tableNames, ['retained']) as $retainedColumn) {
-            $tableName = Str::before($retainedColumn, '.');
+        // Retained means a tombstone or ciphertext; cleartext only where declared, and reported apart.
+        $cleartextColumns = $this->fixture->retainedCleartextColumns();
 
-            if ($report->stores[$tableName]['kept'] === 0) {
-                $this->fail($checkId, "{$retainedColumn} keeps a personal value, but the report keeps no row of {$tableName}");
+        foreach ($this->seededColumns($person, $tableNames, ['retained'], false) as $retainedColumn) {
+            if (! isset($cleartextColumns[$retainedColumn])) {
+                $this->fail($checkId, "{$retainedColumn} is retained but keeps a value of the person in cleartext; declare it in retainedCleartextColumns() or scrub it");
             }
+
+            $cleartextStore = $report->stores["cleartext:{$retainedColumn}"] ?? null;
+
+            if ($cleartextStore === null || $cleartextStore['kept'] === 0 || $cleartextStore['reason'] !== $cleartextColumns[$retainedColumn]) {
+                $this->fail($checkId, "the report must list cleartext:{$retainedColumn} with its kept rows and declared reason");
+            }
+        }
+
+        $otherStores = $this->otherStoresHoldingPerson($person);
+
+        if ($otherStores !== []) {
+            $this->fail($checkId, "after a real {$mode} run, values of the person remain in ".implode(', ', $otherStores));
         }
     }
 
@@ -215,6 +247,14 @@ final class ErasureConformanceRunner
                 if (! in_array($columnClass, ['personal', 'retained', 'other'], true)) {
                     $this->fail('E3b', "table {$tableName}: column {$columnName} has an unknown class");
                 }
+            }
+        }
+
+        foreach ($this->fixture->retainedCleartextColumns() as $qualifiedColumn => $keptReason) {
+            [$tableName, $columnName] = array_pad(explode('.', $qualifiedColumn, 2), 2, '');
+
+            if (($this->fixture->tables()[$tableName][$columnName] ?? null) !== 'retained' || ! in_array($keptReason, self::KEPT_REASONS, true)) {
+                $this->fail('E3b', "the cleartext column {$qualifiedColumn} must be classified retained and name one of the standard kept reasons");
             }
         }
 
@@ -269,6 +309,8 @@ final class ErasureConformanceRunner
                     $this->fail('E5', "a {$mode} dry run forgot a cache entry");
                 }
             }
+
+            $this->assertOtherStoresSeeded('E5', $person);
 
             $realReport = $this->erase($person, $mode);
 
@@ -466,6 +508,7 @@ final class ErasureConformanceRunner
             'a user public id that is not a UUID' => ['userPublicId' => 'not-a-uuid-e11a', 'echo' => 'not-a-uuid-e11a'],
             'a public id that is not a UUID' => ['publicIds' => ['not-a-uuid-e11b'], 'echo' => 'not-a-uuid-e11b'],
             'an empty identifier' => ['identifiers' => [''], 'echo' => null],
+            'a whitespace-only identifier' => ['identifiers' => ['   '], 'echo' => null],
         ];
 
         foreach ($invalidCases as $caseName => $overrides) {
@@ -703,6 +746,16 @@ final class ErasureConformanceRunner
             $this->fail($checkId, 'the package caches the person\'s data, but the report lists no cache:<name> store');
         }
 
+        $declaredStores = [
+            ...array_map(fn (string $diskName): string => "disk:{$diskName}", array_keys($this->fixture->diskPaths($person))),
+            ...array_map(fn (string $connectionName): string => "connection:{$connectionName}", $this->fixture->additionalConnections()),
+        ];
+        $missingOtherStores = array_diff($declaredStores, array_keys($report->stores));
+
+        if ($missingOtherStores !== []) {
+            $this->fail($checkId, 'the report does not list the stores '.implode(', ', $missingOtherStores));
+        }
+
         if ($report->changed() !== $changedRows) {
             $this->fail($checkId, 'changed() is not the sum of deleted and anonymised');
         }
@@ -829,6 +882,107 @@ final class ErasureConformanceRunner
                 $this->fail($checkId, "seed() wrote nothing of the person into {$tableName}, so there is nothing to check");
             }
         }
+
+        $personalValues = $this->personalColumnValues();
+
+        foreach (array_intersect($tableNames, $this->personalTables()) as $tableName) {
+            foreach ($personalValues as $qualifiedColumn => $values) {
+                if ($values === [] && str_starts_with($qualifiedColumn, "{$tableName}.")) {
+                    $this->fail($checkId, "seed() left the personal column {$qualifiedColumn} empty, so there is nothing to check");
+                }
+            }
+        }
+    }
+
+    /**
+     * Every non-null value of every personal column, as strings.
+     *
+     * @return array<string, list<string>> `table.column` => values
+     */
+    private function personalColumnValues(): array
+    {
+        $valuesByColumn = [];
+
+        foreach ($this->fixture->tables() as $tableName => $classifiedColumns) {
+            $personalColumns = array_keys(array_filter($classifiedColumns, fn (string $columnClass): bool => $columnClass === 'personal'));
+
+            if ($personalColumns === []) {
+                continue;
+            }
+
+            $rows = $this->connection()->table($tableName)->get($personalColumns);
+
+            foreach ($personalColumns as $columnName) {
+                $valuesByColumn["{$tableName}.{$columnName}"] = $rows->pluck($columnName)
+                    ->reject(fn (mixed $value): bool => $value === null)
+                    ->map(fn (mixed $value): string => (string) $value)
+                    ->values()
+                    ->all();
+            }
+        }
+
+        return $valuesByColumn;
+    }
+
+    /**
+     * Every declared disk and connection must hold the person before the run,
+     * or the checks on them prove nothing.
+     */
+    private function assertOtherStoresSeeded(string $checkId, ErasurePerson $person): void
+    {
+        $declaredStores = [
+            ...array_map(fn (string $diskName): string => "disk:{$diskName}", array_keys($this->fixture->diskPaths($person))),
+            ...array_map(fn (string $connectionName): string => "connection:{$connectionName}", $this->fixture->additionalConnections()),
+        ];
+        $emptyStores = array_diff($declaredStores, $this->otherStoresHoldingPerson($person));
+
+        if ($emptyStores !== []) {
+            $this->fail($checkId, 'the declared stores hold nothing of the person: '.implode(', ', $emptyStores));
+        }
+    }
+
+    /**
+     * The declared disks and connections that hold a file or a row of the
+     * person: a file matching a declared pattern, or whose path or content
+     * holds a searchable value; a row with a searchable value in any column.
+     *
+     * shortcut: reads every file and row whole, fine for a test database; stream if a fixture seeds large files.
+     *
+     * @return list<string> `disk:<name>` and `connection:<name>`
+     */
+    private function otherStoresHoldingPerson(ErasurePerson $person): array
+    {
+        $storesHoldingPerson = [];
+
+        foreach ($this->fixture->diskPaths($person) as $diskName => $patterns) {
+            $disk = Storage::disk($diskName);
+
+            foreach ($disk->allFiles() as $path) {
+                $isDeclaredFile = array_filter($patterns, fn (string $pattern): bool => fnmatch($pattern, $path)) !== [];
+
+                if ($isDeclaredFile || $this->containsSeededValue([$path, (string) $disk->get($path)], $person)) {
+                    $storesHoldingPerson[] = "disk:{$diskName}";
+
+                    break;
+                }
+            }
+        }
+
+        foreach ($this->fixture->additionalConnections() as $connectionName) {
+            foreach (array_column(Schema::connection($connectionName)->getTables(), 'name') as $tableName) {
+                foreach (DB::connection($connectionName)->table($tableName)->get() as $row) {
+                    $values = array_map(fn (mixed $value): string => (string) $value, array_filter((array) $row, is_scalar(...)));
+
+                    if ($this->containsSeededValue($values, $person)) {
+                        $storesHoldingPerson[] = "connection:{$connectionName}";
+
+                        continue 3;
+                    }
+                }
+            }
+        }
+
+        return $storesHoldingPerson;
     }
 
     /**
