@@ -17,11 +17,14 @@ One answer per topic for every qiick package and product (decision of 2026-11-24
 - **F12 Package files:** `docs/public-api.md` (with its test and the deprecation policy), `docs/security-checklist.md` mapped to tests, `docs/decisions/YYYY-MM-DD-<slug>.md`, `UPGRADING.md` per version, `CHANGELOG.md` with compare links, `docs/dependencies.md`.
 - **F13 Release order:** a package is released after the packages it depends on; a `1.x` (pre-releases included) never depends on a `0.x`, and a stable release never on a pre-release.
 - **F18 Products** share one structure: `docs/beta-readiness.md` (the fleet checklist), `<app>:install` and `<app>:upgrade`, SQLite by default in `.env.example`, tests pinned to an in-memory database, and the package adoption table.
-- **F15–F17** (repository settings, labels and project, agent rules) are in the repository rules, **F19–F23** (security policy, secrets, expand / contract, backup, signed tags) in the security and data safety rules.
+- **F25 Strict Laravel:** products boot with strict models, destructive commands prohibited and HTTPS forced in production, immutable dates and the password defaults; every PHP repo's tests stop stray HTTP requests and processes.
+- **F27 Public APIs:** an API is versioned in its path (`/api/v1`), described by a hand-written OpenAPI file that a test compares with the routes, answers errors in the F11 shape, and retires a version only after announcing it with `Deprecation` and `Sunset` headers.
+- **F28 UI quality:** a product with a UI calls the shared `ui-quality` and drift checks, and proves its screens in a browser test in light and dark.
+- **F15–F17** (repository settings, labels and project, agent rules) are in the repository rules, **F19–F24, F26, F29 and F30** (security policy, secrets, expand / contract, backup, signed tags, supply chain, observability, privacy, runbooks) in the security, data and operations rules.
 
 With a `conventions` object in `qiick-standards.json`, `app-ui-drift / standards` runs the static checks of these rules; an exception is a `conventions.divergences` entry with `reason`, `decision` and `review_by`.
 
-<!-- qiick-standards:detail when: adding or changing a package's config, commands, events, migrations, logging, error codes, retention, test fakes, docs files or Composer requirements, preparing a release, changing a product's install or beta checklist, or writing down an exception to a fleet convention -->
+<!-- qiick-standards:detail when: adding or changing a package's config, commands, events, migrations, logging, error codes, retention, test fakes, docs files or Composer requirements, preparing a release, changing a product's install or beta checklist, changing the app's service providers or test setup, an HTTP API or a product's UI checks, or writing down an exception to a fleet convention -->
 
 ## How the conventions are checked
 
@@ -230,3 +233,50 @@ A divergence skips its check. It fails when it lacks a field, when `review_by` h
 **Checked by.** F18 (products): the checklist file, the two commands, `.env.example` and `phpunit.xml`. The checklist's content is reviewed in the release PR.
 
 **Exceptions.** A product without a self-hosted distribution writes ➖ with the reason in its checklist; the commands stay.
+
+## F25 Strict Laravel
+
+**Rule.** A product's `AppServiceProvider::boot()` calls:
+
+- `Model::shouldBeStrict(! app()->isProduction())`: lazy loading, silently discarded attributes and missing attributes throw outside production (the checks rules);
+- `DB::prohibitDestructiveCommands(app()->isProduction())`: no `migrate:fresh`, `db:wipe` or `migrate:reset` against production;
+- `URL::forceHttps(app()->isProduction())`: every generated URL is `https` behind a proxy that terminates TLS;
+- `Date::use(CarbonImmutable::class)`: a date passed around is never changed in place;
+- `Password::defaults(…)`: one password rule for registration, reset and the settings screen.
+
+Every PHP repo's test setup (`tests/Pest.php` or `tests/TestCase.php`) calls `Http::preventStrayRequests()` and `Process::preventStrayProcesses()`, so a test that forgot its fake fails instead of calling the network or a binary.
+
+**Why.** On 2026-11-25 the four products already did all of the boot calls but `URL::forceHttps` (only signaculum-core), from the starter kit, without a rule that keeps a new product doing them; and the testing rules forbid the network in tests, yet only externa-core enforced it with `Http::preventStrayRequests()`, and no repo stopped stray processes.
+
+**Checked by.** F25: in products, each call in `app/Providers/`; in every PHP repo, both `prevent*` calls under `tests/`.
+
+**Exceptions.** A product that never runs behind TLS (a local-only tool) writes a divergence for `URL::forceHttps`.
+
+## F27 Public APIs
+
+**Rule.** An HTTP API that clients outside the product call (REST, not the Inertia endpoints):
+
+- is versioned in its path, `/api/v1/…`; a breaking change (a removed or renamed field or route, a new required parameter, a changed type or error code) is a new version, `/api/v2`, never a change to `v1`;
+- is described by a hand-written OpenAPI 3.1 file in `resources/openapi/<api>-v<N>.yaml`, served at `/api/v<N>/openapi.json`, with a test that fails when a route in `routes/api.php` is missing from the file (`docs/api.md`);
+- answers errors in the fleet shape (F11), with named rate limiters and their `RateLimit-*` / `Retry-After` headers;
+- retires a version only after announcing it: every response of the old version carries `Deprecation` (RFC 9745) and `Sunset` (RFC 8594) headers for at least six months, the CHANGELOG and the API docs say so, and the version is removed only in a major release.
+
+**Why.** On 2026-11-25 three products had an OpenAPI file (externa-core, instituta-core, signaculum-core) and excubia-app had API routes without one; nothing said how a version ends. Clients of a self-hosted product upgrade on the operator's schedule, not ours, so an API change they cannot see coming breaks them silently.
+
+**Checked by.** F27 (_app_), when `routes/api.php` exists: a `resources/openapi/*-v<N>.yaml` or `.json` file, a test under `tests/` that reads it, and API routes under a `v<N>` prefix.
+
+**Exceptions.** An OAuth or OIDC endpoint keeps the path its RFC or discovery document gives it (`/oauth/token`, `/.well-known/…`) and its RFC error body (the F11 exception).
+
+## F28 UI quality
+
+**Rule.** A product with a UI (`uiPreset` in `qiick-standards.json`):
+
+- calls the reusable `ui-quality.yml` (theme tokens, contrast, axe smoke) and `drift-check.yml` (registry drift and the standards), with the job ids that give the required check names `ui-quality / ui-quality` and `app-ui-drift / drift`;
+- has Pest browser tests (`tests/Browser`) for the flows only a browser proves (navigation, dialogs, keyboard, focus), each run in light and dark (the testing rules);
+- copies every screen from a pattern of the UI rules; a new solution is proposed in app-ui, never designed in the product.
+
+**Why.** On 2026-11-25 externa-core, the largest UI in the fleet, did not call `ui-quality.yml`, so its theme-token and contrast regressions were found by hand; the UI rules say what the screens look like, and this convention makes the machines check that they still do.
+
+**Checked by.** F28 (_app_ with `uiPreset`): the workflows call `ui-quality.yml` and `drift-check.yml`, and `tests/Browser/` has a test.
+
+**Exceptions.** A product whose UI is only the starter kit's auth screens may write a divergence for the browser tests until it ships its first own screen.
