@@ -164,6 +164,15 @@ For each package (`laravel-oidc`, `laravel-outbound`, `laravel-api-keys`,
 `laravel-http-basics`, `laravel-access`, `laravel-mcp-oauth`, and
 `laravel-audit`):
 
+0. **First, the maintainer cuts the required checks** on `develop` and `main`
+   down to the jobs that report on every pull request: the highest cell, the
+   database jobs, `Mutation (per-class ≥95%)`, lint, PHPStan and the shared
+   checks ("Required checks are the jobs a PR always reports" above). A
+   package that requires every cell today (laravel-http-basics requires
+   `PHP 8.3 Laravel 12 stable` and fifteen more) would otherwise leave each
+   pull request waiting for checks the reduced matrix never runs. Changing
+   required checks is the maintainer's, repo by repo; the adoption PR names
+   the list to set.
 1. Pin the reusable workflow to the app-ui commit SHA that contains it, and
    pass that same SHA as `app-ui-ref`. The called workflow's `github` context
    belongs to the package caller, so `github.workflow_sha` cannot identify the
