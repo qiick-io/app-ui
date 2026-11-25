@@ -26,7 +26,7 @@
  *             "C12": { "reason": "…", "decision": "knowledge/decisions/…", "review_by": "YYYY-MM-DD" }
  *         },
  *         "conformance": { "userModel": "App\\Models\\User", "apiPrefix": "api/v1" },
- *         "conventions": { "divergences": {} } // fleet conventions F1-F23 (check-conventions.mjs)
+ *         "conventions": { "divergences": {} } // fleet conventions F1-F30 (check-conventions.mjs)
  *     }
  *
  * Managed files are of two kinds:
@@ -445,7 +445,7 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
         });
     }
 
-    // Fleet convention F12 / F18 / F20 / F22 starting points, written once when a repo adopts the conventions.
+    // Fleet convention F12 / F18 / F20 / F22 / F29 / F30 starting points, written once when a repo adopts the conventions.
     if (config.conventions) {
         const conventionTemplates = config.package
             ? {
@@ -457,6 +457,9 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
                     'docs/beta-readiness.md': 'beta-readiness.md',
                     'docs/runbooks/secrets.md': 'runbook-secrets.md',
                     'docs/runbooks/backup.md': 'runbook-backup.md',
+                    'docs/runbooks/deploy.md': 'runbook-deploy.md',
+                    'docs/runbooks/incident.md': 'runbook-incident.md',
+                    'docs/privacy.md': 'privacy.md',
                 }
               : {};
 

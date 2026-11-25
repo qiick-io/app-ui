@@ -269,17 +269,21 @@ Every qiick repo is configured the same way, so a check name, a label or a merge
 
 **Exceptions.** None.
 
-## Security and data safety
+## Security, data and operations
 
-What every qiick repo does so a vulnerability can be reported, a leaked secret replaced, a schema changed without downtime, the data restored and a release trusted (fleet conventions F19–F23, maintainer request of 2026-11-25).
+What every qiick repo does so a vulnerability can be reported, a leaked secret replaced, a schema changed without downtime, the data restored, a release and its dependencies trusted, a running product watched, personal data accounted for, and an incident handled from a page instead of from memory (fleet conventions F19–F24, F26, F29 and F30, maintainer request of 2026-11-25; F25, F27 and F28 are code conventions, in the conventions rules).
 
 - **F19 Security policy:** every repo has a `SECURITY.md` (supported versions, how to report, response time) and GitHub private vulnerability reporting switched on, because the policy sends reporters there.
 - **F20 Secrets runbook:** every product has `docs/runbooks/secrets.md`: each secret of `.env.example` and each key file, where it lives, who rotates it, how, what the rotation breaks, and what to do after a leak.
 - **F21 Expand / contract:** after the first stable release a schema change never breaks the code of the release before it. Add first (expand), move the data, switch the code, and drop or rename only in a later release (contract), with a `contract:` comment naming the release that stopped using the column.
 - **F22 Backup and restore drill:** every product documents what is backed up and how to restore it in `docs/runbooks/backup.md`, and records a restore drill there before its first stable release and at least every quarter after it.
 - **F23 Signed release tags:** the maintainer creates release tags locally with `git tag -s`; the release workflow runs `signed-tag / verified`, which fails unless GitHub shows the tag as Verified, and every publishing job needs it.
+- **F24 Supply chain:** lock files committed in products; `composer audit` and `npm audit --omit=dev --audit-level=high` on every PR and every night; Dependabot for Composer, npm and GitHub Actions; every accepted advisory written down with a reason and a date; release artefacts (Docker images, archives) carry a build provenance attestation.
+- **F26 Observability with Excubia:** every product requires `qiick/excubia-core` (not `--dev`), keeps an `excubia.json`, schedules `excubia:check` daily, and serves `/health/live` and `/health/ready`; pushing to an `excubia-app` is the operator's choice, configured only through `EXCUBIA_APP_URL` and `EXCUBIA_APP_TOKEN`.
+- **F29 Privacy:** every product keeps `docs/privacy.md`: the personal data it stores (table and column), why, for how long, which processors and outbound destinations receive any of it, and how a person's data is exported and erased. No telemetry, ever, unless the operator turns it on.
+- **F30 Runbooks:** every product keeps `docs/runbooks/deploy.md` (deploy, upgrade and rollback) and `docs/runbooks/incident.md` (first steps, who to tell, what to write down afterwards), next to the secrets and backup runbooks.
 
-With a `conventions` object in `qiick-standards.json`, the standards drift check runs the static checks of F19, F20, F22 and F23; `migrations-frozen / migrations-frozen` checks F21; `scripts/check-repo-settings.mjs` in app-ui checks that private vulnerability reporting is on. An exception is a `conventions.divergences` entry like any other convention.
+With a `conventions` object in `qiick-standards.json`, the standards drift check runs the static checks of F19, F20, F22–F24, F26, F29 and F30; `migrations-frozen / migrations-frozen` checks F21; `scripts/check-repo-settings.mjs` in app-ui checks that private vulnerability reporting is on. An exception is a `conventions.divergences` entry like any other convention.
 
 ### F19 Security policy and private reporting
 
@@ -355,3 +359,68 @@ jobs:
 **Checked by.** `signed-tag / verified` on every tag push (the reusable workflow reads `gh api repos/<repo>/git/tags/<sha>` and its `verification`). F23 in the conventions check: the repo's workflows call `signed-tag.yml`.
 
 **Exceptions.** Tags pushed before 2026-11-25 stay as they are (immutable); the rule starts with the next release of each repo.
+
+### F24 Supply chain
+
+**Rule.**
+
+- **Lock files:** a product commits `composer.lock` and its npm lock file and installs from them in CI (`composer install`, `npm ci`). A package commits neither, because the product's lock decides; its CI tests both ends (`lowest` and `stable`, the package matrix).
+- **Audits:** every PHP repo runs `composer audit` and every repo with a `package.json` runs `npm audit --omit=dev --audit-level=high` on every pull request and on the nightly run, failing on an advisory. An advisory that does not apply (the vulnerable function is never called, no fix exists yet) is accepted in `composer.json` `config.audit.ignore` with its reason, or for npm in `docs/dependencies.md`, with the date to look again; an acceptance without a reason is a finding.
+- **Dependabot:** `.github/dependabot.yml` covers `composer`, `npm` (where there is a `package.json`) and `github-actions`, weekly, with minor and patch updates grouped in one PR per ecosystem. Security updates are on in the repo settings.
+- **New dependencies** need the maintainer's OK and a row in the dependency register (the dependency rules); actions are pinned by SHA (F15).
+- **Provenance:** a workflow that publishes a Docker image or a release archive attests it with `actions/attest-build-provenance`, so an operator can check with `gh attestation verify` that the artefact was built by the repo's workflow from the signed tag (F23).
+
+**Why.** On 2026-11-25 `composer audit` ran in six of the eight packages and in one product (externa-core); `npm audit` only in externa-core, although every product ships a frontend; Dependabot was configured in eight of the nineteen repos; no workflow attested what it built. The products are what operators install, so the products are where an unaudited dependency reaches a server.
+
+**Checked by.** F24 in the conventions check: a PHP repo's workflows run `composer audit`, a repo with `package.json` runs `npm audit` (or `pnpm audit`), `.github/dependabot.yml` lists `github-actions` and the repo's package ecosystems, a product has `composer.lock`, and a workflow that pushes an image (`docker/build-push-action` with `push: true`) also runs `attest-build-provenance`.
+
+**Exceptions.** A repo without a release artefact (packages: Packagist builds from the tag) needs no attestation.
+
+### F26 Observability with Excubia
+
+**Rule.** Every product watches itself with Excubia, the fleet's own health check:
+
+- `qiick/excubia-core` in `require` (not `require-dev`), with an `excubia.json` at the repo root that says which checks apply and leaves `app`, `runtime` and `exceptions` off: the operator turns them on.
+- `excubia:check` is scheduled daily with `onOneServer()`, so the stored result is fresh for the health endpoint and the upgrade command.
+- `GET /health/live` and `GET /health/ready` (the backend rules) answer outside auth; the Excubia health endpoint (`excubia/health`, Oh Dear format) is optional and needs `EXCUBIA_HEALTH_SECRET`.
+- An operator who runs an `excubia-app` sets `EXCUBIA_APP_URL` and `EXCUBIA_APP_TOKEN` in the environment (never in `excubia.json`: the token is a secret, F20) and turns on `runtime` and `exceptions`; exceptions are masked by Excubia before they leave.
+- Logs follow F10 (structured, same keys, no personal data), so a pushed exception carries `request_id` and nothing personal.
+
+**Why.** On 2026-11-25 only excubia-app required `qiick/excubia-core`; the other products had health routes but nothing that checks their own posture (debug mode, caches, failed jobs, end-of-life PHP, vulnerable lock files) after install. The fleet already has the tool; each product finding out on its own that its scheduler stopped is the gap.
+
+**Checked by.** F26 (_app_): `composer.json` requires `qiick/excubia-core`, `excubia.json` exists and has no `app.token`, the schedule runs `excubia:check` (or `excubia:push`), and `routes/health.php` (or the routes) serve `health/live` and `health/ready`.
+
+**Exceptions.** excubia-app is Excubia's own dashboard: it requires the package like any product, and its `app.url` may point at itself.
+
+### F29 Privacy
+
+**Rule.** Every product keeps `docs/privacy.md` (from `standards/templates/privacy.md`) with:
+
+- **Personal data:** a table of every table and column that holds personal data (name, email, IP address, user agent, free text a person typed, files they uploaded), with the purpose and the retention (F9: the prune command, or "until the account is erased").
+- **Processors and outbound destinations:** every service that receives any of it (mail provider, storage, an AI provider, an OIDC provider, a webhook target the operator configures), and what it receives.
+- **Export and erasure:** how a person's data is exported (format, command or screen) and erased, and what is kept after erasure and why (the activity log, anonymised).
+- **Telemetry:** none by default. A feature that sends anything off the server is off until the operator turns it on, and this page names it.
+
+A PR that adds a column or an outbound call with personal data updates the page in the same PR.
+
+**Why.** On 2026-11-25 no product had a privacy page, although every one stores emails, IP addresses (the activity log adds `ip` and `user_agent` to every entry, the backend rules) and user content, and several send data to AI providers and mail services that the operator chooses. An operator who must answer a data protection request, or write their own record of processing, has to read the code today.
+
+**Checked by.** F29 (_app_): `docs/privacy.md` exists with the four sections. Whether it is complete is a review question; the logging check (F10) keeps personal data out of logs.
+
+**Exceptions.** None.
+
+### F30 Runbooks
+
+**Rule.** Every product keeps its runbooks in `docs/runbooks/`, written for the operator at 3 a.m.: commands to copy, in order, and what each one's success looks like.
+
+- `deploy.md`: the deploy and upgrade steps (`<app>:upgrade`, migrations, cache rebuild, queue restart), what to check after (`/health/ready`, `excubia:check`), and a **Rollback** section: the previous release's code against the current schema (expand / contract makes that safe, F21), and the restore (`backup.md`) when it is not.
+- `incident.md`: the **First steps** (maintenance mode or not, where the logs are, how to stop a runaway queue), who to tell and how (a security incident follows `SECURITY.md`), and **After the incident**: a dated entry in the page's log with cause, impact and the PR that fixes the cause.
+- `secrets.md` (F20) and `backup.md` (F22).
+
+A runbook step that turned out wrong during a real deploy or incident is corrected in the next PR.
+
+**Why.** On 2026-11-25 no repo had a runbook directory: deploy and upgrade steps were spread over READMEs and `docs/upgrade.md` pages, and no product said how to roll back or what to do first in an incident. Every qiick product is self-hosted, so the operator, not the maintainer, is the one who needs the page.
+
+**Checked by.** F30 (_app_): `docs/runbooks/deploy.md` with a **Rollback** section and `docs/runbooks/incident.md` with **First steps** and **After the incident**. Adopting the conventions writes all four runbooks from `standards/templates/`.
+
+**Exceptions.** None.

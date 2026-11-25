@@ -131,19 +131,23 @@ Every qiick repo is configured the same way, so a check name, a label or a merge
 
 **Details:** `.qiick/standards/repository.md`. Read it before changing repository settings, branch protection, labels or a workflow's `uses:` pins, or writing agent instructions for a repo.
 
-## Security and data safety
+## Security, data and operations
 
-What every qiick repo does so a vulnerability can be reported, a leaked secret replaced, a schema changed without downtime, the data restored and a release trusted (fleet conventions F19–F23, maintainer request of 2026-11-25).
+What every qiick repo does so a vulnerability can be reported, a leaked secret replaced, a schema changed without downtime, the data restored, a release and its dependencies trusted, a running product watched, personal data accounted for, and an incident handled from a page instead of from memory (fleet conventions F19–F24, F26, F29 and F30, maintainer request of 2026-11-25; F25, F27 and F28 are code conventions, in the conventions rules).
 
 - **F19 Security policy:** every repo has a `SECURITY.md` (supported versions, how to report, response time) and GitHub private vulnerability reporting switched on, because the policy sends reporters there.
 - **F20 Secrets runbook:** every product has `docs/runbooks/secrets.md`: each secret of `.env.example` and each key file, where it lives, who rotates it, how, what the rotation breaks, and what to do after a leak.
 - **F21 Expand / contract:** after the first stable release a schema change never breaks the code of the release before it. Add first (expand), move the data, switch the code, and drop or rename only in a later release (contract), with a `contract:` comment naming the release that stopped using the column.
 - **F22 Backup and restore drill:** every product documents what is backed up and how to restore it in `docs/runbooks/backup.md`, and records a restore drill there before its first stable release and at least every quarter after it.
 - **F23 Signed release tags:** the maintainer creates release tags locally with `git tag -s`; the release workflow runs `signed-tag / verified`, which fails unless GitHub shows the tag as Verified, and every publishing job needs it.
+- **F24 Supply chain:** lock files committed in products; `composer audit` and `npm audit --omit=dev --audit-level=high` on every PR and every night; Dependabot for Composer, npm and GitHub Actions; every accepted advisory written down with a reason and a date; release artefacts (Docker images, archives) carry a build provenance attestation.
+- **F26 Observability with Excubia:** every product requires `qiick/excubia-core` (not `--dev`), keeps an `excubia.json`, schedules `excubia:check` daily, and serves `/health/live` and `/health/ready`; pushing to an `excubia-app` is the operator's choice, configured only through `EXCUBIA_APP_URL` and `EXCUBIA_APP_TOKEN`.
+- **F29 Privacy:** every product keeps `docs/privacy.md`: the personal data it stores (table and column), why, for how long, which processors and outbound destinations receive any of it, and how a person's data is exported and erased. No telemetry, ever, unless the operator turns it on.
+- **F30 Runbooks:** every product keeps `docs/runbooks/deploy.md` (deploy, upgrade and rollback) and `docs/runbooks/incident.md` (first steps, who to tell, what to write down afterwards), next to the secrets and backup runbooks.
 
-With a `conventions` object in `qiick-standards.json`, the standards drift check runs the static checks of F19, F20, F22 and F23; `migrations-frozen / migrations-frozen` checks F21; `scripts/check-repo-settings.mjs` in app-ui checks that private vulnerability reporting is on. An exception is a `conventions.divergences` entry like any other convention.
+With a `conventions` object in `qiick-standards.json`, the standards drift check runs the static checks of F19, F20, F22–F24, F26, F29 and F30; `migrations-frozen / migrations-frozen` checks F21; `scripts/check-repo-settings.mjs` in app-ui checks that private vulnerability reporting is on. An exception is a `conventions.divergences` entry like any other convention.
 
-**Details:** `.qiick/standards/operations.md`. Read it before writing or changing SECURITY.md, a secret, a runbook, a migration that drops, renames or changes a column or table, a backup, or a release tag or release workflow.
+**Details:** `.qiick/standards/operations.md`. Read it before writing or changing SECURITY.md, a secret, a runbook, a migration that drops, renames or changes a column or table, a backup, a release tag or release workflow, a dependency or an audit exception, monitoring or health endpoints, or anything that stores or sends personal data.
 
 ## Releases: never without the maintainer
 

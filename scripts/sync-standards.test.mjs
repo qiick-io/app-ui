@@ -551,10 +551,16 @@ test('every repo gets the repository rules; adopting the conventions writes thei
         read(appRepo, 'docs/runbooks/backup.md'),
         /^## Restore drills$/m,
     );
+    assert.match(read(appRepo, 'docs/runbooks/deploy.md'), /^## Rollback$/m);
+    assert.match(
+        read(appRepo, 'docs/runbooks/incident.md'),
+        /^## After the incident$/m,
+    );
+    assert.match(read(appRepo, 'docs/privacy.md'), /^## Telemetry$/m);
     assert.ok(!fs.existsSync(path.join(packageRepo, 'docs/runbooks')));
     assert.match(
         read(frontendOnlyRepo, 'AGENTS.md'),
-        /^## Security and data safety$/m,
+        /^## Security, data and operations$/m,
     );
     assert.ok(!fs.existsSync(path.join(frontendOnlyRepo, 'docs')));
 });

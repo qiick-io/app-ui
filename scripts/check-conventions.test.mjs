@@ -74,7 +74,11 @@ final class DemoServiceProvider {
         require: { 'qiick/laravel-outbound': '^1.0' },
     }),
     '.github/workflows/ci.yml':
-        'jobs:\n  test:\n    steps:\n      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2\n      - uses: ./.github/actions/setup\n',
+        'jobs:\n  test:\n    steps:\n      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2\n      - uses: ./.github/actions/setup\n      - run: composer audit\n',
+    '.github/dependabot.yml':
+        'version: 2\nupdates:\n  - package-ecosystem: composer\n    directory: /\n  - package-ecosystem: github-actions\n    directory: /\n',
+    'tests/Pest.php':
+        '<?php\nbeforeEach(function () {\n    Http::preventStrayRequests();\n    Process::preventStrayProcesses();\n});\n',
     '.github/workflows/release.yml':
         "on:\n  push:\n    tags: ['v*']\njobs:\n  signed-tag:\n    uses: qiick-io/app-ui/.github/workflows/signed-tag.yml@11bd71901bbe5b1630ceea73d27597364c9af683 # v0.14.0\n",
     'SECURITY.md':
@@ -223,9 +227,11 @@ final class PruneTokensCommand {
             'F15',
             {
                 '.github/workflows/ci.yml':
-                    'jobs:\n  test:\n    steps:\n      - uses: actions/checkout@v4\n',
+                    'jobs:\n  test:\n    steps:\n      - uses: actions/checkout@v4\n      - run: composer audit\n',
             },
         ],
+        ['F24', { '.github/dependabot.yml': undefined }],
+        ['F25', { 'tests/Pest.php': undefined }],
     ];
 
     for (const [conventionId, changes] of cases) {
@@ -271,7 +277,7 @@ final class PruneReportsCommand {
     public function handle() { Report::query()->limit(1000)->delete(); }
 }`,
             'routes/console.php':
-                "<?php Schedule::command('excubia:prune-reports')->daily();",
+                "<?php Schedule::command('excubia:prune-reports')->daily(); Schedule::command('excubia:check')->daily()->onOneServer();",
             'app/Console/Commands/InstallCommand.php':
                 "<?php final class InstallCommand { protected $signature = 'excubia:install {--force}'; }",
             'app/Console/Commands/UpgradeCommand.php':
@@ -285,6 +291,34 @@ final class PruneReportsCommand {
             'docs/runbooks/secrets.md': '# Secrets\n\n## After a leak\n',
             'docs/runbooks/backup.md':
                 '# Backup\n\n## What is backed up\n\n## Restore\n\n## Restore drills\n',
+            '.github/workflows/ci.yml':
+                conformingPackage['.github/workflows/ci.yml'],
+            '.github/dependabot.yml':
+                conformingPackage['.github/dependabot.yml'],
+            'tests/Pest.php': conformingPackage['tests/Pest.php'],
+            'composer.lock': '{}',
+            'app/Providers/AppServiceProvider.php': `<?php
+final class AppServiceProvider {
+    public function boot(): void {
+        Model::shouldBeStrict(! app()->isProduction());
+        DB::prohibitDestructiveCommands(app()->isProduction());
+        URL::forceHttps(app()->isProduction());
+        Date::use(CarbonImmutable::class);
+        Password::defaults(fn () => Password::min(12));
+    }
+}`,
+            'excubia.json': '{ "checks": {} }',
+            'composer.json': JSON.stringify({
+                name: 'qiick/excubia-app',
+                require: { 'qiick/excubia-core': '^1.0' },
+            }),
+            'routes/health.php':
+                "<?php Route::get('health/live', LiveController::class); Route::get('health/ready', ReadyController::class);",
+            'docs/privacy.md':
+                '# Privacy\n\n## Personal data\n\n## Processors and outbound destinations\n\n## Export and erasure\n\n## Telemetry\n',
+            'docs/runbooks/deploy.md': '# Deploy\n\n## Rollback\n',
+            'docs/runbooks/incident.md':
+                '# Incident\n\n## First steps\n\n## After the incident\n',
         },
         'qiick/excubia-app',
     );
@@ -506,4 +540,44 @@ test('F21 accepts a contract only after the release that stopped using the colum
         ),
         [],
     );
+});
+
+test('F24-F30: what a product without them is told to fix', () => {
+    const root = makeRepo(
+        {
+            'package.json': '{}',
+            'routes/api.php':
+                "<?php Route::get('projects', ProjectController::class);",
+            '.github/workflows/release.yml':
+                'jobs:\n  image:\n    steps:\n      - uses: docker/build-push-action@0000000000000000000000000000000000000000 # v6\n        with:\n          push: true\n',
+        },
+        'qiick/demo-app',
+    );
+    const errors = findConventionViolations(
+        root,
+        { app: true, uiPreset: 'Teal', conventions: {} },
+        { today: '2026-11-25' },
+    )
+        .filter((error) => /^conventions F(?:2[4-9]|30) /.test(error))
+        .join('\n');
+
+    for (const expected of [
+        /F24 .*no workflow runs `composer audit`/,
+        /F24 .*`npm audit/,
+        /F24 .*dependabot\.yml is missing/,
+        /F24 .*composer\.lock is not committed/,
+        /F24 .*without `actions\/attest-build-provenance`/,
+        /F25 .*never calls URL::forceHttps/,
+        /F25 .*Process::preventStrayProcesses\(\)/,
+        /F26 .*does not require qiick\/excubia-core/,
+        /F26 .*no route serves \/health\/ready/,
+        /F27 .*resources\/openapi/,
+        /F27 .*no `v<N>` prefix/,
+        /F28 .*ui-quality\.yml/,
+        /F28 .*tests\/Browser/,
+        /F29 .*docs\/privacy\.md is missing/,
+        /F30 .*docs\/runbooks\/deploy\.md is missing/,
+    ]) {
+        assert.match(errors, expected);
+    }
 });
