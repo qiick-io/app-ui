@@ -133,6 +133,13 @@ after exercising the real path. An empty no-op stays red.
 detach / expiry / activity exercise) stays green. The probe is not a substitute
 for reviewing the product hook body.
 
+**Fixture user (C3):** the case-sensitivity probe needs one `users` row. The
+runner creates it with the factory of `conformance.userModel`; a user model
+without a factory returns a created user (or its key) from a `fixtureUser`
+hook instead. Only when neither exists does it insert a minimal row, which
+fails on any extra `NOT NULL` column without a default (excubia's
+`first_name`).
+
 ## Access-package checks (C71–C75)
 
 Set `conformance.usesLaravelAccess: true` when the product adopts

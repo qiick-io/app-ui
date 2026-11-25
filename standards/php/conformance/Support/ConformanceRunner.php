@@ -1264,9 +1264,25 @@ final class ConformanceRunner
     /**
      * Insert a real users row for probe FKs (C3). Hard-coding user_id=1 aborts
      * PostgreSQL when the row is missing.
+     *
+     * The product's own user factory (`conformance.userModel`) comes first, then
+     * the `fixtureUser` hook, because only the product knows its extra NOT NULL
+     * columns (excubia's `first_name`); a raw minimal row is the last resort.
      */
     private function insertFixtureUser(): int|string
     {
+        $userModel = $this->hooks->userModel();
+
+        if (class_exists($userModel) && method_exists($userModel, 'factory')) {
+            return $userModel::factory()->create()->getKey();
+        }
+
+        $hookedUserKey = $this->hooks->fixtureUserKey();
+
+        if ($hookedUserKey !== null) {
+            return $hookedUserKey;
+        }
+
         $publicIdColumn = $this->hooks->publicIdColumn();
         $attributes = [
             $publicIdColumn => (string) Str::uuid(),
@@ -1291,7 +1307,7 @@ final class ConformanceRunner
             return $this->schema->connection()->table('users')->insertGetId($attributes);
         } catch (\Throwable $exception) {
             throw new \RuntimeException(
-                'C3 could not insert a fixture user (extra NOT NULL columns without defaults?). '.$exception->getMessage(),
+                'C3 could not insert a fixture user: give conformance.userModel a factory or add a fixtureUser hook in tests/Conformance/hooks.php (extra NOT NULL columns without defaults?). '.$exception->getMessage(),
                 0,
                 $exception,
             );
