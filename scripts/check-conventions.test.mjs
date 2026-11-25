@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import {
     findConventionViolations,
     findErrorCodeRegistryErrors,
+    findExpandContractViolations,
     generatedIndexNames,
     readErrorCodeRegistry,
 } from '../standards/scripts/check-conventions.mjs';
@@ -74,6 +75,10 @@ final class DemoServiceProvider {
     }),
     '.github/workflows/ci.yml':
         'jobs:\n  test:\n    steps:\n      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2\n      - uses: ./.github/actions/setup\n',
+    '.github/workflows/release.yml':
+        "on:\n  push:\n    tags: ['v*']\njobs:\n  signed-tag:\n    uses: qiick-io/app-ui/.github/workflows/signed-tag.yml@11bd71901bbe5b1630ceea73d27597364c9af683 # v0.14.0\n",
+    'SECURITY.md':
+        '# Security policy\n\n## Supported versions\n\n1.x\n\n## Reporting a vulnerability\n\nUse GitHub private vulnerability reporting.\n',
     'database/migrations/2026_11_24_000000_create_demo_tokens_table.php': `<?php
 Schema::create('demo_tokens', function (Blueprint $table) {
     $table->id();
@@ -274,6 +279,12 @@ final class PruneReportsCommand {
             'docs/beta-readiness.md': '# Beta readiness\n',
             '.env.example': 'DB_CONNECTION=sqlite\n',
             'phpunit.xml': '<env name="DB_DATABASE" value=":memory:"/>',
+            'SECURITY.md': conformingPackage['SECURITY.md'],
+            '.github/workflows/release.yml':
+                conformingPackage['.github/workflows/release.yml'],
+            'docs/runbooks/secrets.md': '# Secrets\n\n## After a leak\n',
+            'docs/runbooks/backup.md':
+                '# Backup\n\n## What is backed up\n\n## Restore\n\n## Restore drills\n',
         },
         'qiick/excubia-app',
     );
@@ -387,4 +398,112 @@ test('F13 lets a pre-release depend on a pre-release, never a stable release', (
     assert.deepEqual(brokenIds(repoWith('1.0.0-beta.2', '^1.0@beta')), []);
     assert.deepEqual(brokenIds(repoWith('1.5.1', '^1.0@beta')), ['F13']);
     assert.deepEqual(brokenIds(repoWith('0.4.0', '^0.1')), []);
+});
+
+test('F19 needs a security policy that sends reporters to private reporting', () => {
+    const withoutPolicy = { ...conformingPackage };
+
+    delete withoutPolicy['SECURITY.md'];
+    assert.deepEqual(brokenIds(makeRepo(withoutPolicy)), ['F19']);
+    assert.deepEqual(
+        brokenIds(
+            makeRepo({
+                ...withoutPolicy,
+                '.github/SECURITY.md':
+                    '# Security\n\n## Supported versions\n\n## Reporting a vulnerability\n\nOpen an issue.\n',
+            }),
+        ),
+        ['F19'],
+    );
+});
+
+test('F23 needs the signed tag check on tag pushes', () => {
+    const withoutSignedTag = { ...conformingPackage };
+
+    delete withoutSignedTag['.github/workflows/release.yml'];
+    assert.deepEqual(brokenIds(makeRepo(withoutSignedTag)), ['F23']);
+});
+
+test('F20 and F22: the secrets and backup runbooks of a product', () => {
+    const product = {
+        '.env.example':
+            'APP_KEY=\nDB_PASSWORD=\nAWS_ACCESS_KEY_ID=\nMAIL_FROM_ADDRESS=hello@example.com\n',
+        'CHANGELOG.md': '# Changelog\n\n## [1.0.0] - 2026-06-01\n',
+        'docs/runbooks/secrets.md':
+            '# Secrets\n\n| `APP_KEY` | … |\n| `DB_PASSWORD` | … |\n',
+        'docs/runbooks/backup.md':
+            '# Backup\n\n## What is backed up\n\n## Restore\n\n## Restore drills\n\n| Date | Version | Result | Time to restore |\n| ---- | ------- | ------ | --------------- |\n| 2026-06-01 | 1.0.0 | ok | 20 min |\n| 2026-09-15 | 1.2.0 | ok | 15 min |\n',
+    };
+    const errorsOn = (today, files = product) =>
+        findConventionViolations(
+            makeRepo(files, 'qiick/demo-app'),
+            { app: true, conventions: {} },
+            { today },
+        )
+            .filter((error) => /conventions F2[02] /.test(error))
+            .join('\n');
+
+    const errors = errorsOn('2026-11-24');
+
+    assert.match(errors, /does not list AWS_ACCESS_KEY_ID/);
+    assert.doesNotMatch(errors, /MAIL_FROM_ADDRESS|DB_PASSWORD/);
+    assert.match(errors, /no "After a leak" section/);
+    assert.doesNotMatch(errors, /F22/);
+    assert.match(
+        errorsOn('2026-12-31'),
+        /newest restore drill \(2026-09-15\) is more than 92 days old/,
+    );
+    assert.doesNotMatch(
+        errorsOn('2026-12-31', {
+            ...product,
+            'CHANGELOG.md': '# Changelog\n\n## [1.0.0-beta.2] - 2026-06-01\n',
+        }),
+        /F22/,
+    );
+});
+
+test('F21 accepts a contract only after the release that stopped using the column', () => {
+    const migration = (upBody) => ({
+        path: 'database/migrations/2027_01_01_000000_drop_legacy.php',
+        text: `<?php\nreturn new class {\n    public function up(): void\n    {\n${upBody}\n    }\n    public function down(): void\n    {\n        Schema::dropIfExists('legacy');\n    }\n};\n`,
+    });
+    const errorsFor = (upBody) =>
+        findExpandContractViolations(
+            [migration(upBody)],
+            ['v1.0.0', 'v1.1.0-beta.1', 'v1.1.0'],
+            'v1.1.0',
+        );
+
+    assert.deepEqual(
+        errorsFor(
+            "        Schema::create('demo', fn ($table) => $table->id());",
+        ),
+        [],
+    );
+    assert.equal(
+        errorsFor("        Schema::dropIfExists('legacy');").length,
+        1,
+    );
+    assert.equal(
+        errorsFor("        // Schema::drop('legacy') in 2.0\n").length,
+        0,
+    );
+    assert.deepEqual(
+        errorsFor(
+            "        // contract: legacy unused since v1.0.0\n        Schema::drop('legacy');",
+        ),
+        [],
+    );
+    assert.match(
+        errorsFor(
+            "        // contract: legacy unused since v1.2.0\n        Schema::drop('legacy');",
+        ).join(''),
+        /names v1\.2\.0, which is not a released tag up to v1\.1\.0/,
+    );
+    assert.deepEqual(
+        errorsFor(
+            "        // expand-safe: widens name to 255 characters\n        Schema::table('users', fn ($table) => $table->string('name', 255)->change());",
+        ),
+        [],
+    );
 });

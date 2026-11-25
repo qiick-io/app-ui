@@ -238,3 +238,51 @@ test('(d) mutation: treat beta tags as stable -> (a) goes red', () => {
     assert.equal(result.status, 1);
     assert.match(result.stderr, /was modified: add a new migration instead/);
 });
+
+test('(F21) a migration added after the stable tag contracts only with a released contract: tag', () => {
+    const fixture = makeEmptyFixtureRepo();
+    const migration = (upBody, downBody = '') =>
+        `<?php\n\nreturn new class {\n    public function up(): void\n    {\n${upBody}\n    }\n\n    public function down(): void\n    {\n${downBody}\n    }\n};\n`;
+    const writeNew = (name, text) =>
+        fs.writeFileSync(path.join(fixture.migrationsDirectory, name), text);
+    const dropLegacyName = `        Schema::table('users', function (Blueprint $table) {\n            $table->dropColumn('legacy_name');\n        });`;
+    const contractName = '2025_02_01_000000_drop_legacy_name_from_users.php';
+
+    fixture.writeMigration(createUsers, 'users-v1');
+    fixture.commit('initial');
+    fixture.tag('v1.0.0');
+    fixture.pushOriginMain();
+
+    // Expand: an added column whose down() drops it breaks nothing.
+    writeNew(
+        addTenancy,
+        migration(
+            `        Schema::table('users', fn (Blueprint $table) => $table->uuid('organisation_id')->nullable());`,
+            `        Schema::table('users', fn (Blueprint $table) => $table->dropColumn('organisation_id'));`,
+        ),
+    );
+    assert.equal(runFrozenCheck(fixture.root).status, 0);
+
+    writeNew(contractName, migration(dropLegacyName));
+    let result = runFrozenCheck(fixture.root);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /without `\/\/ contract:/);
+
+    writeNew(
+        contractName,
+        migration(
+            `        // contract: users.legacy_name unused since v1.1.0\n${dropLegacyName}`,
+        ),
+    );
+    result = runFrozenCheck(fixture.root);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /names v1\.1\.0, which is not a released tag/);
+
+    writeNew(
+        contractName,
+        migration(
+            `        // contract: users.legacy_name unused since v1.0.0\n${dropLegacyName}`,
+        ),
+    );
+    assert.equal(runFrozenCheck(fixture.root).status, 0);
+});

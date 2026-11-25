@@ -1,5 +1,5 @@
 {
-    "$comment": "Fleet repository settings (standards/rules/repository.md, F15 and F16), read by scripts/check-repo-settings.mjs through gh api.",
+    "$comment": "Fleet repository settings (standards/rules/repository.md, F15 and F16; standards/rules/operations.md, F19), read by scripts/check-repo-settings.mjs through gh api.",
     "repository": {
         "default_branch": "develop",
         "allow_squash_merge": true,
@@ -29,6 +29,7 @@
     "actions": {
         "sha_pinning_required": true
     },
+    "privateVulnerabilityReporting": true,
     "labels": [
         {
             "name": "bug",

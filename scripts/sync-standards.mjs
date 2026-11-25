@@ -24,7 +24,7 @@
  *             "C12": { "reason": "…", "decision": "knowledge/decisions/…", "review_by": "YYYY-MM-DD" }
  *         },
  *         "conformance": { "userModel": "App\\Models\\User", "apiPrefix": "api/v1" },
- *         "conventions": { "divergences": {} } // fleet conventions F1-F18 (check-conventions.mjs)
+ *         "conventions": { "divergences": {} } // fleet conventions F1-F23 (check-conventions.mjs)
  *     }
  *
  * Managed files are of two kinds:
@@ -235,6 +235,7 @@ function renderRulePages(config, catalogue) {
         testing: readSource('rules/testing.md'),
         git: readSource('rules/git.md'),
         repository: readSource('rules/repository.md'),
+        operations: readSource('rules/operations.md'),
         release: readSource('rules/release.md'),
         checks: readSource('rules/checks.md'),
     };
@@ -395,6 +396,7 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
                     pages.checks,
                     pages.git,
                     pages.repository,
+                    pages.operations,
                     pages.distribution,
                 ]
                     .filter(Boolean)
@@ -438,17 +440,26 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
         });
     }
 
-    // Fleet convention F12 / F18 starting points, written once when a repo adopts the conventions.
+    // Fleet convention F12 / F18 / F20 / F22 starting points, written once when a repo adopts the conventions.
     if (config.conventions) {
         const conventionTemplates = config.package
-            ? ['public-api.md', 'security-checklist.md']
+            ? {
+                  'docs/public-api.md': 'public-api.md',
+                  'docs/security-checklist.md': 'security-checklist.md',
+              }
             : config.app
-              ? ['beta-readiness.md']
-              : [];
+              ? {
+                    'docs/beta-readiness.md': 'beta-readiness.md',
+                    'docs/runbooks/secrets.md': 'runbook-secrets.md',
+                    'docs/runbooks/backup.md': 'runbook-backup.md',
+                }
+              : {};
 
-        for (const template of conventionTemplates) {
+        for (const [targetPath, template] of Object.entries(
+            conventionTemplates,
+        )) {
             outputs.push({
-                path: `docs/${template}`,
+                path: targetPath,
                 kind: 'template',
                 content: readSource(`templates/${template}`),
             });
