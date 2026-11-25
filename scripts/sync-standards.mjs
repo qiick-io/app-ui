@@ -215,7 +215,7 @@ function demoteHeadings(markdown) {
 }
 
 /**
- * @param {{ uiPreset?: string, app?: boolean, php?: boolean, patterns?: string[] }} config
+ * @param {{ uiPreset?: string, app?: boolean, php?: boolean, package?: boolean, patterns?: string[] }} config
  * @param {PatternCatalogue} catalogue
  * @returns {Record<string, string>} Rule page name => Markdown
  */
@@ -228,6 +228,9 @@ function renderRulePages(config, catalogue) {
         ...(config.php ? { backend: readSource('rules/backend.md') } : {}),
         ...(config.php
             ? { conventions: readSource('rules/conventions.md') }
+            : {}),
+        ...(config.package
+            ? { dependencies: readSource('rules/dependencies.md') }
             : {}),
         testing: readSource('rules/testing.md'),
         git: readSource('rules/git.md'),
@@ -344,7 +347,7 @@ const cursorRule = (description, frontmatter, body) =>
 
 /**
  * Everything the pack writes into a repo with this config.
- * @param {{ uiPreset?: string, php?: boolean, eslint?: boolean, oxlint?: boolean, app?: boolean, frontendRoots?: string[], patterns?: string[] }} config
+ * @param {{ uiPreset?: string, php?: boolean, package?: boolean, eslint?: boolean, oxlint?: boolean, app?: boolean, frontendRoots?: string[], patterns?: string[] }} config
  * @param {PatternCatalogue} [catalogue] - Defaults to `standards/patterns.json`
  * @returns {{ path: string, kind: 'file' | 'block' | 'template', content: string }[]}
  */
@@ -387,6 +390,7 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
                     pages.graphify,
                     pages.backend,
                     pages.conventions,
+                    pages.dependencies,
                     pages.checks,
                     pages.git,
                     pages.distribution,
@@ -423,6 +427,14 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
             content: readSource('rules/comments.md'),
         },
     ];
+
+    if (config.package) {
+        outputs.push({
+            path: 'docs/dependencies.md',
+            kind: 'template',
+            content: readSource('templates/dependencies.md'),
+        });
+    }
 
     for (const [name, page] of Object.entries(pages)) {
         outputs.push({
@@ -785,6 +797,100 @@ export function findNonKebabCaseNames(targetRoot, frontendRoots) {
 }
 
 /**
+ * Runtime Composer requirements must be represented by name in the package's
+ * dependency register; the rationale itself remains a human review.
+ * @param {string} targetRoot
+ * @returns {string[]} Errors, empty when every runtime requirement is listed
+ */
+export function findDependencyRegisterViolations(targetRoot) {
+    const composerPath = path.join(targetRoot, 'composer.json');
+
+    if (!fs.existsSync(composerPath)) {
+        return ['composer.json is missing (required for a Composer package).'];
+    }
+
+    const composer = JSON.parse(fs.readFileSync(composerPath, 'utf8'));
+
+    if (
+        typeof composer !== 'object' ||
+        composer === null ||
+        Array.isArray(composer)
+    ) {
+        return ['composer.json must contain a JSON object.'];
+    }
+
+    const requirements = composer.require ?? {};
+
+    if (
+        typeof requirements !== 'object' ||
+        requirements === null ||
+        Array.isArray(requirements)
+    ) {
+        return ['composer.json "require" must be an object.'];
+    }
+
+    const registerPath = path.join(targetRoot, 'docs/dependencies.md');
+
+    if (!fs.existsSync(registerPath)) {
+        return [];
+    }
+
+    const registerLines = normalize(
+        fs.readFileSync(registerPath, 'utf8'),
+    ).split('\n');
+    const documentedDependencies = new Set();
+    let hasDependencyTable = false;
+    let isDependencyTable = false;
+
+    for (const registerLine of registerLines) {
+        const isTableRow = registerLine.trim().startsWith('|');
+
+        if (!isTableRow) {
+            isDependencyTable = false;
+            continue;
+        }
+
+        const cells = registerLine
+            .trim()
+            .replace(/^\|/, '')
+            .replace(/\|$/, '')
+            .split('|')
+            .map((cell) => cell.trim());
+
+        if (cells[0] === 'Dependency') {
+            isDependencyTable = true;
+            hasDependencyTable = true;
+            continue;
+        }
+
+        if (
+            isDependencyTable &&
+            cells[0] !== undefined &&
+            !/^:?-{3,}:?$/.test(cells[0])
+        ) {
+            const dependencyName = cells[0].replace(/^`|`$/g, '').trim();
+
+            if (dependencyName !== '') {
+                documentedDependencies.add(dependencyName);
+            }
+        }
+    }
+
+    if (!hasDependencyTable) {
+        return [
+            'docs/dependencies.md must contain a Markdown table with "Dependency" as its first column.',
+        ];
+    }
+
+    return Object.keys(requirements)
+        .filter((dependencyName) => !documentedDependencies.has(dependencyName))
+        .map(
+            (dependencyName) =>
+                `"${dependencyName}" in composer.json "require" is missing from docs/dependencies.md.`,
+        );
+}
+
+/**
  * @param {string} targetRoot
  * @param {{ isCheck: boolean, catalogue?: PatternCatalogue }} options
  * @returns {string[]} Errors (check mode) or written paths (sync mode)
@@ -877,6 +983,10 @@ export function syncStandards(
     }
 
     if (isCheck) {
+        if (config.package) {
+            messages.push(...findDependencyRegisterViolations(targetRoot));
+        }
+
         for (const name of findNonKebabCaseNames(
             targetRoot,
             config.frontendRoots ?? [],

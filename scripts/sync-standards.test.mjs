@@ -38,6 +38,19 @@ function makeRepo(config, files = {}) {
 
 const read = (root, file) => fs.readFileSync(path.join(root, file), 'utf8');
 
+const packageMatrixWorkflow = `
+jobs:
+  package-matrix:
+    uses: qiick-io/app-ui/.github/workflows/package-matrix.yml@v0.13.0
+  tests:
+    needs: package-matrix
+    matrix: \${{ fromJSON(needs.package-matrix.outputs.matrix) }}
+  databases:
+    needs: package-matrix
+    matrix:
+      database: \${{ fromJSON(needs.package-matrix.outputs.databases) }}
+`;
+
 test('a synced repo passes the check', () => {
     const root = makeRepo({ uiPreset: 'Blue', php: true, eslint: true });
 
@@ -254,6 +267,90 @@ test('the fleet convention checks run only in a repo that adopted them', () => {
         ),
         /F7 .*env\('TIMEOUT'\) does not start with DEMO_/,
     );
+});
+
+test('Composer packages get the dependency rules and documentation template', () => {
+    const packageRoot = makeRepo(
+        { package: true },
+        { '.github/workflows/ci.yml': packageMatrixWorkflow },
+    );
+
+    syncStandards(packageRoot, { isCheck: false });
+
+    assert.match(read(packageRoot, 'AGENTS.md'), /^## Dependency register$/m);
+    assert.ok(
+        fs.existsSync(
+            path.join(packageRoot, '.qiick/standards/dependencies.md'),
+        ),
+    );
+    assert.match(
+        read(packageRoot, 'docs/dependencies.md'),
+        /^\| Dependency \| Version constraint \|/m,
+    );
+    fs.unlinkSync(path.join(packageRoot, 'docs/dependencies.md'));
+    assert.match(
+        syncStandards(packageRoot, { isCheck: true }).join('\n'),
+        /docs\/dependencies\.md is missing/,
+    );
+
+    const applicationRoot = makeRepo({});
+
+    syncStandards(applicationRoot, { isCheck: false });
+
+    assert.equal(
+        fs.existsSync(path.join(applicationRoot, 'docs/dependencies.md')),
+        false,
+    );
+});
+
+test('package drift check requires every runtime dependency but ignores require-dev', () => {
+    const packageRoot = makeRepo(
+        { package: true },
+        {
+            '.github/workflows/ci.yml': packageMatrixWorkflow,
+            'composer.json': JSON.stringify({
+                require: {
+                    php: '^8.3',
+                    'qiick/laravel-example': '^1.0',
+                },
+                'require-dev': { 'pestphp/pest': '^3.0' },
+            }),
+            'docs/dependencies.md': [
+                '# Dependency register',
+                '',
+                '| Dependency | Version constraint |',
+                '| ---------- | ------------------ |',
+                '| `php` | `^8.3` |',
+                '| `qiick/laravel-example` | `^1.0` |',
+                '',
+            ].join('\n'),
+        },
+    );
+
+    syncStandards(packageRoot, { isCheck: false });
+
+    assert.deepEqual(syncStandards(packageRoot, { isCheck: true }), []);
+
+    fs.writeFileSync(
+        path.join(packageRoot, 'docs/dependencies.md'),
+        [
+            '# Dependency register',
+            '',
+            '| Dependency | Version constraint |',
+            '| ---------- | ------------------ |',
+            '| `php` | `^8.3` |',
+            '',
+        ].join('\n'),
+    );
+
+    const errors = syncStandards(packageRoot, { isCheck: true });
+
+    assert.equal(errors.length, 1);
+    assert.match(
+        errors[0],
+        /"qiick\/laravel-example" in composer\.json "require" is missing from docs\/dependencies\.md/,
+    );
+    assert.doesNotMatch(errors.join('\n'), /pestphp\/pest/);
 });
 
 test('apps get the stack rules and every repo points at the new-product guide', () => {
