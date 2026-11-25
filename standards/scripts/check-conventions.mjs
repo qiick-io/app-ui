@@ -312,7 +312,10 @@ export function findCommands(repo) {
     for (const file of repo.sourceFiles) {
         const signature =
             file.text.match(/\$signature\s*=\s*(['"])([\s\S]*?)\1\s*;/)?.[2] ??
-            file.text.match(/#\[AsCommand\(\s*name:\s*(['"])(.+?)\1/)?.[2];
+            // Symfony's #[AsCommand(name: …)] and Laravel 13's #[Signature('…')].
+            file.text.match(
+                /#\[(?:AsCommand\(\s*name:\s*|Signature\(\s*)(['"])([\s\S]+?)\1/,
+            )?.[2];
 
         if (signature) {
             commands.push({
@@ -642,7 +645,262 @@ export const CONVENTION_CHECKS = [
             ];
         },
     },
+    {
+        id: 'F12',
+        title: 'the same files in every package',
+        appliesTo: ['package'],
+        run: (repo) => findPackageFileViolations(repo.root, repo.testFiles),
+    },
+    {
+        id: 'F13',
+        title: 'a 1.0 never depends on a 0.x or pre-release qiick package',
+        appliesTo: ['package', 'app'],
+        run: (repo) => findReleaseOrderViolations(repo.root),
+    },
+    {
+        id: 'F15',
+        title: 'actions and reusable workflows pinned by commit SHA',
+        appliesTo: ['package', 'app'],
+        run: (repo) => findUnpinnedWorkflowReferences(repo.root),
+    },
+    {
+        id: 'F18',
+        title: 'the same product structure',
+        appliesTo: ['app'],
+        run: (repo) => findProductStructureViolations(repo),
+    },
 ];
+
+/**
+ * @param {string} root
+ * @param {string} relativePath
+ * @returns {string | null} The file's text, or null when it does not exist
+ */
+function readText(root, relativePath) {
+    const absolutePath = path.join(root, relativePath);
+    const directory = path.dirname(absolutePath);
+
+    // Compared by exact name: macOS would open PUBLIC-API.md for public-api.md, Linux CI would not.
+    return fs.existsSync(directory) &&
+        fs.readdirSync(directory).includes(path.basename(absolutePath))
+        ? fs.readFileSync(absolutePath, 'utf8')
+        : null;
+}
+
+/**
+ * Released versions in a Keep a Changelog file, newest first (`[Unreleased]` excluded).
+ * @param {string} changelogText
+ */
+export function releasedVersions(changelogText) {
+    return [...changelogText.matchAll(/^## \[(\d+\.\d+\.\d+[^\]]*)\]/gm)].map(
+        (match) => match[1],
+    );
+}
+
+/**
+ * F12: public API page with its test, deprecation policy, security checklist
+ * mapped to tests, dated decisions, UPGRADING per version, CHANGELOG with
+ * compare links. The dependency register (`docs/dependencies.md`) has its own
+ * check in the standards drift (`"package": true`).
+ * @param {string} root
+ * @param {{ path: string, text: string }[]} testFiles
+ */
+export function findPackageFileViolations(root, testFiles) {
+    /** @type {string[]} */
+    const errors = [];
+    const publicApi = readText(root, 'docs/public-api.md');
+
+    if (publicApi === null) {
+        errors.push('docs/public-api.md is missing.');
+    } else if (!/^#+ Deprecation policy$/m.test(publicApi)) {
+        errors.push('docs/public-api.md has no "Deprecation policy" section.');
+    }
+
+    if (!testFiles.some((file) => file.text.includes('public-api.md'))) {
+        errors.push(
+            'no test reads docs/public-api.md (tests/Arch/PublicApiTest.php: every @api class is listed).',
+        );
+    }
+
+    const securityChecklist = readText(root, 'docs/security-checklist.md');
+
+    if (securityChecklist === null) {
+        errors.push('docs/security-checklist.md is missing.');
+    } else if (!/^\|.*Covering test.*\|$/m.test(securityChecklist)) {
+        errors.push(
+            'docs/security-checklist.md has no table with a "Covering test" column.',
+        );
+    }
+
+    const decisionsDirectory = path.join(root, 'docs/decisions');
+    const decisionFiles = fs.existsSync(decisionsDirectory)
+        ? fs
+              .readdirSync(decisionsDirectory)
+              .filter((name) => name.endsWith('.md'))
+        : [];
+
+    if (decisionFiles.length === 0) {
+        errors.push('docs/decisions/ has no decision.');
+    }
+
+    for (const name of decisionFiles) {
+        const date = name.match(
+            /^(\d{4}-\d{2}-\d{2})-[a-z0-9]+(?:-[a-z0-9]+)*\.md$/,
+        )?.[1];
+        const heading =
+            readText(root, `docs/decisions/${name}`)?.match(/^# (.+)$/m)?.[1] ??
+            '';
+
+        if (!date) {
+            errors.push(
+                `docs/decisions/${name} is not named YYYY-MM-DD-<kebab-slug>.md.`,
+            );
+        } else if (!heading.startsWith(`${date}: `)) {
+            errors.push(
+                `docs/decisions/${name}: the title is not "# ${date}: <title>".`,
+            );
+        }
+    }
+
+    const changelog = readText(root, 'CHANGELOG.md');
+    const upgrading = readText(root, 'UPGRADING.md');
+
+    if (changelog === null) {
+        errors.push('CHANGELOG.md is missing.');
+    } else {
+        if (!/^## \[Unreleased\]/m.test(changelog)) {
+            errors.push('CHANGELOG.md has no [Unreleased] section.');
+        }
+
+        for (const version of releasedVersions(changelog)) {
+            if (!changelog.includes(`[${version}]: http`)) {
+                errors.push(`CHANGELOG.md: [${version}] has no compare link.`);
+            }
+
+            if (upgrading !== null && !upgrading.includes(version)) {
+                errors.push(`UPGRADING.md has no section for ${version}.`);
+            }
+        }
+    }
+
+    if (upgrading === null) {
+        errors.push('UPGRADING.md is missing.');
+    }
+
+    return errors;
+}
+
+/**
+ * F13: once a repo's own version line is 1.x (a pre-release included), its
+ * qiick dependencies are 1.x too; once it is stable, they are stable.
+ * @param {string} root
+ */
+export function findReleaseOrderViolations(root) {
+    const composerText = readText(root, 'composer.json');
+    const ownVersion = releasedVersions(
+        readText(root, 'CHANGELOG.md') ?? '',
+    )[0];
+
+    if (composerText === null || ownVersion === undefined) {
+        return [];
+    }
+
+    const isOneZeroLine = Number(ownVersion.split('.')[0]) >= 1;
+    const isStable = !ownVersion.includes('-');
+    const qiickRequirements = Object.entries(
+        JSON.parse(composerText).require ?? {},
+    ).filter(([name]) => name.startsWith('qiick/'));
+
+    return qiickRequirements.flatMap(([name, constraint]) => [
+        ...(isOneZeroLine && /(?:^|[|\s,])[\^~]?0\.|^0\./.test(constraint)
+            ? [
+                  `composer.json: ${ownVersion} requires ${name} ${constraint}, a 0.x line; ${name} releases 1.0 first.`,
+              ]
+            : []),
+        ...(isStable && /@(?:alpha|beta|RC|dev)|dev-/i.test(constraint)
+            ? [
+                  `composer.json: stable ${ownVersion} requires ${name} ${constraint}, a pre-release.`,
+              ]
+            : []),
+    ]);
+}
+
+/**
+ * F15: every `uses:` in the repo's workflows is a local path, a Docker image
+ * or pinned by a full commit SHA.
+ * @param {string} root
+ */
+export function findUnpinnedWorkflowReferences(root) {
+    return listFiles(path.join(root, '.github/workflows'), /\.ya?ml$/).flatMap(
+        (absolutePath) =>
+            [
+                ...fs
+                    .readFileSync(absolutePath, 'utf8')
+                    .matchAll(/^\s*(?:-\s*)?uses:\s*['"]?([^\s'"#]+)/gm),
+            ]
+                .map((match) => match[1])
+                .filter(
+                    (reference) =>
+                        !reference.startsWith('./') &&
+                        !reference.startsWith('docker://') &&
+                        !/@[0-9a-f]{40}$/.test(reference),
+                )
+                .map(
+                    (reference) =>
+                        `${path.relative(root, absolutePath)}: \`${reference}\` is not pinned by commit SHA.`,
+                ),
+    );
+}
+
+/**
+ * F18: beta checklist, installer and upgrade commands, local database rules.
+ * @param {RepoSnapshot} repo
+ */
+export function findProductStructureViolations(repo) {
+    /** @type {string[]} */
+    const errors = [];
+    const commandNames = findCommands(repo).map((command) => command.name);
+
+    if (readText(repo.root, 'docs/beta-readiness.md') === null) {
+        errors.push(
+            'docs/beta-readiness.md is missing (the fleet beta checklist, standards/templates/beta-readiness.md).',
+        );
+    }
+
+    for (const verb of ['install', 'upgrade']) {
+        if (!commandNames.includes(`${repo.shortName}:${verb}`)) {
+            errors.push(`no \`${repo.shortName}:${verb}\` command.`);
+        }
+    }
+
+    const environmentExample = readText(repo.root, '.env.example');
+    const databaseName = repo.repoName.replace(/-/g, '_');
+
+    if (environmentExample === null) {
+        errors.push('.env.example is missing.');
+    } else if (
+        !/^DB_CONNECTION=sqlite$/m.test(environmentExample) &&
+        !new RegExp(`^DB_DATABASE=${databaseName}$`, 'm').test(
+            environmentExample,
+        )
+    ) {
+        errors.push(
+            `.env.example: the local database is SQLite or \`${databaseName}\`, the app's one database.`,
+        );
+    }
+
+    if (
+        !/name="DB_DATABASE" value="(?::memory:|[a-z_]+_testing)"/.test(
+            readText(repo.root, 'phpunit.xml') ?? '',
+        )
+    ) {
+        errors.push(
+            'phpunit.xml does not pin DB_DATABASE to :memory: (or a *_testing database): tests could run against the development database.',
+        );
+    }
+
+    return errors;
+}
 
 /**
  * @typedef {{ code: string, owner: string, description: string, replacedBy?: string }} ErrorCodeEntry

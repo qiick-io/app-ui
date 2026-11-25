@@ -114,6 +114,23 @@ When this workspace has `graphify-out/graph.json`:
 - Nothing personal in tracked files: no absolute local paths (`/Users/…`), no one's own editor or agent configuration (keep it in `.gitignore`), and "the maintainer" instead of people's names in code, comments and docs. Describe what code does rather than which product it imitates; naming a product is fine where it is an integration (an importer, a compatible endpoint).
 - Ask the maintainer before: a new dependency, anything outside the issue's scope, repo settings (branch protection, required checks, secrets), paid services or accounts.
 
+## Repository settings and agent rules
+
+Every qiick repo is configured the same way, so a check name, a label or a merge button means the same thing everywhere (fleet conventions F15–F17, decision of 2026-11-24).
+
+- **F15 Settings:** default branch `develop`; `develop` and `main` protected the same way (pull request, required checks with the same names on both, "up to date" on, admins included, no force push or deletion); squash merge with the PR title as the commit, merge commits for `main`, no rebase merge; head branches deleted after merge; every action and reusable workflow pinned by full commit SHA with the version in a comment.
+- **F16 Labels and project:** the fleet label set (`priority:P0`–`priority:P3`, `security`, `schema`, `documentation`, `bug`, `enhancement`, …) exists in every repo, and every repo is linked to its GitHub project.
+- **F17 Agents** working in a repo:
+    - watch CI at most once every 3 minutes, never in a tight loop;
+    - never `pkill` / `killall`: stop only processes you started, by PID;
+    - read the `.env` in use before every `migrate` (which connection, which database), and only ever migrate the database of your own worktree;
+    - run `gh` as the maintainer's account (`gh auth status` shows it active) and never as a second account logged in on the machine;
+    - no `Co-authored-by` or other attribution trailers (see the git rules).
+
+`scripts/check-repo-settings.mjs` in app-ui checks F15 and F16 through `gh api`; F15's action pins are also checked in the repo itself by the conventions check.
+
+**Details:** `.qiick/standards/repository.md`. Read it before changing repository settings, branch protection, labels or a workflow's `uses:` pins, or writing agent instructions for a repo.
+
 ## Releases: never without the maintainer
 
 `develop` is the integration branch. `main` holds releases only.
