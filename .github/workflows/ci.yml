@@ -100,14 +100,14 @@ jobs:
           test -z "$(git status --porcelain -- public/r)"
 
   # RED/GREEN proofs for every fleet conformance check (standards/php/conformance-harness).
-  # Engine-dependent proofs also run on PostgreSQL and MySQL service containers.
+  # Engine-dependent proofs also run on PostgreSQL, MySQL and MariaDB service containers.
   conformance:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        database: [sqlite, pgsql, mysql]
+        database: [sqlite, pgsql, mysql, mariadb]
     services:
       postgres:
         image: postgres:16
@@ -136,6 +136,20 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: conformance
+          MARIADB_USER: conformance
+          MARIADB_PASSWORD: secret
+          MARIADB_ROOT_PASSWORD: secret
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
@@ -149,7 +163,7 @@ jobs:
         env:
           DB_CONNECTION: ${{ matrix.database == 'sqlite' && 'sqlite' || matrix.database }}
           DB_HOST: 127.0.0.1
-          DB_PORT: ${{ matrix.database == 'pgsql' && '5432' || matrix.database == 'mysql' && '3306' || '' }}
+          DB_PORT: ${{ matrix.database == 'pgsql' && '5432' || matrix.database == 'mysql' && '3306' || matrix.database == 'mariadb' && '3307' || '' }}
           DB_DATABASE: ${{ matrix.database == 'sqlite' && ':memory:' || 'conformance' }}
           DB_USERNAME: ${{ matrix.database == 'sqlite' && '' || 'conformance' }}
           DB_PASSWORD: ${{ matrix.database == 'sqlite' && '' || 'secret' }}

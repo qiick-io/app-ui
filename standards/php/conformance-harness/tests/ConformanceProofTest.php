@@ -1248,3 +1248,69 @@ describe('engine-dependent probes', function (): void {
     });
 });
 
+
+/**
+ * C76 RED: PostgreSQL and SQLite leave a foreign key unindexed, so the check
+ * must name it. MySQL and MariaDB add the index themselves (and refuse to
+ * drop it), so there the proof is that the engine indexed it and C76 passes.
+ */
+function expectUnindexedForeignKeyCaught(string $expectedForeignKey): void
+{
+    if (in_array(Schema::getConnection()->getDriverName(), ['mysql', 'mariadb'], true)) {
+        expect((new SchemaInspector())->foreignKeysWithoutIndex())->toBe([]);
+        runCheck('C76');
+
+        return;
+    }
+
+    expect(fn () => runCheck('C76'))->toThrow(RuntimeException::class, $expectedForeignKey);
+}
+
+describe('C76 foreign key indexes', function (): void {
+    beforeEach(function (): void {
+        GreenSchema::migrate();
+    });
+
+    it('C76 passes when every foreign key leads an index', function (): void {
+        runCheck('C76');
+        expect(true)->toBeTrue();
+    });
+
+    it('C76 goes red when a foreign key has no index', function (): void {
+        Schema::create('invoices', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users');
+        });
+
+        expectUnindexedForeignKeyCaught('invoices(user_id) -> users');
+    });
+
+    it('C76 goes red when the foreign key is only the second column of an index', function (): void {
+        Schema::create('invoices', function (Blueprint $table): void {
+            $table->id();
+            $table->string('number');
+            $table->foreignId('user_id')->constrained('users');
+            $table->index(['number', 'user_id']);
+        });
+
+        expectUnindexedForeignKeyCaught('invoices(user_id) -> users');
+    });
+
+    it('C76 accepts a composite foreign key led by an index in another order', function (): void {
+        Schema::create('invoice_owners', function (Blueprint $table): void {
+            $table->unsignedBigInteger('tenant_id');
+            $table->unsignedBigInteger('owner_id');
+            $table->primary(['tenant_id', 'owner_id']);
+        });
+        Schema::create('invoices', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('tenant_id');
+            $table->unsignedBigInteger('owner_id');
+            $table->unique(['owner_id', 'tenant_id', 'id']);
+            $table->foreign(['tenant_id', 'owner_id'])->references(['tenant_id', 'owner_id'])->on('invoice_owners');
+        });
+
+        runCheck('C76');
+        expect(true)->toBeTrue();
+    });
+});
