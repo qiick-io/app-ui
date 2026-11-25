@@ -55,11 +55,12 @@ interface ErasureFixture
 
     /**
      * Database connections besides connectionName() that hold the person's
-     * rows. seed() writes at least one row on each; after a real run no row
-     * of any of their tables holds a value of the person. The report lists
-     * each as `connection:<name>`.
+     * rows, with every column of every table classified as in tables().
+     * seed() fills every personal column; after a real run no personal column
+     * holds a value seed() wrote and no row holds a searchable value of the
+     * person. The report lists each connection as `connection:<name>`.
      *
-     * @return list<string>
+     * @return array<string, array<string, array<string, 'personal'|'retained'|'other'>>> connection => table => column => class
      */
     public function additionalConnections(): array;
 

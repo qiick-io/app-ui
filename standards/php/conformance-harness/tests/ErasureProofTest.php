@@ -117,6 +117,9 @@ it('RED: a cheat fails its check', function (string $checkId, ?string $defect, a
     'E3: a declared connection seed() leaves empty' => ['E3-delete', null, ['skippedSeeds' => ['archive']]],
     'E2: no event for a person with no data' => ['E2', 'skip_event_when_empty', []],
     'E11: a whitespace-only identifier accepted' => ['E11', 'accept_blank_identifier', []],
+    'E12: a personal column that is no search marker survives the organisation run' => ['E12', 'org_scrub_keep_national_id', []],
+    'E3: a retained column keeps a value that is no search marker, undeclared' => ['E3-anonymise', 'keep_national_id', ['columnClasses' => ['demo_profiles.national_id' => 'retained']]],
+    'E3: a personal column on another connection survives' => ['E3-anonymise', 'keep_dossier', []],
 ]);
 
 it('GREEN: a retained column declared cleartext, with its reason and its report entry, passes E3', function (): void {

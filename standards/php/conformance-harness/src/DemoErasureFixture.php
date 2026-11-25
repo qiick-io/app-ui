@@ -68,6 +68,7 @@ final class DemoErasureFixture implements ErasureFixture
             $table->id();
             $table->string('owner_public_id', 36)->index();
             $table->string('email')->nullable();
+            $table->string('dossier', 32)->nullable();
         });
 
         Schema::create('demo_profiles', function (Blueprint $table): void {
@@ -153,7 +154,12 @@ final class DemoErasureFixture implements ErasureFixture
         }
 
         if (! in_array('archive', $this->skippedSeeds, true)) {
-            DB::connection('demo_archive')->table('demo_archive_entries')->insert(['owner_public_id' => $person->publicIds[0], 'email' => $person->identifiers[0]]);
+            DB::connection('demo_archive')->table('demo_archive_entries')->insert([
+                'owner_public_id' => $person->publicIds[0],
+                'email' => $person->identifiers[0],
+                // Not a search marker: the suite must compare it by value.
+                'dossier' => 'DOS'.random_int(10000000, 99999999),
+            ]);
         }
 
         if (! in_array('demo_links', $this->skippedSeeds, true)) {
@@ -192,7 +198,7 @@ final class DemoErasureFixture implements ErasureFixture
 
     public function additionalConnections(): array
     {
-        return ['demo_archive'];
+        return ['demo_archive' => ['demo_archive_entries' => ['id' => 'other', 'owner_public_id' => 'personal', 'email' => 'personal', 'dossier' => 'personal']]];
     }
 
     public function call(Closure $erase): object

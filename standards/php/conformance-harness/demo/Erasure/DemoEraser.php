@@ -125,9 +125,11 @@ final class DemoEraser
             return $report;
         }
 
-        $writeStores = function () use ($profiles, $links, $profileCount, $linkCount, $isDeleting, $isLinksInScope): void {
+        $writeStores = function () use ($profiles, $links, $profileCount, $linkCount, $isDeleting, $isLinksInScope, $organisationId): void {
             if (self::$defect === 'erase_everyone') {
                 DB::table('demo_profiles')->delete();
+            } elseif ($profileCount > 0 && self::$defect === 'org_scrub_keep_national_id' && $organisationId !== null) {
+                $profiles()->update(['user_id' => 'erased', 'email' => null, 'ip_address' => null]);
             } elseif ($profileCount > 0 && $isDeleting) {
                 $profiles()->delete();
             } elseif ($profileCount > 0) {
@@ -178,7 +180,7 @@ final class DemoEraser
             }
 
             if ($isGlobalRun && self::$defect !== 'keep_archive') {
-                $isDeleting ? $archiveEntries()->delete() : $archiveEntries()->update(['owner_public_id' => 'erased', 'email' => null]);
+                $isDeleting ? $archiveEntries()->delete() : $archiveEntries()->update(self::$defect === 'keep_dossier' ? ['owner_public_id' => 'erased', 'email' => null] : ['owner_public_id' => 'erased', 'email' => null, 'dossier' => null]);
             }
 
             $isEventSkipped = self::$defect === 'skip_event_when_empty' && $report->changed() === 0;

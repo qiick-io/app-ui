@@ -180,10 +180,19 @@ final class ErasureConformanceRunner
         $this->fixture->seed($person, $this->seedOrganisationId());
         $this->assertSeeded($checkId, $person, $this->personalTables());
         $this->assertOtherStoresSeeded($checkId, $person);
-        $valuesBefore = $this->personalColumnValues();
+        $valuesBefore = $this->columnValues(['personal']);
+        $retainedBefore = $this->columnValues(['retained']);
+
+        foreach ($valuesBefore as $qualifiedColumn => $values) {
+            if ($values === []) {
+                $this->fail($checkId, "seed() left the personal column {$qualifiedColumn} empty, so there is nothing to check");
+            }
+        }
+
         $report = $this->erase($person, $mode);
         $this->assertReport($checkId, $report, $person, $mode, false);
-        $valuesAfter = $this->personalColumnValues();
+        $valuesAfter = $this->columnValues(['personal']);
+        $retainedAfter = $this->columnValues(['retained']);
 
         // Every personal value seed() wrote must go, not only the person's search markers.
         foreach ($valuesBefore as $qualifiedColumn => $values) {
@@ -202,9 +211,16 @@ final class ErasureConformanceRunner
         // Retained means a tombstone or ciphertext; cleartext only where declared, and reported apart.
         $cleartextColumns = $this->fixture->retainedCleartextColumns();
 
-        foreach ($this->seededColumns($person, $tableNames, ['retained'], false) as $retainedColumn) {
+        $retainedAsSeeded = array_keys(array_filter(
+            $retainedBefore,
+            fn (array $values, string $qualifiedColumn): bool => array_intersect($values, $retainedAfter[$qualifiedColumn]) !== [],
+            ARRAY_FILTER_USE_BOTH,
+        ));
+        $retainedColumns = array_unique([...$this->seededColumns($person, $tableNames, ['retained'], false), ...$retainedAsSeeded]);
+
+        foreach ($retainedColumns as $retainedColumn) {
             if (! isset($cleartextColumns[$retainedColumn])) {
-                $this->fail($checkId, "{$retainedColumn} is retained but keeps a value of the person in cleartext; declare it in retainedCleartextColumns() or scrub it");
+                $this->fail($checkId, "{$retainedColumn} is retained but keeps a value of the person as seeded; declare it in retainedCleartextColumns() or scrub it");
             }
 
             $cleartextStore = $report->stores["cleartext:{$retainedColumn}"] ?? null;
@@ -224,36 +240,15 @@ final class ErasureConformanceRunner
     private function checkEveryColumnClassified(): void
     {
         // The inventory comes from the migrated schema, not from the fixture's word.
-        $unclassifiedTables = array_diff($this->schemaTables(), array_keys($this->fixture->tables()));
+        $this->assertTablesClassified('', $this->schema(), $this->fixture->tables(), $this->schemaTables());
 
-        if ($unclassifiedTables !== []) {
-            $this->fail('E3b', 'the migrated schema has unclassified tables ['.implode(', ', $unclassifiedTables).']');
-        }
-
-        foreach ($this->fixture->tables() as $tableName => $classifiedColumns) {
-            if (! $this->schema()->hasTable($tableName)) {
-                $this->fail('E3b', "the classified table {$tableName} does not exist");
-            }
-
-            $actualColumns = $this->schema()->getColumnListing($tableName);
-            $unclassifiedColumns = array_diff($actualColumns, array_keys($classifiedColumns));
-            $staleColumns = array_diff(array_keys($classifiedColumns), $actualColumns);
-
-            if ($unclassifiedColumns !== [] || $staleColumns !== []) {
-                $this->fail('E3b', "table {$tableName}: unclassified columns [".implode(', ', $unclassifiedColumns).'], classified columns that do not exist ['.implode(', ', $staleColumns).']');
-            }
-
-            foreach ($classifiedColumns as $columnName => $columnClass) {
-                if (! in_array($columnClass, ['personal', 'retained', 'other'], true)) {
-                    $this->fail('E3b', "table {$tableName}: column {$columnName} has an unknown class");
-                }
-            }
+        foreach ($this->fixture->additionalConnections() as $connectionName => $classifiedTables) {
+            $connectionSchema = Schema::connection($connectionName);
+            $this->assertTablesClassified("{$connectionName}:", $connectionSchema, $classifiedTables, array_column($connectionSchema->getTables(), 'name'));
         }
 
         foreach ($this->fixture->retainedCleartextColumns() as $qualifiedColumn => $keptReason) {
-            [$tableName, $columnName] = array_pad(explode('.', $qualifiedColumn, 2), 2, '');
-
-            if (($this->fixture->tables()[$tableName][$columnName] ?? null) !== 'retained' || ! in_array($keptReason, self::KEPT_REASONS, true)) {
+            if (($this->classifiedColumns()[$qualifiedColumn] ?? null) !== 'retained' || ! in_array($keptReason, self::KEPT_REASONS, true)) {
                 $this->fail('E3b', "the cleartext column {$qualifiedColumn} must be classified retained and name one of the standard kept reasons");
             }
         }
@@ -550,7 +545,16 @@ final class ErasureConformanceRunner
         $person = $this->fixture->makePerson();
         $this->fixture->seed($person, $organisationId);
         $this->assertSeeded('E12', $person, $scopedTables);
+        $valuesBefore = $this->columnValues(['personal'], $scopedTables);
         $this->erase($person, 'delete', $organisationId);
+        $valuesAfter = $this->columnValues(['personal'], $scopedTables);
+
+        foreach ($valuesBefore as $qualifiedColumn => $values) {
+            if (array_intersect($values, $valuesAfter[$qualifiedColumn]) !== []) {
+                $this->fail('E12', "after an organisation-scoped run, {$qualifiedColumn} still holds a value seed() wrote");
+            }
+        }
+
         $leftovers = $this->seededColumns($person, $scopedTables, ['personal']);
 
         if ($leftovers !== []) {
@@ -748,7 +752,7 @@ final class ErasureConformanceRunner
 
         $declaredStores = [
             ...array_map(fn (string $diskName): string => "disk:{$diskName}", array_keys($this->fixture->diskPaths($person))),
-            ...array_map(fn (string $connectionName): string => "connection:{$connectionName}", $this->fixture->additionalConnections()),
+            ...array_map(fn (string $connectionName): string => "connection:{$connectionName}", array_keys($this->fixture->additionalConnections())),
         ];
         $missingOtherStores = array_diff($declaredStores, array_keys($report->stores));
 
@@ -883,7 +887,7 @@ final class ErasureConformanceRunner
             }
         }
 
-        $personalValues = $this->personalColumnValues();
+        $personalValues = $this->columnValues(['personal'], $tableNames);
 
         foreach (array_intersect($tableNames, $this->personalTables()) as $tableName) {
             foreach ($personalValues as $qualifiedColumn => $values) {
@@ -895,33 +899,109 @@ final class ErasureConformanceRunner
     }
 
     /**
-     * Every non-null value of every personal column, as strings.
+     * Every non-null value of every column of the given classes, as strings:
+     * on the package's connection (`table.column`) and, unless tables are
+     * named, on each additional connection (`connection:table.column`).
      *
-     * @return array<string, list<string>> `table.column` => values
+     * @param  list<string>  $columnClasses
+     * @param  ?list<string>  $tableNames  only these tables of the package's connection
+     * @return array<string, list<string>> qualified column => values
      */
-    private function personalColumnValues(): array
+    private function columnValues(array $columnClasses, ?array $tableNames = null): array
     {
+        $stores = [['', $this->connection(), $this->fixture->tables()]];
+
+        if ($tableNames === null) {
+            foreach ($this->fixture->additionalConnections() as $connectionName => $classifiedTables) {
+                $stores[] = ["{$connectionName}:", DB::connection($connectionName), $classifiedTables];
+            }
+        } else {
+            $stores[0][2] = array_intersect_key($stores[0][2], array_flip($tableNames));
+        }
+
         $valuesByColumn = [];
 
-        foreach ($this->fixture->tables() as $tableName => $classifiedColumns) {
-            $personalColumns = array_keys(array_filter($classifiedColumns, fn (string $columnClass): bool => $columnClass === 'personal'));
+        foreach ($stores as [$prefix, $connection, $classifiedTables]) {
+            foreach ($classifiedTables as $tableName => $classifiedColumns) {
+                $columnNames = array_keys(array_filter($classifiedColumns, fn (string $columnClass): bool => in_array($columnClass, $columnClasses, true)));
 
-            if ($personalColumns === []) {
-                continue;
-            }
+                if ($columnNames === []) {
+                    continue;
+                }
 
-            $rows = $this->connection()->table($tableName)->get($personalColumns);
+                $rows = $connection->table($tableName)->get($columnNames);
 
-            foreach ($personalColumns as $columnName) {
-                $valuesByColumn["{$tableName}.{$columnName}"] = $rows->pluck($columnName)
-                    ->reject(fn (mixed $value): bool => $value === null)
-                    ->map(fn (mixed $value): string => (string) $value)
-                    ->values()
-                    ->all();
+                foreach ($columnNames as $columnName) {
+                    $valuesByColumn["{$prefix}{$tableName}.{$columnName}"] = $rows->pluck($columnName)
+                        ->reject(fn (mixed $value): bool => $value === null)
+                        ->map(fn (mixed $value): string => (string) $value)
+                        ->values()
+                        ->all();
+                }
             }
         }
 
         return $valuesByColumn;
+    }
+
+    /**
+     * Every classified column on every connection, by its qualified name.
+     *
+     * @return array<string, string> qualified column => class
+     */
+    private function classifiedColumns(): array
+    {
+        $classes = [];
+        $stores = ['' => $this->fixture->tables()];
+
+        foreach ($this->fixture->additionalConnections() as $connectionName => $classifiedTables) {
+            $stores["{$connectionName}:"] = $classifiedTables;
+        }
+
+        foreach ($stores as $prefix => $classifiedTables) {
+            foreach ($classifiedTables as $tableName => $classifiedColumns) {
+                foreach ($classifiedColumns as $columnName => $columnClass) {
+                    $classes["{$prefix}{$tableName}.{$columnName}"] = $columnClass;
+                }
+            }
+        }
+
+        return $classes;
+    }
+
+    /**
+     * Every table of one schema, and every column of each, must be classified.
+     *
+     * @param  array<string, array<string, string>>  $classifiedTables
+     * @param  list<string>  $schemaTableNames
+     */
+    private function assertTablesClassified(string $prefix, \Illuminate\Database\Schema\Builder $schema, array $classifiedTables, array $schemaTableNames): void
+    {
+        $unclassifiedTables = array_diff($schemaTableNames, array_keys($classifiedTables));
+
+        if ($unclassifiedTables !== []) {
+            $this->fail('E3b', "the migrated schema {$prefix} has unclassified tables [".implode(', ', $unclassifiedTables).']');
+        }
+
+        foreach ($classifiedTables as $tableName => $classifiedColumns) {
+            if (! $schema->hasTable($tableName)) {
+                $this->fail('E3b', "the classified table {$prefix}{$tableName} does not exist");
+            }
+
+            $actualColumns = $schema->getColumnListing($tableName);
+            $unclassifiedColumns = array_diff($actualColumns, array_keys($classifiedColumns));
+            $staleColumns = array_diff(array_keys($classifiedColumns), $actualColumns);
+
+            if ($unclassifiedColumns !== [] || $staleColumns !== []) {
+                $this->fail('E3b', "table {$prefix}{$tableName}: unclassified columns [".implode(', ', $unclassifiedColumns).'], classified columns that do not exist ['.implode(', ', $staleColumns).']');
+            }
+
+            foreach ($classifiedColumns as $columnName => $columnClass) {
+                if (! in_array($columnClass, ['personal', 'retained', 'other'], true)) {
+                    $this->fail('E3b', "table {$prefix}{$tableName}: column {$columnName} has an unknown class");
+                }
+            }
+        }
     }
 
     /**
@@ -932,7 +1012,7 @@ final class ErasureConformanceRunner
     {
         $declaredStores = [
             ...array_map(fn (string $diskName): string => "disk:{$diskName}", array_keys($this->fixture->diskPaths($person))),
-            ...array_map(fn (string $connectionName): string => "connection:{$connectionName}", $this->fixture->additionalConnections()),
+            ...array_map(fn (string $connectionName): string => "connection:{$connectionName}", array_keys($this->fixture->additionalConnections())),
         ];
         $emptyStores = array_diff($declaredStores, $this->otherStoresHoldingPerson($person));
 
@@ -968,7 +1048,7 @@ final class ErasureConformanceRunner
             }
         }
 
-        foreach ($this->fixture->additionalConnections() as $connectionName) {
+        foreach (array_keys($this->fixture->additionalConnections()) as $connectionName) {
             foreach (array_column(Schema::connection($connectionName)->getTables(), 'name') as $tableName) {
                 foreach (DB::connection($connectionName)->table($tableName)->get() as $row) {
                     $values = array_map(fn (mixed $value): string => (string) $value, array_filter((array) $row, is_scalar(...)));
