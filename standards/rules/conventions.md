@@ -14,10 +14,14 @@ One answer per topic for every qiick package and product (decision of 2026-11-24
 - **F10 Logs:** structured context with the same keys everywhere (`request_id`, `organisation_id`, `public_id`), snake_case; never personal data or secrets.
 - **F11 Errors:** one JSON error shape (`message`, `error`, optional `errors`) and one fleet registry of `error` codes in app-ui (`standards/error-codes.json`), without collisions.
 - **F14 Test fakes** for products ship in the package's `Testing` namespace (`src/Testing/`).
+- **F12 Package files:** `docs/public-api.md` (with its test and the deprecation policy), `docs/security-checklist.md` mapped to tests, `docs/decisions/YYYY-MM-DD-<slug>.md`, `UPGRADING.md` per version, `CHANGELOG.md` with compare links, `docs/dependencies.md`.
+- **F13 Release order:** a package is released after the packages it depends on; a `1.x` (pre-releases included) never depends on a `0.x`, and a stable release never on a pre-release.
+- **F18 Products** share one structure: `docs/beta-readiness.md` (the fleet checklist), `<app>:install` and `<app>:upgrade`, SQLite by default in `.env.example`, tests pinned to an in-memory database, and the package adoption table.
+- **F15–F17** (repository settings, labels and project, agent rules) are in the repository rules.
 
 With a `conventions` object in `qiick-standards.json`, `app-ui-drift / standards` runs the static checks of these rules; an exception is a `conventions.divergences` entry with `reason`, `decision` and `review_by`.
 
-<!-- qiick-standards:detail when: adding or changing a package's config, commands, events, migrations, logging, error codes, retention or test fakes, or writing down an exception to a fleet convention -->
+<!-- qiick-standards:detail when: adding or changing a package's config, commands, events, migrations, logging, error codes, retention, test fakes, docs files or Composer requirements, preparing a release, changing a product's install or beta checklist, or writing down an exception to a fleet convention -->
 
 ## How the conventions are checked
 
@@ -168,3 +172,61 @@ A divergence skips its check. It fails when it lacks a field, when `review_by` h
 **Checked by.** _package_ F14: no `Fake*` / `InMemory*` class outside `src/Testing/`; a package with `src/Contracts/` has `src/Testing/`.
 
 **Exceptions.** None.
+
+## F12 The same files in every package
+
+**Rule.** Every package has:
+
+| File                                  | Content                                                                                                                                                            | Reference                                 |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| `docs/public-api.md`                  | every `@api` class, config key, variable, command, event, route, table and error code; a `## Deprecation policy` section                                           | `qiick/laravel-http-basics`               |
+| `tests/Arch/PublicApiTest.php`        | fails when a class is neither `@api` nor `@internal`, or an `@api` class is missing from the page                                                                  | `qiick/laravel-http-basics`               |
+| `docs/security-checklist.md`          | one row per security property: `# \| Property \| Covering test \| Status`                                                                                          | `qiick/laravel-http-basics`               |
+| `docs/decisions/YYYY-MM-DD-<slug>.md` | one file per decision, titled `# YYYY-MM-DD: <title>`, with who decided, what and why                                                                              | `qiick/laravel-api-keys`                  |
+| `UPGRADING.md`                        | a section for every released version (`## From X to Y`), with the commands, config and schema steps                                                                | `qiick/laravel-api-keys`                  |
+| `CHANGELOG.md`                        | Keep a Changelog: `[Unreleased]`, `[X.Y.Z] - YYYY-MM-DD`, and a compare link for every version (`[X.Y.Z]: https://github.com/qiick-io/<repo>/compare/vA...vX.Y.Z`) | `qiick/laravel-oidc`                      |
+| `docs/dependencies.md`                | the dependency register: every `require` entry with its reason, maintainer, licence, risk and exit plan                                                            | the dependency register rule (app-ui#226) |
+
+`README.md`, `SECURITY.md`, `CONTRIBUTING.md` and `LICENSE` are there already in every package. When a repo adopts the conventions, the sync writes `docs/public-api.md` and `docs/security-checklist.md` from `standards/templates/` once, as starting points.
+
+**Why.** On 2026-11-24 the public API list existed in three of seven packages under two names (`public-api.md`, `PUBLIC-API.md`), the deprecation policy lived in a README, an UPGRADING file or nowhere (analysis X-g), a security checklist mapped to tests existed only in http-basics, and laravel-oidc and laravel-outbound had no upgrade section for some released versions. A reviewer or a product could not find the same thing in the same place twice.
+
+**Checked by.** _package_ F12: the files and their shape (exact file names, case included); the register's contents by the dependency register check.
+
+**Exceptions.** None.
+
+## F13 Release order
+
+**Rule.** A package is released after every qiick package it requires; a product after the packages it adopts. A version line `1.x` (a `1.0.0-beta.N` included) requires only `1.x` qiick packages; a stable release requires only stable ones (`^1.0`, never `@beta`). The order today, from the `require` graph and the decision of 2026-11-24:
+
+1. `laravel-http-basics`, `laravel-outbound`, `laravel-api-keys`, `laravel-access`, `laravel-audit` (no qiick dependency);
+2. `laravel-oidc` and `laravel-mcp-oauth` (both require `laravel-outbound`);
+3. the products, each after the packages it adopts.
+
+**Why.** `laravel-oidc` ships `1.0.0-beta.6` on `laravel-outbound ^0.1`, so its 1.0 would freeze an API on top of one that may still break (analysis X-b, OIDC-l); `externa-core 1.5.1`, a stable release, requires `laravel-oidc ^1.0@beta`.
+
+**Checked by.** F13: the repo's newest version in `CHANGELOG.md` against its `qiick/*` constraints in `composer.json`.
+
+**Exceptions.** A pre-release of a dependency in a product's pre-release (`excubia-app` beta on `laravel-oidc @beta`) is fine; F13 only fails once the product's own line is stable.
+
+## F18 The same product structure
+
+**Rule.** Every product (`"app": true`):
+
+- keeps `docs/beta-readiness.md`, the fleet checklist (`standards/templates/beta-readiness.md`, written first for signaculum-core): the items are the fleet's, the Status column is the product's, and section 7 is its package adoption table;
+- installs and upgrades with `<app>:install` and `<app>:upgrade` (the distribution rules);
+- ships `.env.example` on SQLite, so a fresh clone runs without a database server; a local MySQL or PostgreSQL database is the app's one database, named after it (`excubia_app`), never a copy per branch or version;
+- pins tests to an in-memory database in `phpunit.xml` (`DB_DATABASE=:memory:`); a test never writes `.env` or touches the development database;
+- sets in `qiick-standards.json` what its type needs:
+
+| Repo type     | `qiick-standards.json`                                                                        | Shared workflows (job id)                                                                                                                         | Rule pages                               |
+| ------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Product       | `php`, `app`, `uiPreset`, `frontendRoots`, `oxlint` or `eslint`, `conformance`, `conventions` | `app-ui-drift`, `pr-title`, `php-quality`, `ui-quality`, `migrations-frozen`, `distribution-smoke`, `conformance`                                 | all, `stack` and `distribution` included |
+| Package       | `php`, `package`, `conventions`                                                               | `app-ui-drift` (`registry: false`), `pr-title`, `php-quality` (`phpstan-min-level: max`), `package-matrix`, `migrations-frozen` (with migrations) | all but `stack`, `distribution` and `ui` |
+| Frontend only | `uiPreset`, `frontendRoots`                                                                   | `app-ui-drift`, `pr-title`, `ui-quality`                                                                                                          | all but the PHP pages                    |
+
+**Why.** Each product invented its own: signaculum-core wrote the beta checklist, the others have none; signaculum-core#176 rewrote the shared `.env` from a test; and on 2026-11-09 per-version database copies filled the disk.
+
+**Checked by.** F18 (products): the checklist file, the two commands, `.env.example` and `phpunit.xml`. The checklist's content is reviewed in the release PR.
+
+**Exceptions.** A product without a self-hosted distribution writes ➖ with the reason in its checklist; the commands stay.
