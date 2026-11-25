@@ -125,7 +125,7 @@ const columns = useApiKeyColumns<ApiKeyRow>({
 
 ### The secret dialog
 
-The one screen where a mistake cannot be undone, so `ApiKeySecretDialog` is strict:
+The one screen where a mistake cannot be undone, so `ApiKeySecretDialog` is strict. It is `SecretOnceDialog` (`secret-once-dialog`) with the API key wording; every other secret shown once (a webhook signing secret issued by the sender, for example) uses `SecretOnceDialog` directly, with its own title and announcement:
 
 - An `AlertDialog`: Esc and the overlay do not close it. **Done** stays disabled until the user ticks "I have stored the key somewhere safe".
 - The secret is in a read-only monospace field that takes focus when the dialog opens and selects its text, so it can be copied with the keyboard as well as with **Copy**; the opening and the copy result are announced in the live region. If the clipboard is unavailable, the text stays selected and the failure is announced.

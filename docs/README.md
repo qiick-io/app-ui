@@ -29,4 +29,6 @@ Optional patterns: [`optional/README.md`](optional/README.md) explains adopting 
 
 Backend conventions (with the summary in [`standards/rules/backend.md`](../standards/rules/backend.md)): [roles and permissions](roles-and-permissions.md), [API](api.md), [realtime](realtime.md), [security headers](security-headers.md), [logging and activity log](logging-and-audit.md), [AI backend](ai-backend.md).
 
+Composer packages: [shared Laravel / PHP compatibility matrix](package-matrix.md) (reusable workflow, add/drop policy, `fromJSON` consumption).
+
 Rules for all of them: [`../AGENTS.md`](../AGENTS.md). Copy the code and the positions; if a screen needs something not listed here and externa-core has no equivalent, ask the maintainer.

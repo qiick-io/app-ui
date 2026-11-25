@@ -114,6 +114,41 @@ When this workspace has `graphify-out/graph.json`:
 - Nothing personal in tracked files: no absolute local paths (`/Users/…`), no one's own editor or agent configuration (keep it in `.gitignore`), and "the maintainer" instead of people's names in code, comments and docs. Describe what code does rather than which product it imitates; naming a product is fine where it is an integration (an importer, a compatible endpoint).
 - Ask the maintainer before: a new dependency, anything outside the issue's scope, repo settings (branch protection, required checks, secrets), paid services or accounts.
 
+## Repository settings and agent rules
+
+Every qiick repo is configured the same way, so a check name, a label or a merge button means the same thing everywhere (fleet conventions F15–F17, decision of 2026-11-24).
+
+- **F15 Settings:** default branch `develop`; `develop` and `main` protected the same way (pull request, required checks with the same names on both, "up to date" on, admins included, no force push or deletion); squash merge with the PR title as the commit, merge commits for `main`, no rebase merge; head branches deleted after merge; every action and reusable workflow pinned by full commit SHA with the version in a comment.
+- **F16 Labels and project:** the fleet label set (`priority:P0`–`priority:P3`, `security`, `schema`, `documentation`, `bug`, `enhancement`, …) exists in every repo, and every repo is linked to its GitHub project.
+- **F17 Agents** working in a repo:
+    - watch CI at most once every 3 minutes, never in a tight loop;
+    - never `pkill` / `killall`: stop only processes you started, by PID;
+    - read the `.env` in use before every `migrate` (which connection, which database), and only ever migrate the database of your own worktree;
+    - run `gh` as the maintainer's account (`gh auth status` shows it active) and never as a second account logged in on the machine;
+    - no `Co-authored-by` or other attribution trailers (see the git rules).
+
+`scripts/check-repo-settings.mjs` in app-ui checks F15 and F16 through `gh api`; F15's action pins are also checked in the repo itself by the conventions check.
+
+**Details:** `.qiick/standards/repository.md`. Read it before changing repository settings, branch protection, labels or a workflow's `uses:` pins, or writing agent instructions for a repo.
+
+## Security, data and operations
+
+What every qiick repo does so a vulnerability can be reported, a leaked secret replaced, a schema changed without downtime, the data restored, a release and its dependencies trusted, a running product watched, personal data accounted for, and an incident handled from a page instead of from memory (fleet conventions F19–F24, F26, F29 and F30, maintainer request of 2026-11-25; F25, F27 and F28 are code conventions, in the conventions rules).
+
+- **F19 Security policy:** every repo has a `SECURITY.md` (supported versions, how to report, response time) and GitHub private vulnerability reporting switched on, because the policy sends reporters there.
+- **F20 Secrets runbook:** every product has `docs/runbooks/secrets.md`: each secret of `.env.example` and each key file, where it lives, who rotates it, how, what the rotation breaks, and what to do after a leak.
+- **F21 Expand / contract:** after the first stable release a schema change never breaks the code of the release before it. Add first (expand), move the data, switch the code, and drop or rename only in a later release (contract), with a `contract:` comment naming the release that stopped using the column.
+- **F22 Backup and restore drill:** every product documents what is backed up and how to restore it in `docs/runbooks/backup.md`, and records a restore drill there before its first stable release and at least every quarter after it.
+- **F23 Signed release tags:** the maintainer creates release tags locally with `git tag -s`; the release workflow runs `signed-tag / verified`, which fails unless GitHub shows the tag as Verified, and every publishing job needs it.
+- **F24 Supply chain:** lock files committed in products; `composer audit` and `npm audit --omit=dev --audit-level=high` on every PR and every night; Dependabot for Composer, npm and GitHub Actions; every accepted advisory written down with a reason and a date; release artefacts (Docker images, archives) carry a build provenance attestation.
+- **F26 Observability with Excubia:** every product requires `qiick/excubia-core` (not `--dev`), keeps an `excubia.json`, schedules `excubia:check` daily, and serves `/health/live` and `/health/ready`; pushing to an `excubia-app` is the operator's choice, configured only through `EXCUBIA_APP_URL` and `EXCUBIA_APP_TOKEN`.
+- **F29 Privacy:** every product keeps `docs/privacy.md`: the personal data it stores (table and column), why, for how long, which processors and outbound destinations receive any of it, and how a person's data is exported and erased. No telemetry, ever, unless the operator turns it on.
+- **F30 Runbooks:** every product keeps `docs/runbooks/deploy.md` (deploy, upgrade and rollback) and `docs/runbooks/incident.md` (first steps, who to tell, what to write down afterwards), next to the secrets and backup runbooks.
+
+With a `conventions` object in `qiick-standards.json`, the standards drift check runs the static checks of F19, F20, F22–F24, F26, F29 and F30; `migrations-frozen / migrations-frozen` checks F21; `scripts/check-repo-settings.mjs` in app-ui checks that private vulnerability reporting is on. An exception is a `conventions.divergences` entry like any other convention.
+
+**Details:** `.qiick/standards/operations.md`. Read it before writing or changing SECURITY.md, a secret, a runbook, a migration that drops, renames or changes a column or table, a backup, a release tag or release workflow, a dependency or an audit exception, monitoring or health endpoints, or anything that stores or sends personal data.
+
 ## Releases: never without the maintainer
 
 `develop` is the integration branch. `main` holds releases only.
@@ -130,7 +165,7 @@ Agents must not, unless the maintainer explicitly says so in this conversation:
 - publish packages (Packagist, npm) or images (Docker Hub, GHCR);
 - change repository visibility.
 
-How a release goes, for reference: release PR → the maintainer merges it with a **merge commit** (never squash: `main` must stay an ancestor of `develop`) → tag `vX.Y.Z` on the merge commit → GitHub Release titled exactly with the tag, listing the included PRs → `main` is merged back into `develop` through a pull request, also with a merge commit.
+How a release goes, for reference: release PR → the maintainer merges it with a **merge commit** (never squash: `main` must stay an ancestor of `develop`) → the maintainer signs the tag `vX.Y.Z` on the merge commit on their own machine (`git tag -s`) and pushes it, and `signed-tag / verified` confirms GitHub shows it Verified (F23) → GitHub Release titled exactly with the tag, listing the included PRs → `main` is merged back into `develop` through a pull request, also with a merge commit.
 
 **Details:** `.qiick/standards/release.md`. Read it before preparing a release PR or the CHANGELOG, bumping a version, or asking for required checks.
 
@@ -140,6 +175,7 @@ Machines enforce these in CI; keep them green, and never silence one to get gree
 
 - **PHP quality floor:** PHPStan (Larastan) at level **8** at least in apps and **`max`** in packages; the level never drops and `phpstan-baseline.neon` only shrinks. Apps run Pest with line coverage in CI and fail below the committed `coverage-floor.txt`, which only rises; packages keep a fixed minimum per path. Both run in the reusable `php-quality.yml`.
 - **Fleet conformance:** every core-hardening decision ships with a check in `tests/Conformance` (synced from the pack). The suite runs on a freshly migrated database; engine-dependent checks need PostgreSQL and MySQL via the reusable `conformance.yml`. A product skips a check only with a `divergences` object (`reason`, `decision`, `review_by`). Catalogue: [`standards/CONFORMANCE.md`](../CONFORMANCE.md).
+- **Package compatibility matrix:** every qiick Composer package shares one Laravel / PHP matrix (`standards/package-matrix.json`, reusable [`package-matrix.yml`](../../.github/workflows/package-matrix.yml)): PHP 8.3 / 8.4 / 8.5 × Laravel 12 / 13 × `lowest` / `stable`, plus the database targets (SQLite, MySQL 8.4, MariaDB 11.4 LTS, PostgreSQL 17, digest-pinned). A package with a higher minimum PHP version excludes unsupported versions through the workflow input (laravel-audit excludes PHP 8.3). Adding a major is an app-ui release packages adopt on the next pin bump; dropping one is a **major** for each package. With `"package": true` in `qiick-standards.json`, the standards check fails when CI does not call the workflow and expand both outputs with `fromJSON`. Docs: [`docs/package-matrix.md`](../../docs/package-matrix.md).
 
 **Details:** `.qiick/standards/checks.md`. Read it before fixing a failing check, adding or changing a GitHub Actions workflow, or touching a baseline, `knip.json`, a ratchet, the conformance suite or the strict-model setup.
 

@@ -272,7 +272,7 @@ return [
     [
         'id' => 'C75',
         'tag' => 'schema',
-        'description' => 'Access group tables + indexes; Spatie tables match the bidirectional column/type/index allowlist on the migrated schema; migration scan (incl. sprintf/concat heuristics) is an extra signal (usesLaravelAccess)',
+        'description' => 'Access group tables + indexes (incl. nullable organisation_id, is_instance, XOR); Spatie bidirectional allowlist; migration scan extra signal (usesLaravelAccess)',
         'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
     ],
 ];

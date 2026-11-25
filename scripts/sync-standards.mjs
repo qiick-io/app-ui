@@ -16,13 +16,15 @@
  *         "oxlint": true,                  // Vite+ apps: the shared Oxlint configs
  *         "eslint": true,                  // repos still on ESLint: the shared ESLint config
  *         "app": true,                     // self-hosted app: stack and distribution rules
+ *         "package": true,                 // Composer package: must consume package-matrix.yml
  *         "patterns": ["command-palette"], // optional UI patterns it adopts (standards/patterns.json)
  *         "requiredItems": ["page-layout"], // registry items it must install (check-drift.mjs)
  *         "divergences": {                  // registry strings and/or conformance objects
  *             "page-layout": "Why",
  *             "C12": { "reason": "…", "decision": "knowledge/decisions/…", "review_by": "YYYY-MM-DD" }
  *         },
- *         "conformance": { "userModel": "App\\Models\\User", "apiPrefix": "api/v1" }
+ *         "conformance": { "userModel": "App\\Models\\User", "apiPrefix": "api/v1" },
+ *         "conventions": { "divergences": {} } // fleet conventions F1-F30 (check-conventions.mjs)
  *     }
  *
  * Managed files are of two kinds:
@@ -36,14 +38,19 @@
  *   repo's own.
  *
  * `--check` fails on a missing or different managed file or block, on a
- * frontend file or directory name that is not kebab-case, and on graphify git
- * hygiene: `.gitignore` must ignore `graphify-out/`, no tracked `graphify-out/`
- * path, and `.gitattributes` must not contain `merge=graphify`.
+ * frontend file or directory name that is not kebab-case, on graphify git
+ * hygiene (`.gitignore` must ignore `graphify-out/`, no tracked `graphify-out/`
+ * path, and `.gitattributes` must not contain `merge=graphify`), and — when
+ * `"package": true` — on a CI matrix that does not consume package-matrix.yml
+ * (see docs/package-matrix.md), and — with a `conventions` object — on a fleet
+ * convention its source breaks (standards/rules/conventions.md).
  */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findConventionViolations } from '../standards/scripts/check-conventions.mjs';
+import { findPackageMatrixViolations } from '../standards/scripts/check-package-matrix.mjs';
 
 const CONFIG_FILE = 'qiick-standards.json';
 const SOURCE_URL = 'https://github.com/qiick-io/app-ui/tree/develop/standards';
@@ -208,7 +215,7 @@ function demoteHeadings(markdown) {
 }
 
 /**
- * @param {{ uiPreset?: string, app?: boolean, php?: boolean, patterns?: string[] }} config
+ * @param {{ uiPreset?: string, app?: boolean, php?: boolean, package?: boolean, patterns?: string[] }} config
  * @param {PatternCatalogue} catalogue
  * @returns {Record<string, string>} Rule page name => Markdown
  */
@@ -219,8 +226,16 @@ function renderRulePages(config, catalogue) {
         code: readSource('rules/code.md'),
         graphify: readSource('rules/graphify.md'),
         ...(config.php ? { backend: readSource('rules/backend.md') } : {}),
+        ...(config.php
+            ? { conventions: readSource('rules/conventions.md') }
+            : {}),
+        ...(config.package
+            ? { dependencies: readSource('rules/dependencies.md') }
+            : {}),
         testing: readSource('rules/testing.md'),
         git: readSource('rules/git.md'),
+        repository: readSource('rules/repository.md'),
+        operations: readSource('rules/operations.md'),
         release: readSource('rules/release.md'),
         checks: readSource('rules/checks.md'),
     };
@@ -334,7 +349,7 @@ const cursorRule = (description, frontmatter, body) =>
 
 /**
  * Everything the pack writes into a repo with this config.
- * @param {{ uiPreset?: string, php?: boolean, eslint?: boolean, oxlint?: boolean, app?: boolean, frontendRoots?: string[], patterns?: string[] }} config
+ * @param {{ uiPreset?: string, php?: boolean, eslint?: boolean, oxlint?: boolean, app?: boolean, package?: boolean, conventions?: object, frontendRoots?: string[], patterns?: string[] }} config
  * @param {PatternCatalogue} [catalogue] - Defaults to `standards/patterns.json`
  * @returns {{ path: string, kind: 'file' | 'block' | 'template', content: string }[]}
  */
@@ -376,8 +391,12 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
                     pages.code,
                     pages.graphify,
                     pages.backend,
+                    pages.conventions,
+                    pages.dependencies,
                     pages.checks,
                     pages.git,
+                    pages.repository,
+                    pages.operations,
                     pages.distribution,
                 ]
                     .filter(Boolean)
@@ -412,6 +431,43 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
             content: readSource('rules/comments.md'),
         },
     ];
+
+    if (config.package) {
+        outputs.push({
+            path: 'docs/dependencies.md',
+            kind: 'template',
+            content: readSource('templates/dependencies.md'),
+        });
+    }
+
+    // Fleet convention F12 / F18 / F20 / F22 / F29 / F30 starting points, written once when a repo adopts the conventions.
+    if (config.conventions) {
+        const conventionTemplates = config.package
+            ? {
+                  'docs/public-api.md': 'public-api.md',
+                  'docs/security-checklist.md': 'security-checklist.md',
+              }
+            : config.app
+              ? {
+                    'docs/beta-readiness.md': 'beta-readiness.md',
+                    'docs/runbooks/secrets.md': 'runbook-secrets.md',
+                    'docs/runbooks/backup.md': 'runbook-backup.md',
+                    'docs/runbooks/deploy.md': 'runbook-deploy.md',
+                    'docs/runbooks/incident.md': 'runbook-incident.md',
+                    'docs/privacy.md': 'privacy.md',
+                }
+              : {};
+
+        for (const [targetPath, template] of Object.entries(
+            conventionTemplates,
+        )) {
+            outputs.push({
+                path: targetPath,
+                kind: 'template',
+                content: readSource(`templates/${template}`),
+            });
+        }
+    }
 
     for (const [name, page] of Object.entries(pages)) {
         outputs.push({
@@ -774,6 +830,100 @@ export function findNonKebabCaseNames(targetRoot, frontendRoots) {
 }
 
 /**
+ * Runtime Composer requirements must be represented by name in the package's
+ * dependency register; the rationale itself remains a human review.
+ * @param {string} targetRoot
+ * @returns {string[]} Errors, empty when every runtime requirement is listed
+ */
+export function findDependencyRegisterViolations(targetRoot) {
+    const composerPath = path.join(targetRoot, 'composer.json');
+
+    if (!fs.existsSync(composerPath)) {
+        return ['composer.json is missing (required for a Composer package).'];
+    }
+
+    const composer = JSON.parse(fs.readFileSync(composerPath, 'utf8'));
+
+    if (
+        typeof composer !== 'object' ||
+        composer === null ||
+        Array.isArray(composer)
+    ) {
+        return ['composer.json must contain a JSON object.'];
+    }
+
+    const requirements = composer.require ?? {};
+
+    if (
+        typeof requirements !== 'object' ||
+        requirements === null ||
+        Array.isArray(requirements)
+    ) {
+        return ['composer.json "require" must be an object.'];
+    }
+
+    const registerPath = path.join(targetRoot, 'docs/dependencies.md');
+
+    if (!fs.existsSync(registerPath)) {
+        return [];
+    }
+
+    const registerLines = normalize(
+        fs.readFileSync(registerPath, 'utf8'),
+    ).split('\n');
+    const documentedDependencies = new Set();
+    let hasDependencyTable = false;
+    let isDependencyTable = false;
+
+    for (const registerLine of registerLines) {
+        const isTableRow = registerLine.trim().startsWith('|');
+
+        if (!isTableRow) {
+            isDependencyTable = false;
+            continue;
+        }
+
+        const cells = registerLine
+            .trim()
+            .replace(/^\|/, '')
+            .replace(/\|$/, '')
+            .split('|')
+            .map((cell) => cell.trim());
+
+        if (cells[0] === 'Dependency') {
+            isDependencyTable = true;
+            hasDependencyTable = true;
+            continue;
+        }
+
+        if (
+            isDependencyTable &&
+            cells[0] !== undefined &&
+            !/^:?-{3,}:?$/.test(cells[0])
+        ) {
+            const dependencyName = cells[0].replace(/^`|`$/g, '').trim();
+
+            if (dependencyName !== '') {
+                documentedDependencies.add(dependencyName);
+            }
+        }
+    }
+
+    if (!hasDependencyTable) {
+        return [
+            'docs/dependencies.md must contain a Markdown table with "Dependency" as its first column.',
+        ];
+    }
+
+    return Object.keys(requirements)
+        .filter((dependencyName) => !documentedDependencies.has(dependencyName))
+        .map(
+            (dependencyName) =>
+                `"${dependencyName}" in composer.json "require" is missing from docs/dependencies.md.`,
+        );
+}
+
+/**
  * @param {string} targetRoot
  * @param {{ isCheck: boolean, catalogue?: PatternCatalogue }} options
  * @returns {string[]} Errors (check mode) or written paths (sync mode)
@@ -866,6 +1016,10 @@ export function syncStandards(
     }
 
     if (isCheck) {
+        if (config.package) {
+            messages.push(...findDependencyRegisterViolations(targetRoot));
+        }
+
         for (const name of findNonKebabCaseNames(
             targetRoot,
             config.frontendRoots ?? [],
@@ -876,6 +1030,12 @@ export function syncStandards(
         }
 
         messages.push(...findGraphifyGitViolations(targetRoot));
+
+        if (config.package === true) {
+            messages.push(...findPackageMatrixViolations(targetRoot));
+        }
+
+        messages.push(...findConventionViolations(targetRoot, config));
     }
 
     return messages;

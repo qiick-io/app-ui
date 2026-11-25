@@ -1,0 +1,89 @@
+{
+    "$comment": "Canonical Laravel/PHP compatibility matrix and database targets for every qiick Composer package. `matrix` is the full variant (push to develop and main, nightly); `pr` says which part of it a pull request runs, from the files it touches. The reusable .github/workflows/package-matrix.yml exports both; packages consume them with fromJSON. Docs: docs/package-matrix.md.",
+    "matrix": {
+        "php": ["8.3", "8.4", "8.5"],
+        "laravel": ["12", "13"],
+        "dependency-version": ["lowest", "stable"],
+        "include": [
+            {
+                "laravel": "12",
+                "testbench": "10"
+            },
+            {
+                "laravel": "13",
+                "testbench": "11"
+            }
+        ],
+        "exclude": []
+    },
+    "pr": {
+        "$comment": "Path patterns are regular expressions on repo-relative paths. A pull request that touches only docsOnly paths runs nothing (every job still reports success under its name). Otherwise: the highest cell always, the lowest cell when it touches code, the server databases when it touches database code, mutation on the src/ classes it changed.",
+        "always": {
+            "php": "highest",
+            "laravel": "highest",
+            "dependency-version": "stable"
+        },
+        "whenCodeChanges": {
+            "php": "lowest",
+            "laravel": "lowest",
+            "dependency-version": "lowest"
+        },
+        "paths": {
+            "docsOnly": ["\\.md$", "^docs/", "^LICENSE$"],
+            "code": ["^composer\\.json$", "^src/"],
+            "database": [
+                "^database/",
+                "^src/(?:.*/)?(?:Models?|Migrations?|Database|Eloquent|Stores?|Repositories|Queries|Builders|Schema)/",
+                "^src/.*(?:Model|Migration|Store|Repository|Query|Builder|Schema)\\.php$"
+            ],
+            "mutation": ["^src/(?!Testing/).*\\.php$"]
+        }
+    },
+    "databases": [
+        {
+            "name": "SQLite",
+            "connection": "sqlite",
+            "image": null,
+            "port": null
+        },
+        {
+            "name": "PostgreSQL 17",
+            "connection": "pgsql",
+            "image": "postgres:17@sha256:87c8b42f423b45d5247e6aa8fdb2e7762fec164c68a50fe3eb07e7bfcaf4dbcf",
+            "port": 5432,
+            "environment": {
+                "POSTGRES_HOST_AUTH_METHOD": "trust",
+                "POSTGRES_DB": "qiick_package"
+            },
+            "options": "--health-cmd=\"pg_isready -U postgres -d qiick_package\" --health-interval=5s --health-timeout=5s --health-retries=20",
+            "username": "postgres",
+            "password": ""
+        },
+        {
+            "name": "MySQL 8.4",
+            "connection": "mysql",
+            "image": "mysql:8.4@sha256:8c233bad33d520a7aae1c1e619c3a9775f4a1ba2d463d692fada04ec7f40be00",
+            "port": 3306,
+            "environment": {
+                "MYSQL_ALLOW_EMPTY_PASSWORD": "yes",
+                "MYSQL_DATABASE": "qiick_package"
+            },
+            "options": "--health-cmd=\"mysqladmin ping -h 127.0.0.1\" --health-interval=5s --health-timeout=5s --health-retries=20",
+            "username": "root",
+            "password": ""
+        },
+        {
+            "name": "MariaDB 11.4",
+            "connection": "mariadb",
+            "image": "mariadb:11.4@sha256:a8992b5e5404d11e03c54a31d0c1bdea3fd116d283aa6d1a627551f29045309b",
+            "port": 3306,
+            "environment": {
+                "MARIADB_ALLOW_EMPTY_ROOT_PASSWORD": "yes",
+                "MARIADB_DATABASE": "qiick_package"
+            },
+            "options": "--health-cmd=\"healthcheck.sh --connect --innodb_initialized\" --health-interval=5s --health-timeout=5s --health-retries=20",
+            "username": "root",
+            "password": ""
+        }
+    ]
+}

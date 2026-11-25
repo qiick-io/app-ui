@@ -2000,10 +2000,10 @@
             ]
         },
         {
-            "name": "api-key-secret-dialog",
+            "name": "secret-once-dialog",
             "type": "registry:component",
-            "title": "API key secret dialog",
-            "description": "ApiKeySecretDialog: the show-once secret after create or rotate; read-only selectable field with Copy, announced to screen readers, not dismissible until the user confirms they stored it.",
+            "title": "Secret once dialog",
+            "description": "SecretOnceDialog: a secret shown once (an API key, a webhook signing secret); read-only selectable field with Copy, announced to screen readers, not dismissible until the user confirms they stored it. The app passes the translated title and announcement.",
             "dependencies": ["lucide-react", "react-i18next"],
             "registryDependencies": [
                 "@qiick/alert-dialog",
@@ -2013,6 +2013,20 @@
                 "@qiick/input-group",
                 "@qiick/toast"
             ],
+            "files": [
+                {
+                    "path": "src/components/secrets/secret-once-dialog.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "api-key-secret-dialog",
+            "type": "registry:component",
+            "title": "API key secret dialog",
+            "description": "ApiKeySecretDialog: the show-once secret after create or rotate, `SecretOnceDialog` with the API key wording.",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": ["@qiick/secret-once-dialog"],
             "files": [
                 {
                     "path": "src/components/api-keys/api-key-secret-dialog.tsx",

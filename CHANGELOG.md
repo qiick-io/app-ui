@@ -8,6 +8,47 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-11-25
+
+### Added
+
+- Registry: `secret-once-dialog`, the show-once secret dialog generalised from `api-key-secret-dialog` (not dismissible until the user confirms they stored the secret, read-only field with Copy, live-region announcements) for every secret shown once, such as a webhook signing secret the sender generates (Standard Webhooks). `api-key-secret-dialog` now wraps it and keeps its props, wording and `data-test` hooks; new `secretOnce.*` locale keys in en, it and de. Apps that installed `api-key-secret-dialog` re-add it to pull the new dependency (#241).
+
+- CI: adds a shared Laravel / PHP compatibility matrix and database service list for qiick Composer packages. The reusable `package-matrix.yml` exports the canonical JSON so package workflows can keep their existing test jobs and required check names while consuming it with `fromJSON`. Packages can exclude unsupported PHP versions (for example, `laravel-audit` excludes PHP 8.3); the shared database targets are SQLite, MySQL 8.4, MariaDB 11.4, and PostgreSQL 17. Docs: `docs/package-matrix.md` (#212).
+
+- Standards: the fleet conventions F1–F11 and F14 (decision of 2026-11-24) in a new rule page `standards/rules/conventions.md`, synced into every PHP repo: published config with nested defaults and fail-fast validation, `<package>:check`, off means off, no static state, `*Event` names, `<package>:<verb>` commands with `--dry-run`, env prefix, standard columns, retention, log keys, one error shape. `standards/scripts/check-conventions.mjs` checks them statically from the standards drift check, only in repos whose `qiick-standards.json` has a `conventions` object; exceptions are `conventions.divergences` with reason, decision and review date. `standards/error-codes.json` is the fleet registry of machine `error` codes (#227).
+
+- Standards: package dependency register in `docs/dependencies.md`, with a template and standards-drift coverage check for every runtime `composer.json` `require` entry. Affects Composer packages on the next standards pin bump and re-sync; fill in the generated register (#226).
+
+- Standards: the fleet conventions F12, F13 and F15–F18. F12 (the same files in every package), F13 (release order) and F18 (one product structure, with the fleet beta checklist taken from signaculum-core) join `rules/conventions.md` and the static checks; adopting the conventions writes `docs/public-api.md` and `docs/security-checklist.md` (packages) or `docs/beta-readiness.md` (products) once. A new rule page for every repo, `rules/repository.md`, holds F15 (settings and action pins), F16 (labels and project) and F17 (agent rules: CI watchers at most every 3 minutes, no `pkill`, read the `.env` before `migrate`, only your worktree's database, `gh` as the maintainer's account). `scripts/check-repo-settings.mjs` compares every public `qiick-io` repo with `standards/repo-settings.json` through `gh api` (#228).
+
+- CI: the package matrix has a `pr` and a `full` variant. On a pull request `package-matrix.yml` plans from the changed files (docs only: nothing; otherwise the highest PHP / Laravel cell; the lowest cell for `composer.json` or `src/`; the server databases for database code; mutation on the changed classes) through the new outputs `variant`, `docs-only`, `run-databases`, `mutate-scope` and `mutate-classes` (a class the PR deleted is never mutated); push, nightly and manual runs take the full matrix. With `"package": true` the standards check also requires the plan's signals, `cancel-in-progress`, a nightly `cron` and an issue on a failed nightly run, and fails a job that skips itself on the plan instead of its steps, since its required check would never report (#231).
+
+- Standards: security and data safety, fleet conventions F19–F23, in a new rule page for every repo, `rules/operations.md`. F19 `SECURITY.md` and GitHub private vulnerability reporting (16 of 19 policies sent reporters there; it was on in 3 repos); F20 `docs/runbooks/secrets.md` listing every secret of `.env.example` with rotation and an "After a leak" section; F21 expand / contract after the first stable release, checked by `migrations-frozen.sh` through `standards/scripts/check-expand-contract.mjs` (`// contract: <column> unused since vX.Y.Z` or `// expand-safe:`); F22 `docs/runbooks/backup.md` with a restore drill at most 92 days old once a product is stable; F23 signed release tags, created locally with `git tag -s` and verified by the new reusable `signed-tag.yml` (`signed-tag / verified`), which app-ui runs on its own tags (every fleet tag was lightweight). Adopting the conventions writes both runbooks in products; `check-repo-settings.mjs` reports private vulnerability reporting; app-ui gets its `SECURITY.md` (#235).
+
+- Standards: the second part of the second block, fleet conventions F24–F30, with static checks in `check-conventions.mjs`. In `rules/operations.md` (retitled "Security, data and operations"): F24 supply chain (`composer audit` and `npm audit` in CI, Dependabot for every ecosystem, lock files in products, build provenance for pushed images), F26 observability with Excubia (`qiick/excubia-core` required, `excubia.json` without a token, `excubia:check` scheduled, `/health/live` and `/health/ready`), F29 privacy (`docs/privacy.md`) and F30 runbooks (`docs/runbooks/deploy.md` with a rollback, `docs/runbooks/incident.md`). In `rules/conventions.md`: F25 strict Laravel (boot calls in products, `Http::preventStrayRequests()` and `Process::preventStrayProcesses()` in every PHP repo's tests), F27 public APIs (path versions, OpenAPI with a test, `Deprecation` / `Sunset` before a version ends) and F28 UI quality (`ui-quality.yml`, drift and browser tests). Adopting the conventions writes the privacy page and the deploy and incident runbooks in products (#234).
+
+### Fixed
+
+- `check-repo-settings.mjs` (F16) reads a repo's project link from the organisation projects' `repositories` too: a repository's own `projectsV2` field stayed empty for repos linked with `gh project link`, so linked repos were reported as unlinked (#239).
+
+- Conformance C75 (AC17): require nullable `user_groups.organisation_id`, non-null `is_instance`, and the XOR constraint (`is_instance` true only with `organisation_id` NULL), matching qiick/laravel-access#8. Externa 1.x keeps the columns unused and stays green (#223).
+
+### Changed
+
+- Docs: `docs/package-matrix.md` says to update a package's required checks before it adopts the reduced pull request matrix, so a check that no longer reports never blocks a merge (#238).
+- CI: superseded pull request runs are cancelled (#232).
+
+### Upgrade notes
+
+- **Every repo:** bump the three pins to `v0.14.0` and re-sync the standards pack. The new rule pages (`rules/conventions.md`, `rules/repository.md`, `rules/operations.md`) arrive with the sync.
+- **Conventions F1–F30 are opt-in:** `check-conventions.mjs` runs only in repos whose `qiick-standards.json` has a `conventions` object. Adopting them writes the docs and runbooks listed above once; declare anything not yet met in `conventions.divergences` with reason, decision and review date.
+- **Composer packages:** fill in the generated `docs/dependencies.md` register (#226). Before switching to the `pr` variant of `package-matrix.yml`, update the repo's required checks (#238).
+- **PHP apps using `qiick/laravel-access`:** C75 now requires the `user_groups` instance / organisation XOR (#223).
+- **Apps with `api-key-secret-dialog`:** re-add it (`npx shadcn add @qiick/api-key-secret-dialog --overwrite`) to pull `secret-once-dialog`; its props are unchanged (#241).
+- **Release tags are signed from this version (F23):** `signed-tag / verified` runs on app-ui tags.
+- Before `1.0.0` a minor may include behaviour that would be major later; this release does not rename registry props or tokens.
+
 ## [0.13.0] - 2026-11-22
 
 ### Added
@@ -375,7 +416,8 @@ First tagged release. Everything below was on `develop` only; apps pinned `devel
 - `docs/page.md`: link tabs set `aria-controls={undefined}` on each `TabsTrigger`. Without it, axe reports a critical `aria-valid-attr-value` (found by externa-core's axe smoke test).
 - Drift check: an override can now explain a **missing** file of an installed item, not only a changed one. The source app (externa-core) keeps `lib/list-per-page.ts` and `layout/chat-layout.tsx` elsewhere.
 
-[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/qiick-io/app-ui/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/qiick-io/app-ui/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/qiick-io/app-ui/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/qiick-io/app-ui/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/qiick-io/app-ui/compare/v0.10.0...v0.11.0

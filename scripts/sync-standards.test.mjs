@@ -38,6 +38,44 @@ function makeRepo(config, files = {}) {
 
 const read = (root, file) => fs.readFileSync(path.join(root, file), 'utf8');
 
+/** A package CI that consumes the shared matrix and its pull request plan. */
+const packageMatrixWorkflow = `
+on:
+  pull_request:
+  schedule:
+    - cron: '17 3 * * *'
+concurrency:
+  group: ci-\${{ github.event_name }}-\${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  package-matrix:
+    uses: qiick-io/app-ui/.github/workflows/package-matrix.yml@v0.13.0
+  tests:
+    needs: package-matrix
+    strategy:
+      matrix: \${{ fromJSON(needs.package-matrix.outputs.matrix) }}
+    steps:
+      - if: \${{ !matrix.skip }}
+        run: vendor/bin/pest
+  databases:
+    needs: package-matrix
+    strategy:
+      matrix:
+        database: \${{ fromJSON(needs.package-matrix.outputs.databases) }}
+    steps:
+      - if: needs.package-matrix.outputs.run-databases == 'true'
+        run: vendor/bin/pest
+  phpstan:
+    needs: package-matrix
+    steps:
+      - if: needs.package-matrix.outputs.docs-only != 'true'
+        run: vendor/bin/phpstan analyse
+  nightly-failure:
+    if: failure() && github.event_name == 'schedule'
+    steps:
+      - run: gh issue create --title "Nightly CI failed"
+`;
+
 test('a synced repo passes the check', () => {
     const root = makeRepo({ uiPreset: 'Blue', php: true, eslint: true });
 
@@ -221,10 +259,170 @@ test('PHP repos get the backend conventions', () => {
     syncStandards(frontendOnlyRepo, { isCheck: false });
 
     assert.match(read(laravelRepo, 'AGENTS.md'), /^## Backend conventions$/m);
+    assert.match(read(laravelRepo, 'AGENTS.md'), /^## Fleet conventions$/m);
+    assert.match(
+        read(laravelRepo, '.qiick/standards/conventions.md'),
+        /^## F14 Test fakes in `Testing`$/m,
+    );
     assert.doesNotMatch(
         read(frontendOnlyRepo, 'AGENTS.md'),
-        /Backend conventions/,
+        /Backend conventions|Fleet conventions/,
     );
+});
+
+test('every repo gets the repository rules; adopting the conventions writes their starting files once', () => {
+    const frontendOnlyRepo = makeRepo({});
+    const packageRepo = makeRepo({ php: true, package: true, conventions: {} });
+    const appRepo = makeRepo({ php: true, app: true, conventions: {} });
+
+    for (const root of [frontendOnlyRepo, packageRepo, appRepo]) {
+        syncStandards(root, { isCheck: false });
+    }
+
+    assert.match(
+        read(frontendOnlyRepo, 'AGENTS.md'),
+        /^## Repository settings and agent rules$/m,
+    );
+    assert.match(
+        read(packageRepo, 'docs/public-api.md'),
+        /^## Deprecation policy$/m,
+    );
+    assert.ok(
+        fs.existsSync(path.join(packageRepo, 'docs/security-checklist.md')),
+    );
+    assert.ok(!fs.existsSync(path.join(packageRepo, 'docs/beta-readiness.md')));
+    assert.match(
+        read(appRepo, 'docs/beta-readiness.md'),
+        /^## 7\. Shared qiick packages$/m,
+    );
+    assert.match(
+        read(appRepo, 'docs/runbooks/secrets.md'),
+        /^## After a leak$/m,
+    );
+    assert.match(
+        read(appRepo, 'docs/runbooks/backup.md'),
+        /^## Restore drills$/m,
+    );
+    assert.match(read(appRepo, 'docs/runbooks/deploy.md'), /^## Rollback$/m);
+    assert.match(
+        read(appRepo, 'docs/runbooks/incident.md'),
+        /^## After the incident$/m,
+    );
+    assert.match(read(appRepo, 'docs/privacy.md'), /^## Telemetry$/m);
+    assert.ok(!fs.existsSync(path.join(packageRepo, 'docs/runbooks')));
+    assert.match(
+        read(frontendOnlyRepo, 'AGENTS.md'),
+        /^## Security, data and operations$/m,
+    );
+    assert.ok(!fs.existsSync(path.join(frontendOnlyRepo, 'docs')));
+});
+
+test('the fleet convention checks run only in a repo that adopted them', () => {
+    const files = {
+        'composer.json': JSON.stringify({ name: 'qiick/laravel-demo' }),
+        'config/demo.php': "<?php return ['timeout' => env('TIMEOUT')];",
+    };
+    const conventionErrors = (config) => {
+        const root = makeRepo(config, files);
+
+        syncStandards(root, { isCheck: false });
+
+        return syncStandards(root, { isCheck: true }).filter((message) =>
+            message.startsWith('conventions'),
+        );
+    };
+
+    assert.deepEqual(conventionErrors({ php: true, package: true }), []);
+    assert.match(
+        conventionErrors({ php: true, package: true, conventions: {} }).join(
+            '\n',
+        ),
+        /F7 .*env\('TIMEOUT'\) does not start with DEMO_/,
+    );
+});
+
+test('Composer packages get the dependency rules and documentation template', () => {
+    const packageRoot = makeRepo(
+        { package: true },
+        { '.github/workflows/ci.yml': packageMatrixWorkflow },
+    );
+
+    syncStandards(packageRoot, { isCheck: false });
+
+    assert.match(read(packageRoot, 'AGENTS.md'), /^## Dependency register$/m);
+    assert.ok(
+        fs.existsSync(
+            path.join(packageRoot, '.qiick/standards/dependencies.md'),
+        ),
+    );
+    assert.match(
+        read(packageRoot, 'docs/dependencies.md'),
+        /^\| Dependency \| Version constraint \|/m,
+    );
+    fs.unlinkSync(path.join(packageRoot, 'docs/dependencies.md'));
+    assert.match(
+        syncStandards(packageRoot, { isCheck: true }).join('\n'),
+        /docs\/dependencies\.md is missing/,
+    );
+
+    const applicationRoot = makeRepo({});
+
+    syncStandards(applicationRoot, { isCheck: false });
+
+    assert.equal(
+        fs.existsSync(path.join(applicationRoot, 'docs/dependencies.md')),
+        false,
+    );
+});
+
+test('package drift check requires every runtime dependency but ignores require-dev', () => {
+    const packageRoot = makeRepo(
+        { package: true },
+        {
+            '.github/workflows/ci.yml': packageMatrixWorkflow,
+            'composer.json': JSON.stringify({
+                require: {
+                    php: '^8.3',
+                    'qiick/laravel-example': '^1.0',
+                },
+                'require-dev': { 'pestphp/pest': '^3.0' },
+            }),
+            'docs/dependencies.md': [
+                '# Dependency register',
+                '',
+                '| Dependency | Version constraint |',
+                '| ---------- | ------------------ |',
+                '| `php` | `^8.3` |',
+                '| `qiick/laravel-example` | `^1.0` |',
+                '',
+            ].join('\n'),
+        },
+    );
+
+    syncStandards(packageRoot, { isCheck: false });
+
+    assert.deepEqual(syncStandards(packageRoot, { isCheck: true }), []);
+
+    fs.writeFileSync(
+        path.join(packageRoot, 'docs/dependencies.md'),
+        [
+            '# Dependency register',
+            '',
+            '| Dependency | Version constraint |',
+            '| ---------- | ------------------ |',
+            '| `php` | `^8.3` |',
+            '',
+        ].join('\n'),
+    );
+
+    const errors = syncStandards(packageRoot, { isCheck: true });
+
+    assert.equal(errors.length, 1);
+    assert.match(
+        errors[0],
+        /"qiick\/laravel-example" in composer\.json "require" is missing from docs\/dependencies\.md/,
+    );
+    assert.doesNotMatch(errors.join('\n'), /pestphp\/pest/);
 });
 
 test('apps get the stack rules and every repo points at the new-product guide', () => {
@@ -455,4 +653,70 @@ test('a committed merge=graphify line in .gitattributes fails the check', () => 
 
     assert.equal(errors.length, 1);
     assert.match(errors[0], /\.gitattributes must not contain merge=graphify/);
+});
+
+test('a package without opt-in is not required to consume the shared matrix', () => {
+    const root = makeRepo(
+        { ref: 'develop', php: true },
+        {
+            '.github/workflows/ci.yml': `
+name: CI
+jobs:
+  tests:
+    strategy:
+      matrix:
+        php: ['8.3']
+`,
+        },
+    );
+
+    syncStandards(root, { isCheck: false });
+
+    const errors = syncStandards(root, { isCheck: true }).filter((message) =>
+        message.startsWith('package matrix:'),
+    );
+
+    assert.deepEqual(errors, []);
+});
+
+test('a package:true repo without the shared matrix fails the check', () => {
+    const root = makeRepo(
+        { ref: 'develop', php: true, package: true },
+        {
+            '.github/workflows/ci.yml': `
+name: CI
+jobs:
+  tests:
+    strategy:
+      matrix:
+        php: ['8.3']
+`,
+        },
+    );
+
+    syncStandards(root, { isCheck: false });
+
+    const errors = syncStandards(root, { isCheck: true }).filter((message) =>
+        message.startsWith('package matrix:'),
+    );
+
+    assert.ok(errors.length >= 1);
+    assert.match(errors.join('\n'), /package-matrix\.yml/);
+});
+
+test('a package:true repo that consumes the shared matrix passes that check', () => {
+    const root = makeRepo(
+        { ref: 'develop', php: true, package: true },
+        {
+            '.github/workflows/ci.yml': packageMatrixWorkflow,
+        },
+    );
+
+    syncStandards(root, { isCheck: false });
+
+    const errors = syncStandards(root, { isCheck: true }).filter((message) =>
+        message.startsWith('package matrix:'),
+    );
+
+    assert.deepEqual(errors, []);
 });

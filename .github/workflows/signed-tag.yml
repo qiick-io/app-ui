@@ -1,0 +1,59 @@
+# Reusable signed release tag check (qiick standards, F23 in
+# standards/rules/operations.md): a release tag is an annotated tag the
+# maintainer signed locally (`git tag -s`), and GitHub shows it as Verified.
+# A lightweight tag, an unsigned annotated tag or a signature GitHub cannot
+# verify fails, so no job that `needs:` this one publishes the release.
+#
+# In the repo:
+#
+#   on:
+#     push:
+#       tags: ['v*']
+#   jobs:
+#     signed-tag:
+#       uses: qiick-io/app-ui/.github/workflows/signed-tag.yml@<sha> # vX.Y.Z
+#     publish:
+#       needs: signed-tag
+#
+# Check name: `signed-tag / verified`.
+name: signed tag
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  verified:
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require an annotated tag that GitHub shows as Verified
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          read -r object_type object_sha < <(gh api "repos/$REPOSITORY/git/ref/tags/$TAG" --jq '"\(.object.type) \(.object.sha)"')
+
+          if [ -z "${object_sha:-}" ]; then
+            echo "::error::Could not read the tag $TAG through the GitHub API."
+            exit 1
+          fi
+
+          if [ "$object_type" != tag ]; then
+            echo "::error::$TAG is a lightweight tag: create release tags with \`git tag -s $TAG -m $TAG <commit>\`."
+            exit 1
+          fi
+
+          read -r is_verified reason < <(gh api "repos/$REPOSITORY/git/tags/$object_sha" --jq '"\(.verification.verified) \(.verification.reason)"')
+
+          if [ "$is_verified" != true ]; then
+            echo "::error::$TAG is not Verified on GitHub ($reason): sign it with a key registered as a signing key on the maintainer's account."
+            exit 1
+          fi
+
+          echo "$TAG is signed and Verified."

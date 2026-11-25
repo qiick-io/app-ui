@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Qiick\ConformanceHarness;
 
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -101,16 +102,21 @@ final class GreenSchema
             $table->unsignedBigInteger('role_id');
         });
 
-        // laravel-access package shape (§2.4–2.6): standard names + public_id / metadata / expires_at.
+        // laravel-access package shape (§2.4–2.6 + AC17): public_id / metadata /
+        // expires_at, nullable organisation_id, is_instance, XOR constraint.
         Schema::create('user_groups', function (Blueprint $table): void {
             $table->id();
             $table->uuid('public_id')->unique();
             $table->string('name')->unique();
             $table->text('description')->nullable();
             $table->json('metadata')->nullable();
+            $table->uuid('organisation_id')->nullable()->index();
+            $table->boolean('is_instance')->default(false);
             $table->timestamps();
             $table->softDeletes();
         });
+
+        self::addUserGroupsInstanceOrganisationXorConstraint();
 
         Schema::create('user_group_user', function (Blueprint $table): void {
             $table->foreignId('user_group_id');
@@ -208,5 +214,45 @@ final class GreenSchema
             $table->text('public_key');
             $table->timestamps();
         });
+    }
+
+    /**
+     * Mirrors qiick/laravel-access create_user_groups: is_instance=true only with
+     * organisation_id NULL (SQLite triggers; CHECK on MySQL / MariaDB / PostgreSQL).
+     */
+    public static function addUserGroupsInstanceOrganisationXorConstraint(): void
+    {
+        $driver = Schema::getConnection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            DB::statement(
+                'CREATE TRIGGER user_groups_instance_org_xor_insert
+                 BEFORE INSERT ON user_groups
+                 FOR EACH ROW
+                 WHEN NEW.is_instance = 1 AND NEW.organisation_id IS NOT NULL
+                 BEGIN
+                     SELECT RAISE(ABORT, \'is_instance requires null organisation_id\');
+                 END',
+            );
+            DB::statement(
+                'CREATE TRIGGER user_groups_instance_org_xor_update
+                 BEFORE UPDATE ON user_groups
+                 FOR EACH ROW
+                 WHEN NEW.is_instance = 1 AND NEW.organisation_id IS NOT NULL
+                 BEGIN
+                     SELECT RAISE(ABORT, \'is_instance requires null organisation_id\');
+                 END',
+            );
+
+            return;
+        }
+
+        $expression = in_array($driver, ['mysql', 'mariadb'], true)
+            ? '(is_instance = 0 OR organisation_id IS NULL)'
+            : '(is_instance = false OR organisation_id IS NULL)';
+
+        DB::statement(
+            "ALTER TABLE user_groups ADD CONSTRAINT user_groups_instance_org_xor CHECK {$expression}",
+        );
     }
 }

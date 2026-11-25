@@ -1,0 +1,171 @@
+# Reusable Laravel/PHP compatibility matrix for every qiick Composer package.
+# Source of truth: standards/package-matrix.json. Docs: docs/package-matrix.md.
+#
+# Two variants (input `variant`, default `auto`):
+# - `full` on push, schedule and manual runs: the whole matrix, the server
+#   databases, mutation on every class;
+# - `pr` on pull requests, from the files the PR changes: the highest
+#   PHP / Laravel cell always, the lowest only when composer.json or src/
+#   changes, the databases only for database code, mutation only on the
+#   changed classes; a docs-only PR runs nothing. Every job keeps its name and
+#   reports, so required checks never wait: skip the steps, not the job.
+#
+# In a package:
+#
+#   jobs:
+#     package-matrix:
+#       uses: qiick-io/app-ui/.github/workflows/package-matrix.yml@<sha> # vX.Y.Z
+#       with:
+#         app-ui-ref: <same commit SHA as the uses ref>
+#         exclude-php-versions: '["8.3"]' # laravel-audit only
+#     tests:
+#       name: PHP ${{ matrix.php }} Laravel ${{ matrix.laravel }} ${{ matrix.dependency-version }}
+#       needs: package-matrix
+#       strategy:
+#         fail-fast: false
+#         matrix: ${{ fromJSON(needs.package-matrix.outputs.matrix) }}
+#       steps:
+#         - if: ${{ !matrix.skip }}
+#           … # every step
+#     databases:
+#       needs: package-matrix
+#       strategy:
+#         fail-fast: false
+#         matrix:
+#           database: ${{ fromJSON(needs.package-matrix.outputs.databases) }}
+#       steps:
+#         - if: needs.package-matrix.outputs.run-databases == 'true'
+#           … # every step
+#
+# Required check names (once the package opts in with "package": true): the
+# standards drift job (`app-ui-drift / standards`) fails when the package's CI
+# does not consume these outputs.
+name: package matrix
+
+on:
+  workflow_call:
+    inputs:
+      app-ui-ref:
+        description: Commit SHA or release tag in qiick-io/app-ui used to load the matrix
+        required: true
+        type: string
+      exclude-php-versions:
+        description: JSON array of unsupported PHP versions to remove for this package
+        required: false
+        default: '[]'
+        type: string
+      variant:
+        description: auto (pr on pull_request, full otherwise), pr or full
+        required: false
+        default: auto
+        type: string
+    outputs:
+      variant:
+        description: The variant that ran, pr or full
+        value: ${{ jobs.export.outputs.variant }}
+      docs-only:
+        description: "'true' when a pull request changes only docs: lint, PHPStan and the other non-matrix jobs skip their steps"
+        value: ${{ jobs.export.outputs.docs-only }}
+      run-databases:
+        description: "'true' when the database jobs run their steps (always on full)"
+        value: ${{ jobs.export.outputs.run-databases }}
+      mutate-scope:
+        description: all (full) or changed (pr)
+        value: ${{ jobs.export.outputs.mutate-scope }}
+      mutate-classes:
+        description: JSON array of the src/ files a pull request changed (empty on full)
+        value: ${{ jobs.export.outputs.mutate-classes }}
+      matrix:
+        description: >-
+          GitHub Actions matrix object (php × laravel × dependency-version,
+          Testbench includes, package PHP exclusions) as a JSON string
+        value: ${{ jobs.export.outputs.matrix }}
+      databases:
+        description: >-
+          Service-container database list (PostgreSQL 17, MySQL 8.4, MariaDB 11.4
+          with pinned image digests); SQLite is covered by the package test matrix
+        value: ${{ jobs.export.outputs.databases }}
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      variant: ${{ steps.read.outputs.variant }}
+      matrix: ${{ steps.read.outputs.matrix }}
+      databases: ${{ steps.read.outputs.databases }}
+      docs-only: ${{ steps.read.outputs.docs-only }}
+      run-databases: ${{ steps.read.outputs.run-databases }}
+      mutate-scope: ${{ steps.read.outputs.mutate-scope }}
+      mutate-classes: ${{ steps.read.outputs.mutate-classes }}
+    steps:
+      - name: Resolve the variant
+        id: variant
+        env:
+          REQUESTED_VARIANT: ${{ inputs.variant }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          variant="$REQUESTED_VARIANT"
+
+          if [ "$variant" = auto ]; then
+            if [ "$EVENT_NAME" = pull_request ]; then variant=pr; else variant=full; fi
+          fi
+
+          case "$variant" in
+            pr | full) ;;
+            *) echo "::error::variant must be auto, pr or full"; exit 1 ;;
+          esac
+
+          echo "variant=$variant" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: qiick-io/app-ui
+          ref: ${{ inputs.app-ui-ref }}
+          sparse-checkout: |
+            standards/package-matrix.json
+            scripts/export-package-matrix.mjs
+          sparse-checkout-cone-mode: false
+
+      # After app-ui: a checkout into the workspace root cleans it.
+      - name: Check out the package to diff the pull request
+        if: steps.variant.outputs.variant == 'pr'
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          path: package
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: List the files the pull request changes
+        id: changes
+        if: steps.variant.outputs.variant == 'pr'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          {
+            echo 'files<<CHANGED_FILES_END'
+            git -C package diff --name-only --diff-filter=ACMRD "$BASE_SHA...$HEAD_SHA"
+            echo 'CHANGED_FILES_END'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Export the shared matrix and database list
+        id: read
+        env:
+          EXCLUDE_PHP_VERSIONS: ${{ inputs.exclude-php-versions }}
+          VARIANT: ${{ steps.variant.outputs.variant }}
+          CHANGED_FILES: ${{ steps.changes.outputs.files }}
+        run: |
+          set -euo pipefail
+
+          if [ ! -f standards/package-matrix.json ]; then
+            echo "::error::standards/package-matrix.json is missing from app-ui-ref"
+            exit 1
+          fi
+
+          node scripts/export-package-matrix.mjs >> "$GITHUB_OUTPUT"
