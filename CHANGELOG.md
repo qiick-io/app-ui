@@ -12,6 +12,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 - Standards: every foreign key is served by an index (fleet convention F8): its columns lead an index, unique index or primary key of its table. Conformance C76 checks it in products on the migrated database (`SchemaInspector::foreignKeysWithoutIndex()`); packages, whose test suites exclude the app-scoped conformance suite, get a repo-owned `tests/Feature/ForeignKeyIndexTest.php` that runs the same code under the package matrix (SQLite, MySQL, MariaDB, PostgreSQL), and F8 fails a package with foreign keys and no such test. The harness proves C76 on SQLite, PostgreSQL, MySQL and MariaDB (MariaDB added to the harness CI matrix); its green fixture gained the three indexes it lacked.
 
+### Fixed
+
+- Conformance C3: the fixture user is created with the factory of `conformance.userModel`, or by a new `fixtureUser` hook when the model has none, instead of a raw minimal `users` row that failed on products with extra NOT NULL columns (excubia's `first_name`). The harness proves all three paths on PostgreSQL, MySQL and MariaDB.
+
 ## [0.14.0] - 2026-11-25
 
 ### Added

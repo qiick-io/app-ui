@@ -1179,6 +1179,48 @@ describe('engine-dependent probes', function (): void {
         expect(true)->toBeTrue();
     });
 
+    it('C3 creates its fixture user through the product factory, the fixtureUser hook, or fails with advice', function (): void {
+        if (! in_array(Schema::getConnection()->getDriverName(), ['pgsql', 'mysql', 'mariadb'], true)) {
+            $this->markTestSkipped('C3 requires PostgreSQL or MySQL.');
+        }
+
+        $runnerWith = static fn (array $config, array $callables = []): ConformanceRunner => new ConformanceRunner(
+            harnessBasePath(),
+            new ConformanceHooks($config, $callables),
+            new SchemaInspector(),
+        );
+        $migrateWithFirstName = static function (): void {
+            GreenSchema::migrate();
+            // excubia: an extra NOT NULL column the raw minimal insert cannot fill.
+            Schema::table('users', function (Blueprint $table): void {
+                $table->string('first_name');
+            });
+        };
+
+        $migrateWithFirstName();
+        expect(fn () => $runnerWith(['userModel' => 'App\\Models\\User'])->run(catalogById()['C3']))
+            ->toThrow(RuntimeException::class, 'fixtureUser hook');
+
+        $migrateWithFirstName();
+        // Green only because the factory fills first_name (the raw insert above failed).
+        $runnerWith(['userModel' => \Qiick\ConformanceHarness\FixtureUser::class])->run(catalogById()['C3']);
+
+        $migrateWithFirstName();
+        $wasHookCalled = false;
+        $runnerWith(['userModel' => 'App\\Models\\User'], [
+            'fixtureUser' => static function () use (&$wasHookCalled): int {
+                $wasHookCalled = true;
+
+                return (int) Schema::getConnection()->table('users')->insertGetId([
+                    'public_id' => (string) \Illuminate\Support\Str::uuid(),
+                    'email' => 'hook@example.test',
+                    'first_name' => 'Grace',
+                ]);
+            },
+        ])->run(catalogById()['C3']);
+        expect($wasHookCalled)->toBeTrue();
+    });
+
     it('C15 goes green when duplicate instance settings are rejected', function (): void {
         if (! in_array(Schema::getConnection()->getDriverName(), ['pgsql', 'mysql', 'mariadb'], true)) {
             $this->markTestSkipped('C15 requires PostgreSQL or MySQL.');
