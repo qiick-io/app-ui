@@ -17,7 +17,7 @@ One answer per topic for every qiick package and product (decision of 2026-11-24
 - **F12 Package files:** `docs/public-api.md` (with its test and the deprecation policy), `docs/security-checklist.md` mapped to tests, `docs/decisions/YYYY-MM-DD-<slug>.md`, `UPGRADING.md` per version, `CHANGELOG.md` with compare links, `docs/dependencies.md`.
 - **F13 Release order:** a package is released after the packages it depends on; a `1.x` (pre-releases included) never depends on a `0.x`, and a stable release never on a pre-release.
 - **F18 Products** share one structure: `docs/beta-readiness.md` (the fleet checklist), `<app>:install` and `<app>:upgrade`, SQLite by default in `.env.example`, tests pinned to an in-memory database, and the package adoption table.
-- **F15–F17** (repository settings, labels and project, agent rules) are in the repository rules.
+- **F15–F17** (repository settings, labels and project, agent rules) are in the repository rules, **F19–F23** (security policy, secrets, expand / contract, backup, signed tags) in the security and data safety rules.
 
 With a `conventions` object in `qiick-standards.json`, `app-ui-drift / standards` runs the static checks of these rules; an exception is a `conventions.divergences` entry with `reason`, `decision` and `review_by`.
 

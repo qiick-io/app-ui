@@ -2,7 +2,7 @@
 /**
  * Compares the GitHub settings of qiick repos with the fleet standard
  * (`standards/repo-settings.json`, rules in `standards/rules/repository.md`,
- * conventions F15 and F16). Reads through `gh api` as the logged-in account;
+ * conventions F15, F16 and F19). Reads through `gh api` as the logged-in account;
  * changes nothing unless `--fix-labels` is given, which creates or updates the
  * fleet labels (never deletes a repo's own).
  *
@@ -29,6 +29,7 @@ const ORGANISATION = 'qiick-io';
  *     requiredChecksExceptions: Record<string, string>,
  *     rulesets: string[],
  *     actions: Record<string, unknown>,
+ *     privateVulnerabilityReporting: boolean,
  *     labels: LabelDefinition[],
  * }} RepoSettingsStandard
  * @typedef {{
@@ -38,6 +39,7 @@ const ORGANISATION = 'qiick-io';
  *     protections: Record<string, Record<string, any> | null>,
  *     rulesetNames: string[],
  *     actions: Record<string, unknown> | null,
+ *     isPrivateVulnerabilityReportingEnabled: boolean | null,
  *     labels: LabelDefinition[],
  *     projectTitles: string[],
  * }} RepoState
@@ -156,6 +158,17 @@ export function findSettingsViolations(state, standard) {
         }
     }
 
+    // F19: SECURITY.md sends reporters there; a private repo takes no outside reports.
+    if (
+        !state.isPrivate &&
+        state.isPrivateVulnerabilityReportingEnabled !==
+            standard.privateVulnerabilityReporting
+    ) {
+        violations.push(
+            `F19 private vulnerability reporting is ${state.isPrivateVulnerabilityReportingEnabled ? 'on' : 'off'}, expected ${standard.privateVulnerabilityReporting ? 'on' : 'off'}.`,
+        );
+    }
+
     const labelsByName = new Map(
         state.labels.map((label) => [label.name, label]),
     );
@@ -232,6 +245,9 @@ function fetchRepoState(repoName, standard) {
             (ruleset) => ruleset.name,
         ),
         actions: ghApi([`${repoPath}/actions/permissions`]),
+        isPrivateVulnerabilityReportingEnabled:
+            ghApi([`${repoPath}/private-vulnerability-reporting`])?.enabled ??
+            null,
         labels: ghApi(['--paginate', `${repoPath}/labels?per_page=100`]) ?? [],
         projectTitles:
             projects?.data?.repository?.projectsV2?.nodes?.map(

@@ -34,6 +34,7 @@ function conformingState(name = 'laravel-demo') {
         },
         rulesetNames: [...standard.rulesets],
         actions: { ...standard.actions },
+        isPrivateVulnerabilityReportingEnabled: true,
         labels: structuredClone(standard.labels),
         projectTitles: ['laravel-demo'],
     };
@@ -52,6 +53,7 @@ test('each difference is reported with its convention id', () => {
     state.rulesetNames = [];
     state.labels = state.labels.filter((label) => label.name !== 'schema');
     state.projectTitles = [];
+    state.isPrivateVulnerabilityReportingEnabled = false;
 
     const violations = findSettingsViolations(state, standard).join('\n');
 
@@ -71,6 +73,10 @@ test('each difference is reported with its convention id', () => {
     );
     assert.match(violations, /F16 label `schema` is missing/);
     assert.match(violations, /F16 no GitHub project/);
+    assert.match(
+        violations,
+        /F19 private vulnerability reporting is off, expected on/,
+    );
 });
 
 test('app-ui needs only identical required checks, not the shared names', () => {
@@ -91,9 +97,14 @@ test('an unprotected private repo is reported as convention only', () => {
 
     state.isPrivate = true;
     state.protections = { develop: null, main: null };
+    state.isPrivateVulnerabilityReportingEnabled = null;
 
     assert.match(
         findSettingsViolations(state, standard).join('\n'),
         /private repo on the free plan/,
+    );
+    assert.doesNotMatch(
+        findSettingsViolations(state, standard).join('\n'),
+        /F19/,
     );
 });

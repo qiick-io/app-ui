@@ -9,7 +9,8 @@
 # fold add/alter into create_ before 1.0). The check prints that and exits 0,
 # ignoring origin/main, pre-release tags and any `database/migrations/.frozen`.
 #
-# With a stable tag: a migration that exists on `main`, on the latest *stable*
+# With a stable tag, every migration added since it follows expand / contract
+# (F21, check-expand-contract.mjs), and a migration that exists on `main`, on the latest *stable*
 # `v*` tag or in the optional freeze baseline `database/migrations/.frozen` must
 # stay byte for byte as it is there: never edited, renamed or deleted. A schema
 # change is a new migration.
@@ -76,6 +77,20 @@ fi
 
 compare_with_ref "$STABLE_TAG"
 
+# Expand / contract (F21): a migration added since the stable tag never breaks
+# the previous release's code without saying which release stopped using it.
+printf '==> Expand / contract since %s\n' "$STABLE_TAG"
+new_migrations=()
+
+for path in "$DIR"/*.php; do
+    [ -f "$path" ] || continue
+    git cat-file -e "$STABLE_TAG:$path" 2>/dev/null || new_migrations+=("$path")
+done
+
+if [ "${#new_migrations[@]}" -gt 0 ]; then
+    node "$(dirname "${BASH_SOURCE[0]}")/check-expand-contract.mjs" "$STABLE_TAG" "${new_migrations[@]}" || errors=$((errors + 1))
+fi
+
 printf '==> Freeze baseline %s\n' "$BASELINE"
 
 [ -f "$BASELINE" ] || printf 'No %s: only main and the latest stable tag are compared.\n' "$BASELINE"
@@ -102,7 +117,7 @@ if [ -f "$BASELINE" ]; then
 fi
 
 if [ "$errors" -gt 0 ]; then
-    printf '\n%d frozen migration(s) touched. Released migrations are forward-only: revert the change and add a new migration (qiick standards, "Contracts: never break them").\n' "$errors" >&2
+    printf '\n%d problem(s). Released migrations are forward-only: revert the change and add a new migration (qiick standards, "Contracts: never break them"); a new migration that drops, renames or changes a column follows expand / contract (rules/operations.md, F21).\n' "$errors" >&2
     exit 1
 fi
 

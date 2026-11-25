@@ -30,9 +30,9 @@ const standardsRoot = path.join(
     '..',
 );
 
-/** Every convention id the decision numbers, automated or not. */
+/** Every convention id the decisions number, automated or not (F19–F23: `rules/operations.md`). */
 export const CONVENTION_IDS = Array.from(
-    { length: 18 },
+    { length: 23 },
     (_unused, index) => `F${index + 1}`,
 );
 
@@ -75,6 +75,14 @@ const NON_STANDARD_LOG_KEYS = {
     publicid: 'public_id',
     uuid: 'public_id',
 };
+/** `.env.example` variables that hold a secret (F20). */
+const SECRET_VARIABLE =
+    /^([A-Z][A-Z0-9_]*(?:KEY|SECRET|TOKEN|PASSWORD|DSN)(?:_ID)?)=/gm;
+/** A call of the reusable signed tag check (F23). */
+const SIGNED_TAG_WORKFLOW =
+    /uses:\s*qiick-io\/app-ui\/\.github\/workflows\/signed-tag\.yml@/;
+/** Days between two restore drills once a product has a stable release (F22). */
+const RESTORE_DRILL_INTERVAL_DAYS = 92;
 const SNAKE_CASE = /^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -90,6 +98,7 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
  *     migrationFiles: { path: string, text: string }[],
  *     configFiles: { path: string, text: string }[],
  *     scheduleFiles: { path: string, text: string }[],
+ *     today?: string,
  * }} RepoSnapshot
  */
 
@@ -192,17 +201,19 @@ export function readRepo(targetRoot, config) {
 }
 
 /**
- * The text between the parenthesis at `openIndex` and its partner.
+ * The text between the bracket at `openIndex` (`(` or `{`) and its partner.
  * @param {string} text
- * @param {number} openIndex - Index of `(`
+ * @param {number} openIndex - Index of `(` or `{`
  */
 function balancedArguments(text, openIndex) {
+    const opening = text[openIndex];
+    const closing = opening === '{' ? '}' : ')';
     let depth = 0;
 
     for (let index = openIndex; index < text.length; index++) {
-        if (text[index] === '(') {
+        if (text[index] === opening) {
             depth++;
-        } else if (text[index] === ')') {
+        } else if (text[index] === closing) {
             depth--;
 
             if (depth === 0) {
@@ -669,6 +680,37 @@ export const CONVENTION_CHECKS = [
         appliesTo: ['app'],
         run: (repo) => findProductStructureViolations(repo),
     },
+    {
+        id: 'F19',
+        title: 'a security policy',
+        appliesTo: ['package', 'app'],
+        run: (repo) => findSecurityPolicyViolations(repo.root),
+    },
+    {
+        id: 'F20',
+        title: 'a secrets runbook that lists every secret',
+        appliesTo: ['app'],
+        run: (repo) => findSecretsRunbookViolations(repo.root),
+    },
+    {
+        id: 'F22',
+        title: 'a backup runbook and a recent restore drill',
+        appliesTo: ['app'],
+        run: (repo) => findBackupRunbookViolations(repo.root, repo.today),
+    },
+    {
+        id: 'F23',
+        title: 'release tags verified as signed',
+        appliesTo: ['package', 'app'],
+        run: (repo) =>
+            listFiles(path.join(repo.root, '.github/workflows'), /\.ya?ml$/)
+                .map((workflowPath) => fs.readFileSync(workflowPath, 'utf8'))
+                .some((workflowText) => SIGNED_TAG_WORKFLOW.test(workflowText))
+                ? []
+                : [
+                      'no workflow calls qiick-io/app-ui/.github/workflows/signed-tag.yml on a tag push (job id `signed-tag`).',
+                  ],
+    },
 ];
 
 /**
@@ -1026,6 +1068,197 @@ export function findErrorCodeViolations(repo, registry) {
 }
 
 /**
+ * F19: `SECURITY.md` at the root or in `.github/`, with the supported
+ * versions and the private reporting channel.
+ * @param {string} root
+ */
+export function findSecurityPolicyViolations(root) {
+    const policy =
+        readText(root, 'SECURITY.md') ?? readText(root, '.github/SECURITY.md');
+
+    if (policy === null) {
+        return ['SECURITY.md is missing (standards/templates/SECURITY.md).'];
+    }
+
+    return [
+        [/^#+ Supported versions$/im, 'no "Supported versions" section'],
+        [
+            /^#+ Reporting a vulnerability$/im,
+            'no "Reporting a vulnerability" section',
+        ],
+        [
+            /private vulnerability reporting/i,
+            'does not send reporters to GitHub private vulnerability reporting',
+        ],
+    ]
+        .filter(([pattern]) => !pattern.test(policy))
+        .map(([, problem]) => `SECURITY.md: ${problem}.`);
+}
+
+/**
+ * F20: `docs/runbooks/secrets.md` names every secret of `.env.example` and
+ * says what to do after a leak.
+ * @param {string} root
+ */
+export function findSecretsRunbookViolations(root) {
+    const runbook = readText(root, 'docs/runbooks/secrets.md');
+
+    if (runbook === null) {
+        return [
+            'docs/runbooks/secrets.md is missing (standards/templates/runbook-secrets.md).',
+        ];
+    }
+
+    const secretNames = [
+        ...(readText(root, '.env.example') ?? '').matchAll(SECRET_VARIABLE),
+    ].map((match) => match[1]);
+    const unlisted = [...new Set(secretNames)].filter(
+        (name) => !new RegExp(`\\b${name}\\b`).test(runbook),
+    );
+
+    return [
+        ...unlisted.map(
+            (name) =>
+                `docs/runbooks/secrets.md does not list ${name} from .env.example.`,
+        ),
+        ...(/^#+ After a leak$/im.test(runbook)
+            ? []
+            : ['docs/runbooks/secrets.md has no "After a leak" section.']),
+    ];
+}
+
+/**
+ * F22: `docs/runbooks/backup.md` with what is backed up, the restore steps
+ * and the drills; once the CHANGELOG has a stable release, a drill in the
+ * last 92 days.
+ * @param {string} root
+ * @param {string} today - YYYY-MM-DD
+ */
+export function findBackupRunbookViolations(root, today) {
+    const runbook = readText(root, 'docs/runbooks/backup.md');
+
+    if (runbook === null) {
+        return [
+            'docs/runbooks/backup.md is missing (standards/templates/runbook-backup.md).',
+        ];
+    }
+
+    const errors = ['What is backed up', 'Restore', 'Restore drills']
+        .filter((section) => !new RegExp(`^#+ ${section}$`, 'im').test(runbook))
+        .map(
+            (section) => `docs/runbooks/backup.md has no "${section}" section.`,
+        );
+    const drillsSection = runbook.split(/^#+ Restore drills$/im)[1] ?? '';
+    const newestDrill = [
+        ...drillsSection.matchAll(/^\|\s*(\d{4}-\d{2}-\d{2})\s*\|/gm),
+    ]
+        .map((match) => match[1])
+        .sort()
+        .pop();
+    const hasStableRelease = releasedVersions(
+        readText(root, 'CHANGELOG.md') ?? '',
+    ).some((version) => /^\d+\.\d+\.\d+$/.test(version));
+
+    if (!hasStableRelease) {
+        return errors;
+    }
+
+    if (newestDrill === undefined) {
+        return [
+            ...errors,
+            'docs/runbooks/backup.md records no restore drill, and the product has a stable release.',
+        ];
+    }
+
+    const daysSinceDrill =
+        (Date.parse(today) - Date.parse(newestDrill)) / 86_400_000;
+
+    return daysSinceDrill > RESTORE_DRILL_INTERVAL_DAYS
+        ? [
+              ...errors,
+              `the newest restore drill (${newestDrill}) is more than ${RESTORE_DRILL_INTERVAL_DAYS} days old: restore a backup and record the drill in docs/runbooks/backup.md.`,
+          ]
+        : errors;
+}
+
+/** Schema operations in `up()` that break the previous release's code (F21). */
+const BREAKING_SCHEMA_OPERATION =
+    /->(?:dropColumns?|renameColumn|dropTimestamps|dropSoftDeletes|dropMorphs|dropForeignIdFor|dropConstrainedForeignId|change)\s*\(|Schema::(?:drop|dropIfExists|rename|dropColumns)\s*\(/;
+
+/**
+ * F21: migrations added since the latest stable tag whose `up()` drops,
+ * renames or changes a column or table carry `// contract: … unused since
+ * vX.Y.Z` (a released tag no newer than `latestStableTag`) or
+ * `// expand-safe: <why>`, or `// contract: never released`.
+ * @param {{ path: string, text: string }[]} newMigrations - Raw PHP, comments kept
+ * @param {string[]} releasedTags - Every `v*` tag of the repo
+ * @param {string} latestStableTag
+ * @returns {string[]}
+ */
+export function findExpandContractViolations(
+    newMigrations,
+    releasedTags,
+    latestStableTag,
+) {
+    const tagOrder = (tag) =>
+        tag
+            .replace(/^v/, '')
+            .split(/[.-]/)
+            .slice(0, 3)
+            .map((part) => Number.parseInt(part, 10));
+    const isNotNewer = (tag) => {
+        const [first, second] = [tagOrder(tag), tagOrder(latestStableTag)];
+        const difference = first.findIndex(
+            (part, index) => part !== second[index],
+        );
+
+        return difference === -1 || first[difference] < second[difference];
+    };
+
+    return newMigrations.flatMap((migration) => {
+        const upMatch = /function\s+up\s*\([^)]*\)[^{]*\{/.exec(migration.text);
+
+        if (upMatch === null) {
+            return [];
+        }
+
+        const upBody = balancedArguments(
+            migration.text,
+            upMatch.index + upMatch[0].length - 1,
+        );
+
+        if (!BREAKING_SCHEMA_OPERATION.test(stripPhpComments(upBody))) {
+            return [];
+        }
+
+        if (
+            /\/\/\s*(?:expand-safe:\s*\S|contract:\s*never released)/.test(
+                upBody,
+            )
+        ) {
+            return [];
+        }
+
+        const contractTag =
+            /\/\/\s*contract:.*\bunused since (v\d+\.\d+\.\d+\S*)/.exec(
+                upBody,
+            )?.[1];
+
+        if (contractTag === undefined) {
+            return [
+                `${migration.path}: up() drops, renames or changes a column or table without \`// contract: <column> unused since vX.Y.Z\` or \`// expand-safe: <why>\` (expand / contract, F21).`,
+            ];
+        }
+
+        return releasedTags.includes(contractTag) && isNotNewer(contractTag)
+            ? []
+            : [
+                  `${migration.path}: \`contract:\` names ${contractTag}, which is not a released tag up to ${latestStableTag}: the code that stopped using the column must already be released.`,
+              ];
+    });
+}
+
+/**
  * Divergence errors: unknown id, missing metadata, past review date.
  * @param {Record<string, unknown>} divergences
  * @param {string} today - YYYY-MM-DD
@@ -1086,7 +1319,7 @@ export function findConventionViolations(
     }
 
     const divergences = config.conventions.divergences ?? {};
-    const repo = readRepo(targetRoot, config);
+    const repo = { ...readRepo(targetRoot, config), today };
     /** @type {string[]} */
     const errors = findDivergenceErrors(divergences, today).map(
         (error) => `conventions: ${error}`,
