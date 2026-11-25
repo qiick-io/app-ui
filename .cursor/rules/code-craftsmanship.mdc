@@ -166,6 +166,8 @@ Machines enforce these in CI; keep them green, and never silence one to get gree
 
 **GitHub bills per job, rounded up to the whole minute.** A job that runs for ten seconds costs a minute, so a seven-job workflow costs seven minutes however fast it is, and a workflow that runs twice per commit costs twice that. Measured on externa-core, one push cost ~95 billable minutes. Every rule below follows from that one fact: minutes are paid, and CI that burns them gets switched off, which blocks every repo behind it.
 
+- **A pull request runs only what its change can break; the full matrix runs after the merge and every night** (decision of 2026-11-24: the org's Actions queue was the bottleneck). Packages take the plan from `package-matrix.yml` (`pr` / `full` variants in `standards/package-matrix.json`): a docs-only PR runs nothing; otherwise lint, PHPStan and Pest on the highest PHP / Laravel cell with SQLite; the lowest cell only when `composer.json` or `src/` changes; the server databases only for database code; mutation only on the changed classes. Push to `develop`, the nightly `cron` and manual runs take the full matrix and mutation on every class, and a failed nightly run opens an issue. Jobs skip their steps, never themselves, so the required checks (the highest cell, the database jobs, `Mutation (per-class ≥95%)`, lint, PHPStan) report on every PR. Details: [`docs/package-matrix.md`](../../docs/package-matrix.md).
+
 - **`push` only on `main` and `develop`.** Everything else arrives through `pull_request`. Without the branch filter, pushing to a branch that already has an open pull request runs every workflow twice on the same commit: twice the bill, no extra signal.
 
     ```yaml

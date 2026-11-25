@@ -6,7 +6,12 @@
  * A package must:
  * 1. call `qiick-io/app-ui/.github/workflows/package-matrix.yml@…`;
  * 2. expand `fromJSON(needs.<job>.outputs.matrix)`;
- * 3. expand `fromJSON(needs.<job>.outputs.databases)`.
+ * 3. expand `fromJSON(needs.<job>.outputs.databases)`;
+ * 4. honour the pull request variant: skip a cell's steps on `matrix.skip`,
+ *    the database steps unless `outputs.run-databases`, and mutate only
+ *    `outputs.mutate-classes` (when it has a mutation job);
+ * 5. cancel superseded runs, run the full variant nightly, and open an issue
+ *    when the nightly run fails (`gh issue create`).
  *
  * Used by `scripts/sync-standards.mjs --check` when `qiick-standards.json`
  * has `"package": true`. Docs: docs/package-matrix.md.
@@ -87,6 +92,43 @@ export function findPackageMatrixViolations(targetRoot) {
         errors.push(
             'package matrix: no job expands fromJSON(needs.<job>.outputs.databases).',
         );
+    }
+
+    /** Signals of the reduced pull request run (docs/package-matrix.md, "Pull requests"). */
+    const pullRequestSignals = [
+        [
+            /matrix\.skip\b/,
+            'no test step honours `matrix.skip` (a docs-only pull request runs nothing).',
+        ],
+        [
+            /outputs\.run-databases\b/,
+            'the database jobs ignore `needs.<job>.outputs.run-databases`.',
+        ],
+        [
+            /cancel-in-progress:/,
+            'no `concurrency` with `cancel-in-progress` (a superseded pull request run keeps paying).',
+        ],
+        [
+            /schedule:\s*\n\s*-\s*cron:/,
+            'no nightly `schedule: - cron:` run of the full variant.',
+        ],
+        [
+            /gh issue create/,
+            'a failed nightly run opens no issue (`gh issue create`).',
+        ],
+    ];
+
+    if (/mutat/i.test(workflowsText)) {
+        pullRequestSignals.push([
+            /outputs\.mutate-classes\b/,
+            'the mutation job ignores `needs.<job>.outputs.mutate-classes` (a pull request mutates only the classes it changed).',
+        ]);
+    }
+
+    for (const [signal, message] of pullRequestSignals) {
+        if (!signal.test(workflowsText)) {
+            errors.push(`package matrix: ${message}`);
+        }
     }
 
     return errors;

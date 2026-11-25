@@ -11,7 +11,8 @@
  * steps skipped (`matrix.skip`, `run-databases`) instead of not at all.
  *
  * Environment: EXCLUDE_PHP_VERSIONS (JSON array), VARIANT (`pr` | `full`),
- * CHANGED_FILES (newline-separated paths, `pr` only).
+ * CHANGED_FILES (newline-separated paths, `pr` only), PACKAGE_ROOT (the package
+ * checkout, default `package`).
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -159,6 +160,11 @@ if (process.argv[1] === scriptPath) {
               runDatabases: true,
               mutateClasses: [],
           };
+    // A class the PR deleted has nothing left to mutate; the package checkout is in PACKAGE_ROOT.
+    const packageRoot = process.env.PACKAGE_ROOT ?? 'package';
+    const mutateClasses = plan.mutateClasses.filter((file) =>
+        fs.existsSync(path.join(packageRoot, file)),
+    );
 
     process.stdout.write(`variant=${isPullRequest ? 'pr' : 'full'}\n`);
     process.stdout.write(`matrix=${JSON.stringify(plan.matrix)}\n`);
@@ -168,7 +174,5 @@ if (process.argv[1] === scriptPath) {
     process.stdout.write(`run-databases=${plan.runDatabases}\n`);
     // `all` on the full variant; the changed classes (possibly none) on a PR.
     process.stdout.write(`mutate-scope=${isPullRequest ? 'changed' : 'all'}\n`);
-    process.stdout.write(
-        `mutate-classes=${JSON.stringify(plan.mutateClasses)}\n`,
-    );
+    process.stdout.write(`mutate-classes=${JSON.stringify(mutateClasses)}\n`);
 }

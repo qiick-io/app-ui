@@ -9,7 +9,10 @@ import {
     findPackageMatrixViolations,
     listWorkflowFiles,
 } from '../standards/scripts/check-package-matrix.mjs';
-import { createPackageMatrixOutputs } from './export-package-matrix.mjs';
+import {
+    createPackageMatrixOutputs,
+    createPullRequestPlan,
+} from './export-package-matrix.mjs';
 
 const packageMatrixJsonPath = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
@@ -37,6 +40,13 @@ function makePackageFixture(workflows = {}) {
 
 const consumingWorkflow = `
 name: CI
+concurrency:
+  group: ci-\${{ github.event_name }}-\${{ github.ref }}
+  cancel-in-progress: \${{ github.event_name == 'pull_request' }}
+on:
+  pull_request:
+  schedule:
+    - cron: '17 3 * * *'
 jobs:
   package-matrix:
     uses: qiick-io/app-ui/.github/workflows/package-matrix.yml@v0.13.0
@@ -47,11 +57,22 @@ jobs:
     needs: package-matrix
     strategy:
       matrix: \${{ fromJSON(needs.package-matrix.outputs.matrix) }}
+    steps:
+      - if: \${{ !matrix.skip }}
+        run: vendor/bin/pest
   databases:
     needs: package-matrix
     strategy:
       matrix:
         database: \${{ fromJSON(needs.package-matrix.outputs.databases) }}
+    steps:
+      - if: needs.package-matrix.outputs.run-databases == 'true'
+        run: vendor/bin/pest
+  nightly-failure:
+    if: failure() && github.event_name == 'schedule'
+    needs: [tests, databases]
+    steps:
+      - run: gh issue create --title "Nightly CI failed"
 `;
 
 test('canonical package-matrix.json has the supported axes and database engines', () => {
@@ -158,10 +179,14 @@ jobs:
     });
     const errors = findPackageMatrixViolations(root);
 
-    assert.equal(errors.length, 3);
+    assert.equal(errors.length, 8);
     assert.match(errors[0], /package-matrix\.yml/);
     assert.match(errors[1], /outputs\.matrix/);
     assert.match(errors[2], /outputs\.databases/);
+    assert.match(
+        errors.slice(3).join('\n'),
+        /matrix\.skip[\s\S]*run-databases[\s\S]*cancel-in-progress[\s\S]*cron[\s\S]*gh issue create/,
+    );
 });
 
 test('missing workflows directory fails', () => {
@@ -185,9 +210,80 @@ jobs:
         php: ['8.3']
 `,
     });
-    const errors = findPackageMatrixViolations(root);
+    const errors = findPackageMatrixViolations(root).slice(0, 2);
 
-    assert.equal(errors.length, 2);
     assert.match(errors[0], /outputs\.matrix/);
     assert.match(errors[1], /outputs\.databases/);
+});
+
+test('a mutation job must mutate only the classes a pull request changed', () => {
+    const root = makePackageFixture({
+        'ci.yml':
+            consumingWorkflow +
+            '  mutation:\n    name: Mutation (per-class ≥95%)\n',
+    });
+
+    assert.match(
+        findPackageMatrixViolations(root).join('\n'),
+        /outputs\.mutate-classes/,
+    );
+});
+
+test('the pull request variant runs only what the changed files can break', () => {
+    const document = JSON.parse(fs.readFileSync(packageMatrixJsonPath, 'utf8'));
+    const fullMatrix = createPackageMatrixOutputs(document, []).matrix;
+    const plan = (files) => createPullRequestPlan(document, fullMatrix, files);
+    const cellNames = (files) =>
+        plan(files).matrix.include.map(
+            (cell) =>
+                `PHP ${cell.php} Laravel ${cell.laravel} ${cell['dependency-version']}${cell.skip ? ' (skipped)' : ''}`,
+        );
+
+    // Docs only: the highest cell still reports, with its steps skipped.
+    assert.deepEqual(cellNames(['README.md', 'docs/install.md']), [
+        'PHP 8.5 Laravel 13 stable (skipped)',
+    ]);
+    assert.equal(plan(['docs/install.md']).runDatabases, false);
+    assert.deepEqual(plan(['docs/install.md']).mutateClasses, []);
+
+    // Tests only: the highest cell, no lowest, no databases.
+    assert.deepEqual(cellNames(['tests/Unit/TokenTest.php']), [
+        'PHP 8.5 Laravel 13 stable',
+    ]);
+    assert.equal(plan(['tests/Unit/TokenTest.php']).runDatabases, false);
+
+    // Code: both ends; the databases only for database code.
+    assert.deepEqual(cellNames(['src/Token.php']), [
+        'PHP 8.5 Laravel 13 stable',
+        'PHP 8.3 Laravel 12 lowest',
+    ]);
+    assert.equal(plan(['src/Token.php']).runDatabases, false);
+    assert.equal(
+        plan(['src/Stores/DatabaseTokenStore.php']).runDatabases,
+        true,
+    );
+    assert.equal(plan(['database/migrations/x.php']).runDatabases, true);
+    assert.deepEqual(cellNames(['composer.json']).length, 2);
+
+    // Mutation: changed src/ classes only, never the fakes.
+    assert.deepEqual(
+        plan(['src/Token.php', 'src/Testing/FakeTokenStore.php', 'tests/A.php'])
+            .mutateClasses,
+        ['src/Token.php'],
+    );
+});
+
+test('the lowest cell follows a package PHP exclusion', () => {
+    const document = JSON.parse(fs.readFileSync(packageMatrixJsonPath, 'utf8'));
+    const fullMatrix = createPackageMatrixOutputs(document, ['8.3']).matrix;
+    const lowest = createPullRequestPlan(document, fullMatrix, ['src/A.php'])
+        .matrix.include[1];
+
+    assert.deepEqual(lowest, {
+        php: '8.4',
+        laravel: '12',
+        'dependency-version': 'lowest',
+        testbench: '10',
+        skip: false,
+    });
 });
