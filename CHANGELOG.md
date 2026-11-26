@@ -14,6 +14,8 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Fixed
 
+- `drawer`: a drawer opened from a plain button (controlled `open`, no `DrawerTrigger`) returns focus to that button when it closes, instead of `<body>` (WCAG 2.4.3; from excubia-app#422).
+- `grouped-view-tabs`: a sub-menu trigger that names the open view ("Issues: Findings") shows that view's count and severity, not the group's sum (from excubia-app#426).
 - `secret-once-dialog` drops its own copies of the secret (the acknowledged and copied state) as soon as the app clears it, so the same value shown again starts unconfirmed; without the Clipboard API, Copy selects and copies from the secret field itself. `clipboard`: `copyTextToClipboard()` takes an optional source field for the `execCommand` fallback, needed inside a focus trap where a textarea appended to the body cannot take focus (#256).
 - `api-key-scope-picker` uses a labelled native select for No access, Read and Write, and explains when access is unavailable. Re-add the picker to pull its `@qiick/native-select` dependency and merge the new `apiKeys.scopes` locale keys (#266).
 
