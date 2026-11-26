@@ -75,17 +75,18 @@ export function ApiKeyScopePicker({
                         'write',
                     ];
                     const hasActions = availableActions.length > 0;
-                    const description = hasActions
-                        ? scopeResource.description
-                        : t('apiKeys.scopes.unavailable');
                     const level = apiKeyAccessLevel(
                         value,
                         scopeResource.resource,
                     );
-                    const selectedLevel =
-                        level === 'none' || availableActions.includes(level)
-                            ? level
-                            : 'none';
+                    // Keep a stale level visible until the user changes or clears it.
+                    const isLevelUnavailable =
+                        level !== 'none' && !availableActions.includes(level);
+                    const description = isLevelUnavailable
+                        ? t('apiKeys.scopes.unavailableLevel')
+                        : hasActions
+                          ? scopeResource.description
+                          : t('apiKeys.scopes.unavailable');
 
                     return (
                         <Field
@@ -105,11 +106,14 @@ export function ApiKeyScopePicker({
                             </FieldContent>
                             <NativeSelect
                                 id={selectId}
-                                value={selectedLevel}
+                                value={level}
                                 aria-describedby={
                                     description ? descriptionId : undefined
                                 }
-                                disabled={isDisabled || !hasActions}
+                                disabled={
+                                    isDisabled ||
+                                    (!hasActions && !isLevelUnavailable)
+                                }
                                 onChange={(event) =>
                                     onChange(
                                         withApiKeyAccessLevel(
@@ -124,6 +128,11 @@ export function ApiKeyScopePicker({
                                 <NativeSelectOption value="none">
                                     {t('apiKeys.scopes.none')}
                                 </NativeSelectOption>
+                                {isLevelUnavailable ? (
+                                    <NativeSelectOption value={level} disabled>
+                                        {t(`apiKeys.scopes.${level}`)}
+                                    </NativeSelectOption>
+                                ) : null}
                                 {availableActions.map((action) => (
                                     <NativeSelectOption
                                         key={action}

@@ -101,7 +101,7 @@ it('shows why access is unavailable when no action is grantable', () => {
                     availableActions: [],
                 },
             ]}
-            value={['mcp:read']}
+            value={[]}
             onChange={vi.fn()}
         />,
     );
@@ -112,4 +112,32 @@ it('shows why access is unavailable when no action is grantable', () => {
     });
     expect(permission).toHaveProperty('value', 'none');
     expect(permission).toHaveProperty('disabled', true);
+});
+
+it('shows a stale permission until the user clears it', () => {
+    const onChange = vi.fn();
+    render(
+        <ApiKeyScopePicker
+            resources={[
+                {
+                    resource: 'mcp',
+                    label: 'AI clients (MCP server)',
+                    availableActions: [],
+                },
+            ]}
+            value={['mcp:read']}
+            onChange={onChange}
+        />,
+    );
+
+    const permission = screen.getByRole('combobox', {
+        name: 'AI clients (MCP server)',
+        description: en.apiKeys.scopes.unavailableLevel,
+    });
+    expect(permission).toHaveProperty('value', 'read');
+    expect(
+        within(permission).getByRole('option', { name: 'Read' }),
+    ).toHaveProperty('disabled', true);
+    fireEvent.change(permission, { target: { value: 'none' } });
+    expect(onChange).toHaveBeenCalledWith([]);
 });
