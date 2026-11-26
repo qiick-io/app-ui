@@ -278,13 +278,78 @@ test('the erasure CI step fails when the step or its job tolerates failure, or t
         );
     };
 
-    assert.match(ciErrors(tolerantStepRepo).join(), /sets continue-on-error/);
-    assert.match(
-        ciErrors(tolerantJobRepo).join(),
-        /job that sets continue-on-error/,
-    );
+    assert.match(ciErrors(tolerantStepRepo).join(), /tolerate its failure/);
+    assert.match(ciErrors(tolerantJobRepo).join(), /tolerate its failure/);
     assert.match(ciErrors(unrequiredJobRepo).join(), /requiredChecks/);
     assert.deepEqual(ciErrors(requiredJobRepo), []);
+});
+
+test('the erasure CI step rejects every way to tolerate its failure, and partial required-check names', () => {
+    const step = '      - run: node tests/Erasure/run.mjs';
+    /** @type {Record<string, [string, string[]?]>} loophole => [jobs, requiredChecks] */
+    const loopholes = {
+        'a shell operator': [
+            '  tests:\n    steps:\n      - run: node tests/Erasure/run.mjs || true',
+        ],
+        'set +e in a multi-line run': [
+            '  tests:\n    steps:\n      - run: |\n          set +e\n          node tests/Erasure/run.mjs',
+        ],
+        'a comment that splits the step from continue-on-error': [
+            `  tests:\n    steps:\n${step}\n      # Temporary waiver.\n        continue-on-error: true`,
+        ],
+        'a quoted continue-on-error key': [
+            `  tests:\n    steps:\n${step}\n        "continue-on-error": true`,
+        ],
+        'continue-on-error as an expression': [
+            `  tests:\n    steps:\n${step}\n        continue-on-error: \${{ github.event_name == 'pull_request' }}`,
+        ],
+        'an if: that can skip the step': [
+            `  tests:\n    steps:\n${step}\n        if: \${{ false }}`,
+        ],
+        'a shell that ignores the exit code': [
+            `  tests:\n    steps:\n${step}\n        shell: bash --noprofile --norc {0} || true`,
+        ],
+        'set +e in a job default shell': [
+            `  tests:\n    defaults:\n      run:\n        shell: bash -c "set +e; {0}"\n    steps:\n${step}`,
+        ],
+        'a required check that only contains the job name': [
+            `  tests:\n    steps:\n${step}`,
+            ['tests-extra'],
+        ],
+    };
+    const ciErrors = (jobs, requiredChecks) => {
+        const root = makeRepo(
+            {
+                php: true,
+                package: true,
+                erasure: true,
+                ...(requiredChecks ? { requiredChecks } : {}),
+            },
+            {
+                '.github/workflows/tests.yml': `on: pull_request\njobs:\n${jobs}\n`,
+            },
+        );
+        syncStandards(root, { isCheck: false });
+
+        return syncStandards(root, { isCheck: true }).filter((message) =>
+            message.includes('tests/Erasure/run.mjs'),
+        );
+    };
+
+    for (const [loophole, [jobs, requiredChecks]] of Object.entries(
+        loopholes,
+    )) {
+        assert.notDeepEqual(ciErrors(jobs, requiredChecks), [], loophole);
+    }
+
+    assert.deepEqual(ciErrors(`  tests:\n    steps:\n${step}`, ['tests']), []);
+    assert.deepEqual(
+        ciErrors(
+            `  tests:\n    name: Tests PHP \${{ matrix.php }}\n    steps:\n${step}`,
+            ['Tests PHP 8.5'],
+        ),
+        [],
+    );
 });
 
 test('erasure:true without php:true is an error, not a silent no-op', () => {

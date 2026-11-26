@@ -1030,7 +1030,11 @@ export function findErasureCiViolations(targetRoot, config) {
 }
 
 /**
- * Why one `run.mjs` step cannot fail CI, or null when it can.
+ * Why one `run.mjs` step might not fail CI, or null when it must. Strict on
+ * purpose: anything in the job that could tolerate a failure (a
+ * `continue-on-error` that is not `false`, in any quoting, a `set +e`, a
+ * custom shell, an `if:` on the step) rejects it, and the job's name must be
+ * one of `requiredChecks` exactly (a `${{ }}` in it matches one matrix value).
  *
  * @param {string[]} lines the workflow's lines
  * @param {number} stepIndex the step's `- run:` line
@@ -1039,53 +1043,76 @@ export function findErasureCiViolations(targetRoot, config) {
  */
 function findErasureStepProblem(lines, stepIndex, config) {
     const indentOf = (line) => line.search(/\S/);
-    const isTolerated = (line) =>
-        /^\s*continue-on-error:/.test(line) &&
-        !/continue-on-error:\s*false\s*$/.test(line);
+    const isCode = (line) => line.trim() !== '' && !line.trim().startsWith('#');
+    const keyPattern = (key) =>
+        new RegExp(`^\\s*(?:-\\s+)?["']?${key}["']?\\s*:\\s*(.*)$`);
     const stepIndent = indentOf(lines[stepIndex]);
+    const stepEnd = lines.findIndex(
+        (line, index) =>
+            index > stepIndex && isCode(line) && indentOf(line) <= stepIndent,
+    );
+    const stepLines = lines.slice(
+        stepIndex + 1,
+        stepEnd === -1 ? lines.length : stepEnd,
+    );
 
-    for (const line of lines.slice(stepIndex + 1)) {
-        if (line.trim() !== '' && indentOf(line) <= stepIndent) {
-            break;
-        }
-
-        if (isTolerated(line)) {
-            return 'sets continue-on-error';
-        }
+    if (stepLines.some((line) => isCode(line) && keyPattern('if').test(line))) {
+        return 'has an if: that can skip it';
     }
 
     const jobStart = lines
         .slice(0, stepIndex)
-        .findLastIndex((line) => /^ {2}[\w-]+:\s*$/.test(line));
-    const nextJobOffset = lines
-        .slice(jobStart + 1)
-        .findIndex((line) => /^ {0,2}\S/.test(line));
+        .findLastIndex((line) => /^ {2}["']?[\w-]+["']?:\s*$/.test(line));
+    const jobEnd = lines.findIndex(
+        (line, index) =>
+            index > jobStart && /^ {0,2}\S/.test(line) && isCode(line),
+    );
     const jobLines = lines.slice(
         jobStart,
-        nextJobOffset === -1 ? lines.length : jobStart + 1 + nextJobOffset,
+        jobEnd === -1 ? lines.length : jobEnd,
     );
+    // The workflow-level `defaults:` can set the shell of every job.
+    const scannedLines = [
+        ...jobLines,
+        ...lines.filter(
+            (line) => /^\s+shell\s*:/.test(line) && indentOf(line) < 4,
+        ),
+    ].filter(isCode);
+    const isTolerated = scannedLines.some((line) => {
+        const continueOnError = line.match(keyPattern('continue-on-error'));
 
-    if (jobLines.some((line) => indentOf(line) === 4 && isTolerated(line))) {
-        return 'is in a job that sets continue-on-error';
+        return (
+            (continueOnError !== null &&
+                !/^["']?false["']?\s*(?:#.*)?$/.test(continueOnError[1])) ||
+            /set\s+\+e/.test(line) ||
+            keyPattern('shell').test(line)
+        );
+    });
+
+    if (isTolerated) {
+        return 'is in a job that can tolerate its failure (continue-on-error, set +e or a custom shell)';
     }
 
     const requiredChecks = config.requiredChecks ?? [];
-    const jobKey = jobLines[0]?.trim().replace(/:$/, '') ?? '';
+    const jobKey = jobLines[0]?.trim().replace(/["':]/g, '') ?? '';
     const jobName =
         jobLines
-            .find((line) => /^ {4}name:/.test(line))
-            ?.replace(/^ {4}name:\s*/, '')
-            .split('${{')[0]
-            .replace(/['"]/g, '')
-            .trim() ?? '';
-    const isRequired = requiredChecks.some(
-        (check) =>
-            check.includes(jobKey) ||
-            (jobName !== '' && check.includes(jobName)),
+            .find((line) => /^ {4}name\s*:/.test(line))
+            ?.replace(/^ {4}name\s*:\s*/, '')
+            .replace(/^["']|["']\s*$/g, '')
+            .trim() || jobKey;
+    const jobNamePattern = new RegExp(
+        `^${jobName
+            .split(/\$\{\{.*?\}\}/)
+            .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .join('[^/]+')}$`,
     );
 
-    if (requiredChecks.length > 0 && !isRequired) {
-        return `is in the job ${jobKey}, which no entry of requiredChecks in qiick-standards.json names`;
+    if (
+        requiredChecks.length > 0 &&
+        !requiredChecks.some((check) => jobNamePattern.test(check))
+    ) {
+        return `is in the job "${jobName}", which is not one of requiredChecks in qiick-standards.json`;
     }
 
     return null;
