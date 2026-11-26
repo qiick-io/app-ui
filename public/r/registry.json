@@ -747,6 +747,20 @@
             ]
         },
         {
+            "name": "role-picker",
+            "type": "registry:component",
+            "title": "Role picker",
+            "description": "RolePicker: the roles of a user as a labelled checkbox list. Super-admin is exclusive (picking it clears and disables the other roles); other roles combine, and a helper text says their permissions add up. Human labels, with a title-cased fallback for a raw role name.",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": ["@qiick/checkbox", "@qiick/field"],
+            "files": [
+                {
+                    "path": "src/components/admin/role-picker.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
             "name": "removable-badge",
             "type": "registry:component",
             "title": "Removable badge",

@@ -9,6 +9,13 @@
 - `spatie/laravel-permission`. Permissions are cases of a string-backed `PermissionEnum`: `CanShowUsers = 'can-show-users'`, `CanCreateUsers`, `CanEditUsers`, `CanDeleteUsers`, `CanRestoreUsers`, `CanForceDeleteUsers`, `CanShowActivityLogs`, `CanUseAi` (`can-<verb>-<resource>`, kebab-case values).
 - Roles are a `RoleEnum`: `super-admin` (everything, through `Gate::before`), `admin` (every permission it was granted), `reader`, plus product roles. A system role that nobody can be assigned (externa's `public`) says so in the enum.
 
+## Role model (decision 2026-11-26)
+
+- **Super-admin is exclusive.** A user holds super-admin alone, or any combination of the other roles. The registry's `RolePicker` (`@qiick/role-picker`) disables the other roles once super-admin is picked and clears them; the server rejects the combination with laravel-access `Qiick\Access\Rules\ExclusiveSuperAdminRoleRule` on the role field of the user requests (`['array', new ExclusiveSuperAdminRoleRule]`).
+- **Permissions add up** across the selected roles; the picker says so in its helper text.
+- **Human labels:** the picker shows the role's label from `RoleEnum` (`label()`), never the raw slug; without a label it title-cases the name.
+- **API keys of a super-admin** reach every permission of `PermissionEnum` that the key's scopes cover (laravel-access `isWithinOwnerCeiling()`), never the `Gate::before` bypass. A product computes the grantable scopes with `isWithinOwnerCeiling()`, not `hasAssignedPermission()`, so a super-admin alone can create a key.
+
 ## Initial super admin
 
 The account seeded for a local checkout comes from `.env`, not from a hard-coded password. The same four keys apply in every product:
