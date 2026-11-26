@@ -97,6 +97,7 @@ final class ConformanceRunner
             'C74' => $this->c74AccessActivityUuids(),
             'C75' => $this->c75AccessGroupMigrations(),
             'C76' => $this->c76ForeignKeysIndexed(),
+            'C77' => $this->c77AccessPolicySuperAdminAuthority(),
             default => throw new \RuntimeException("No runner for {$check['id']}."),
         };
     }
@@ -872,6 +873,16 @@ final class ConformanceRunner
         }
 
         $this->hooks->requireProved('assertAccessActivityUuidOnly');
+    }
+
+    /** Verify the product policy's grant with and without the scoped credential. */
+    private function c77AccessPolicySuperAdminAuthority(): void
+    {
+        if (! $this->hooks->boolean('usesLaravelAccess', false)) {
+            return;
+        }
+
+        $this->hooks->assertPolicySuperAdminDecisions();
     }
 
     /**

@@ -281,4 +281,10 @@ return [
         'description' => 'Every foreign key is served by an index: its columns lead an index, unique index or primary key of its table (every engine; PostgreSQL and SQLite never add one themselves)',
         'decision' => 'knowledge/decisions/2026-11-24-fleet-conventions',
     ],
+    [
+        'id' => 'C77',
+        'tag' => 'behaviour',
+        'description' => 'The same super-admin user passes a product policy exception as a web actor and is denied as a scoped API actor (usesLaravelAccess)',
+        'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
+    ],
 ];

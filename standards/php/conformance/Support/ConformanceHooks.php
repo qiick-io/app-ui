@@ -36,7 +36,7 @@ final class ConformanceHooks
 {
     /**
      * @param ConformanceConfig $config
-     * @param array<string, callable(ConformanceBehaviourProbe|null): void> $callables
+     * @param array<string, callable> $callables
      */
     public function __construct(
         private readonly array $config,
@@ -61,7 +61,7 @@ final class ConformanceHooks
         $callables = [];
 
         if (is_file($hooksFile)) {
-            /** @var array<string, callable(): void> $loaded */
+            /** @var array<string, callable> $loaded */
             $loaded = require $hooksFile;
             $callables = is_array($loaded) ? $loaded : [];
         }
@@ -145,6 +145,28 @@ final class ConformanceHooks
             throw new \RuntimeException(
                 "Conformance hook \"{$key}\" did not prove the behaviour (call \$probe->pass() after exercising it).",
             );
+        }
+    }
+
+    /** Check both outcomes so a policy that denies everyone cannot pass the probe. */
+    public function assertPolicySuperAdminDecisions(): void
+    {
+        $callback = $this->callables['policySuperAdminDecisions'] ?? null;
+
+        if (! is_callable($callback)) {
+            throw new \RuntimeException(
+                'Conformance hook "policySuperAdminDecisions" is required. Implement it in tests/Conformance/hooks.php or declare a divergence for this check.',
+            );
+        }
+
+        $decisions = $callback();
+
+        if (! is_array($decisions) || ($decisions['web'] ?? null) !== true) {
+            throw new \RuntimeException('The policy probe must report a super-admin web actor allowed by the product policy.');
+        }
+
+        if (($decisions['api'] ?? null) !== false) {
+            throw new \RuntimeException('The product policy granted super-admin authority to an API actor or the policy probe did not report a denial.');
         }
     }
 
