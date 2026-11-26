@@ -581,3 +581,28 @@ test('F24-F30: what a product without them is told to fix', () => {
         assert.match(errors, expected);
     }
 });
+
+test('F8 asks a package with foreign keys for a test of their indexes', () => {
+    const withForeignKey = {
+        ...conformingPackage,
+        'database/migrations/2026_11_25_000000_create_demo_grants_table.php':
+            "<?php\nSchema::create('demo_grants', function (Blueprint $table) {\n    $table->id();\n    $table->foreignId('demo_token_id')->index()->constrained('demo_tokens');\n});",
+    };
+
+    assert.match(
+        findConventionViolations(makeRepo(withForeignKey), adopted, {
+            today: '2026-11-25',
+        }).join('\n'),
+        /F8 .*no test calls SchemaInspector::foreignKeysWithoutIndex\(\)/,
+    );
+    assert.deepEqual(
+        brokenIds(
+            makeRepo({
+                ...withForeignKey,
+                'tests/Feature/ForeignKeyIndexTest.php':
+                    '<?php it("indexes", fn () => expect((new SchemaInspector())->foreignKeysWithoutIndex())->toBe([]));',
+            }),
+        ),
+        [],
+    );
+});

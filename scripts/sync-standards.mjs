@@ -440,6 +440,15 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
         },
     ];
 
+    // F8 / C76: packages prove foreign key indexes in their own suite (the conformance suite is app-scoped).
+    if (config.package && config.php) {
+        outputs.push({
+            path: 'tests/Feature/ForeignKeyIndexTest.php',
+            kind: 'template',
+            content: readSource('php/ForeignKeyIndexTest.php'),
+        });
+    }
+
     if (config.package) {
         outputs.push({
             path: 'docs/dependencies.md',

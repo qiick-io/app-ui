@@ -484,58 +484,60 @@ export const CONVENTION_CHECKS = [
         title: 'standard columns and stable index names',
         appliesTo: ['package', 'app'],
         run: (repo) =>
-            repo.migrationFiles.flatMap((file) => {
-                /** @type {string[]} */
-                const errors = [];
+            repo.migrationFiles
+                .flatMap((file) => {
+                    /** @type {string[]} */
+                    const errors = [];
 
-                for (const indexName of generatedIndexNames(file.text)) {
-                    if (indexName.length > MAX_INDEX_NAME_LENGTH) {
+                    for (const indexName of generatedIndexNames(file.text)) {
+                        if (indexName.length > MAX_INDEX_NAME_LENGTH) {
+                            errors.push(
+                                `${file.path}: generated index name \`${indexName}\` is ${indexName.length} characters; PostgreSQL truncates past ${MAX_INDEX_NAME_LENGTH} and MySQL refuses past 64: pass an explicit name.`,
+                            );
+                        }
+                    }
+
+                    for (const match of file.text.matchAll(
+                        /->(\w+)\(\s*['"](organi[sz]ation_id|public_id)['"]/g,
+                    )) {
+                        const [, method, column] = match;
+
+                        if (column === 'organization_id') {
+                            errors.push(
+                                `${file.path}: \`organization_id\` is spelled \`organisation_id\` in the fleet.`,
+                            );
+                        } else if (
+                            !/^(?:uuid|foreignUuid|dropColumn|index|unique)$/.test(
+                                method,
+                            )
+                        ) {
+                            errors.push(
+                                `${file.path}: \`${column}\` is ->${method}(), not a UUID column.`,
+                            );
+                        }
+                    }
+
+                    for (const match of file.text.matchAll(
+                        /->(timestamp|timestampTz)\(\s*['"](\w+)['"]/g,
+                    )) {
+                        if (FUTURE_INSTANT_COLUMN.test(match[2])) {
+                            errors.push(
+                                `${file.path}: \`${match[2]}\` holds a future instant: ->dateTime(), not ->${match[1]}().`,
+                            );
+                        }
+                    }
+
+                    for (const match of file.text.matchAll(
+                        /->jsonb?\(\s*['"](meta|meta_data|extra|extras|extra_data)['"]/g,
+                    )) {
                         errors.push(
-                            `${file.path}: generated index name \`${indexName}\` is ${indexName.length} characters; PostgreSQL truncates past ${MAX_INDEX_NAME_LENGTH} and MySQL refuses past 64: pass an explicit name.`,
+                            `${file.path}: the free-form JSON column is \`metadata\`, not \`${match[1]}\`.`,
                         );
                     }
-                }
 
-                for (const match of file.text.matchAll(
-                    /->(\w+)\(\s*['"](organi[sz]ation_id|public_id)['"]/g,
-                )) {
-                    const [, method, column] = match;
-
-                    if (column === 'organization_id') {
-                        errors.push(
-                            `${file.path}: \`organization_id\` is spelled \`organisation_id\` in the fleet.`,
-                        );
-                    } else if (
-                        !/^(?:uuid|foreignUuid|dropColumn|index|unique)$/.test(
-                            method,
-                        )
-                    ) {
-                        errors.push(
-                            `${file.path}: \`${column}\` is ->${method}(), not a UUID column.`,
-                        );
-                    }
-                }
-
-                for (const match of file.text.matchAll(
-                    /->(timestamp|timestampTz)\(\s*['"](\w+)['"]/g,
-                )) {
-                    if (FUTURE_INSTANT_COLUMN.test(match[2])) {
-                        errors.push(
-                            `${file.path}: \`${match[2]}\` holds a future instant: ->dateTime(), not ->${match[1]}().`,
-                        );
-                    }
-                }
-
-                for (const match of file.text.matchAll(
-                    /->jsonb?\(\s*['"](meta|meta_data|extra|extras|extra_data)['"]/g,
-                )) {
-                    errors.push(
-                        `${file.path}: the free-form JSON column is \`metadata\`, not \`${match[1]}\`.`,
-                    );
-                }
-
-                return errors;
-            }),
+                    return errors;
+                })
+                .concat(findForeignKeyIndexTestViolations(repo)),
     },
     {
         id: 'F9',
@@ -1575,6 +1577,30 @@ export function findUiQualityViolations(repo) {
             ? []
             : ['tests/Browser/ has no browser test.']),
     ];
+}
+
+/**
+ * F8: a package whose migrations declare foreign keys proves on the migrated
+ * database that each one has an index (`SchemaInspector::foreignKeysWithoutIndex()`,
+ * the code conformance C76 runs in products), so the package matrix checks it
+ * on SQLite, MySQL, MariaDB and PostgreSQL.
+ * @param {RepoSnapshot} repo
+ */
+export function findForeignKeyIndexTestViolations(repo) {
+    const hasForeignKeys = repo.migrationFiles.some((file) =>
+        /->(?:constrained|foreign|references)\(/.test(file.text),
+    );
+    const hasForeignKeyIndexTest = repo.testFiles.some(
+        (file) =>
+            !file.path.startsWith('tests/Conformance/') &&
+            file.text.includes('foreignKeysWithoutIndex'),
+    );
+
+    return repo.kind === 'package' && hasForeignKeys && !hasForeignKeyIndexTest
+        ? [
+              'the migrations declare foreign keys but no test calls SchemaInspector::foreignKeysWithoutIndex() (standards/php/ForeignKeyIndexTest.php).',
+          ]
+        : [];
 }
 
 /**
