@@ -281,7 +281,7 @@
     },
     "rolePicker": {
         "legend": "Rollen",
-        "description": "Die Berechtigungen aller gewählten Rollen werden zusammengezählt.",
+        "description": "Die Berechtigungen aller ausgewählten Rollen gelten gemeinsam.",
         "superAdminHint": "Alle Berechtigungen. Kann nicht mit anderen Rollen kombiniert werden."
     }
 }

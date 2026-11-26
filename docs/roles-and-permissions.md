@@ -1,6 +1,6 @@
 # Roles and permissions
 
-**Registry:** none (backend, plus the list and form patterns for the roles screens).
+**Registry:** `@qiick/role-picker` (the user's role field); otherwise backend, plus the list and form patterns for the roles screens.
 
 **Copy from externa-core:** `app/Enums/PermissionEnum.php`, `app/Enums/RoleEnum.php`, `app/Console/Commands/SyncPermissionsCommand.php`, `app/Http/Middleware/EnsureUserHasPermissionMiddleware.php`, `app/Http/Requests/Concerns/AuthorizesWithPermissionTrait.php`, `app/Services/Authorization/EffectivePermissionResolverService.php`, `app/Models/Role.php`, `config/permission.php` (PHP, repo root); `resources/js/hooks/use-can.ts`, `resources/js/lib/permissions.ts`, roles screens `pages/admin/roles/{index,form}.tsx`. Policies: excubia-app `app/Policies/*Policy.php`.
 

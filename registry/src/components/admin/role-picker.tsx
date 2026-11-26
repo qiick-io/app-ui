@@ -20,6 +20,7 @@ export type RolePickerRole = {
 };
 
 export type RolePickerProps = {
+    /** The roles the user may assign plus the ones already selected, so every selected role can be seen and cleared. */
     roles: readonly RolePickerRole[];
     /** Selected role names. */
     value: readonly string[];
@@ -29,6 +30,8 @@ export type RolePickerProps = {
     /** The server's validation message for the roles. */
     error?: string;
     isDisabled?: boolean;
+    /** Marks the legend as a required field. */
+    isRequired?: boolean;
 };
 
 /**
@@ -58,6 +61,7 @@ export function RolePicker({
     superAdminRoleName = 'super-admin',
     error,
     isDisabled = false,
+    isRequired = false,
 }: RolePickerProps) {
     const { t } = useTranslation();
     const pickerId = useId();
@@ -87,13 +91,15 @@ export function RolePicker({
         >
             <FieldLegend variant="label" className="mb-0">
                 {t('rolePicker.legend')}
+                {isRequired ? ' *' : null}
             </FieldLegend>
             <FieldDescription id={descriptionId}>
                 {t('rolePicker.description')}
             </FieldDescription>
             <div className="flex flex-col gap-3">
                 {roles.map((role) => {
-                    const checkboxId = `${pickerId}-${role.name}`;
+                    // Prefixed so a role named `description` or `error` cannot reuse the group's ids.
+                    const checkboxId = `${pickerId}-role-${role.name}`;
                     const roleDescriptionId = `${checkboxId}-description`;
                     const isSuperAdminRole = role.name === superAdminRoleName;
                     const isSelected = value.includes(role.name);
@@ -103,8 +109,11 @@ export function RolePicker({
                         isSuperAdminSelected &&
                         !isSuperAdminRole &&
                         !isSelected;
+                    // The exclusivity hint always shows: picking the role clears the others.
                     const description = isSuperAdminRole
-                        ? (role.description ?? t('rolePicker.superAdminHint'))
+                        ? [role.description, t('rolePicker.superAdminHint')]
+                              .filter(Boolean)
+                              .join(' ')
                         : role.description;
 
                     return (

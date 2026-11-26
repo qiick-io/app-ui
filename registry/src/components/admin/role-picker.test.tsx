@@ -85,6 +85,24 @@ describe('RolePicker', () => {
         expect(selectedValue()).toBe('["super-admin"]');
     });
 
+    it('keeps the exclusivity hint next to an app description', () => {
+        render(
+            <RolePicker
+                roles={[{ name: 'super-admin', description: 'Owner.' }]}
+                value={[]}
+                onChange={() => {}}
+                isRequired
+            />,
+        );
+
+        expect(
+            screen.getByText(
+                'Owner. Every permission. Cannot be combined with other roles.',
+            ),
+        ).toBeTruthy();
+        expect(screen.getByText(/Roles \*/)).toBeTruthy();
+    });
+
     it('labels a role without a label from its name', () => {
         expect(humanizeRoleName('super-admin')).toBe('Super admin');
         expect(humanizeRoleName('org_owner')).toBe('Org owner');
