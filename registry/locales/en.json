@@ -226,6 +226,7 @@
             "legend": "Permissions",
             "description": "What the key can do with each resource. Write includes read.",
             "none": "No access",
+            "unavailable": "Your account cannot grant access to this resource.",
             "read": "Read",
             "write": "Write"
         },
