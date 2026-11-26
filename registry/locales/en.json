@@ -8,6 +8,7 @@
         "moreActions": "More actions",
         "notifications": "Notifications",
         "notificationsUnread": "Notifications, {{count}} unread",
+        "openTableRow": "Press Enter or Space to open this row.",
         "saving": "Saving",
         "scrollableTable": "Scrollable table",
         "search": "Search",

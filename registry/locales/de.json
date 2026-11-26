@@ -8,6 +8,7 @@
         "moreActions": "Weitere Aktionen",
         "notifications": "Benachrichtigungen",
         "notificationsUnread": "Benachrichtigungen, {{count}} ungelesen",
+        "openTableRow": "Drücken Sie die Eingabe- oder Leertaste, um diese Zeile zu öffnen.",
         "saving": "Wird gespeichert",
         "scrollableTable": "Scrollbare Tabelle",
         "search": "Suchen",

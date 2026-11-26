@@ -25,6 +25,7 @@ In an app with many records, people know what they want by name: a project, a us
 ## Keyboard and accessibility
 
 - cmdk gives the listbox semantics: arrows move, Enter selects, Escape closes, and the active row is announced (`aria-activedescendant`). The dialog has a screen-reader title and description, and traps focus.
+- The search field takes its accessible name from cmdk's hidden label. The palette passes its translated search prompt to `CommandDialog` as `inputLabel`, so the name stays available after typing.
 - Search status ("Searching…", "Search failed") is a `role="status"` line. A failed search keeps the local results.
 - Inside a rich-text editor, ⌘K stays with the editor (insert link). The palette opens from the trigger there.
 
