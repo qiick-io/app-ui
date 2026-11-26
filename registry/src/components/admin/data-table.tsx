@@ -11,8 +11,13 @@ import type {
     SortingState,
 } from '@tanstack/react-table';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { Fragment } from 'react';
-import type { HTMLAttributes, KeyboardEvent, ReactNode } from 'react';
+import { Fragment, useId, useRef } from 'react';
+import type {
+    FocusEvent,
+    HTMLAttributes,
+    KeyboardEvent,
+    ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     TablePaginationFooter,
@@ -108,6 +113,8 @@ export function DataTable<TData>({
     className,
 }: DataTableProps<TData>) {
     const { t } = useTranslation();
+    const rowActionHintId = useId();
+    const spacePressedRow = useRef<HTMLTableRowElement>(null);
     const sorting: SortingState = sort
         ? [{ id: sort.id, desc: sort.direction === 'desc' }]
         : [];
@@ -160,6 +167,13 @@ export function DataTable<TData>({
                 ) : undefined
             }
         >
+            {onRowClick ? (
+                <span id={rowActionHintId} hidden>
+                    {t('a11y.openTableRow', {
+                        defaultValue: 'Press Enter or Space to open this row.',
+                    })}
+                </span>
+            ) : null}
             <Table>
                 <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
@@ -201,6 +215,16 @@ export function DataTable<TData>({
                                     : rowProps?.onKeyUp;
                                 handleConsumerKey?.(event);
 
+                                const isSpaceRelease =
+                                    !isKeyDown && event.key === ' ';
+                                const hasSpacePress =
+                                    spacePressedRow.current ===
+                                    event.currentTarget;
+
+                                if (isSpaceRelease && hasSpacePress) {
+                                    spacePressedRow.current = null;
+                                }
+
                                 if (
                                     event.defaultPrevented ||
                                     event.target !== event.currentTarget
@@ -211,11 +235,34 @@ export function DataTable<TData>({
                                 // Stop Space from scrolling on press and activate on release.
                                 if (isKeyDown && event.key === ' ') {
                                     event.preventDefault();
+
+                                    if (!event.repeat) {
+                                        spacePressedRow.current =
+                                            event.currentTarget;
+                                    }
                                 }
 
-                                if (event.key === (isKeyDown ? 'Enter' : ' ')) {
+                                if (
+                                    (isKeyDown &&
+                                        event.key === 'Enter' &&
+                                        !event.repeat) ||
+                                    (isSpaceRelease && hasSpacePress)
+                                ) {
                                     openRow?.();
                                 }
+                            }
+
+                            function handleRowBlur(
+                                event: FocusEvent<HTMLTableRowElement>,
+                            ): void {
+                                if (
+                                    spacePressedRow.current ===
+                                    event.currentTarget
+                                ) {
+                                    spacePressedRow.current = null;
+                                }
+
+                                rowProps?.onBlur?.(event);
                             }
 
                             return (
@@ -231,6 +278,18 @@ export function DataTable<TData>({
                                             openRow ? 'Enter Space' : undefined
                                         }
                                         {...rowProps}
+                                        aria-describedby={
+                                            openRow
+                                                ? [
+                                                      rowProps?.[
+                                                          'aria-describedby'
+                                                      ],
+                                                      rowActionHintId,
+                                                  ]
+                                                      .filter(Boolean)
+                                                      .join(' ')
+                                                : rowProps?.['aria-describedby']
+                                        }
                                         className={cn(
                                             openRow &&
                                                 'cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring',
@@ -246,6 +305,11 @@ export function DataTable<TData>({
                                             openRow
                                                 ? handleRowKey
                                                 : rowProps?.onKeyUp
+                                        }
+                                        onBlur={
+                                            openRow
+                                                ? handleRowBlur
+                                                : rowProps?.onBlur
                                         }
                                     >
                                         {row.getVisibleCells().map((cell) => {
