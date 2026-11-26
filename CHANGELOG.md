@@ -12,6 +12,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 - Conformance C77 checks that a real product policy grants its super-admin exception to a web session and denies it to a scoped API actor for the same user. Products with `usesLaravelAccess` add `policySuperAdminDecisions` to their conformance hooks on their next standards sync. See the [access-package checks](standards/CONFORMANCE.md#access-package-checks-c71c75-c77).
 
+### Changed
+
+- Shell: the sidebar version line is `v<version> · <build>`, with the build ID from `APP_BUILD`, then a build-time `bootstrap/cache/build.json`, else nothing; never `vdev` in production ([shell.md](docs/shell.md)).
+
 ### Fixed
 
 - `secret-once-dialog` drops its own copies of the secret (the acknowledged and copied state) as soon as the app clears it, so the same value shown again starts unconfirmed; without the Clipboard API, Copy selects and copies from the secret field itself. `clipboard`: `copyTextToClipboard()` takes an optional source field for the `execCommand` fallback, needed inside a focus trap where a textarea appended to the body cannot take focus (#256).
