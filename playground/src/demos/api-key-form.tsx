@@ -45,8 +45,16 @@ export default function ApiKeyFormDemo() {
                         errors={errors}
                         resources={[
                             { resource: 'posts', label: 'Posts' },
-                            { resource: 'files', label: 'Files' },
-                            { resource: 'mcp', label: 'MCP' },
+                            {
+                                resource: 'mcp',
+                                label: 'AI clients (MCP server)',
+                                description: 'Tools for AI clients',
+                            },
+                            {
+                                resource: 'audit-logs',
+                                label: 'Audit logs',
+                                availableActions: [],
+                            },
                         ]}
                         onFieldChange={(field, value) =>
                             setValues((current) => ({

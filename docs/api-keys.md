@@ -72,7 +72,7 @@ The items are separate so they fit either place:
 | Item                    | What it is                                                                                                             |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `api-key-form`          | `ApiKeyForm`: name, permissions, then the optional restrictions (expiry, IP allowlist, rate limit). The `<form>` only. |
-| `api-key-scope-picker`  | `ApiKeyScopePicker`: a row per resource with No access / Read / Write. It can only produce the vocabulary above.       |
+| `api-key-scope-picker`  | `ApiKeyScopePicker`: a labelled native select per resource with No access and the available Read / Write choices.      |
 | `api-key-secret-dialog` | `ApiKeySecretDialog`: the show-once secret after create and rotate.                                                    |
 | `api-key-list-row`      | `useApiKeyColumns()` for `DataTable`, `ApiKeyStatusBadge`, `ApiKeyRowActions` (rotate, revoke), `ApiKeyRevokeDialog`.  |
 | `api-key-scopes`        | `lib/api-key-scopes.ts`: the pattern, `apiKeyAccessLevel()`, `withApiKeyAccessLevel()`, `apiKeyStatus()`.              |
@@ -82,6 +82,7 @@ The items are separate so they fit either place:
 - **Page:** the list page in the settings or admin layout ([list-page.md](list-page.md), [settings.md](settings.md)). **Create API key** (`KeyRound` icon) is the primary action, far right in `headerActions`. No keys yet: `PageEmptyState` with the same action.
 - **List:** `DataTable` with `useApiKeyColumns()`: name, key prefix (`exc_live_7fK2pQ9x…`, monospace), permissions, last used ("Never used"), expires ("Never"), status (`success` Active, `warning` Expired, `muted` Revoked), row actions last. Rotate shows on active keys only; a revoked key has no actions.
 - **Create:** a `Dialog` ([forms.md](forms.md): a one-shot result) holding `ApiKeyForm`, Cancel then **Create** bottom right, the submit button outside the form through `form={id}`. On success the dialog closes and `ApiKeySecretDialog` opens with the secret.
+- **Permissions:** pass the actions the current user can grant as `availableActions` and initialize the form with grantable scopes only. A row with no grantable actions shows a disabled **No access** select and explains why. If a selected level becomes unavailable, the row shows that level and lets the user replace or clear it. If the user cannot grant any scopes, the product explains how to get access and disables Create.
 - **Rotate:** the row action posts straight away, without a confirmation: nothing breaks, because the old secret keeps working for the grace window. The secret dialog opens with `reason="rotated"` and `previousSecretValidUntil`.
 - **Revoke:** `ApiKeyRevokeDialog` ([destructive-actions.md](destructive-actions.md)): Cancel / Revoke, no typed confirmation, since the row stays.
 - **Product fields** (an owner picker, a tenancy, a collection list) go in `ApiKeyForm`'s `children`, after the name, and their columns are spliced into the array `useApiKeyColumns()` returns. They are declared divergences (below), not changes to the items.

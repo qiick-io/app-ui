@@ -226,6 +226,8 @@
             "legend": "Berechtigungen",
             "description": "Was der Schlüssel mit jeder Ressource tun darf. Schreiben schließt Lesen ein.",
             "none": "Kein Zugriff",
+            "unavailable": "Mit Ihrem Konto können Sie keinen Zugriff auf diese Ressource gewähren.",
+            "unavailableLevel": "Die gewählte Zugriffsstufe ist nicht verfügbar. Wählen Sie eine andere Stufe.",
             "read": "Lesen",
             "write": "Schreiben"
         },

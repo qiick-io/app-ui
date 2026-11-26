@@ -1967,12 +1967,12 @@
             "name": "api-key-scope-picker",
             "type": "registry:component",
             "title": "API key scope picker",
-            "description": "ApiKeyScopePicker: one row per resource with a No access / Read / Write segmented control (a radio group), producing <resource>:(read|write) scopes only.",
+            "description": "ApiKeyScopePicker: one labelled native select per resource with No access and the grantable Read / Write options, producing <resource>:(read|write) scopes only.",
             "dependencies": ["react-i18next"],
             "registryDependencies": [
                 "@qiick/api-key-scopes",
                 "@qiick/field",
-                "@qiick/toggle-group"
+                "@qiick/native-select"
             ],
             "files": [
                 {

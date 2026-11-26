@@ -226,6 +226,8 @@
             "legend": "Permessi",
             "description": "Cosa può fare la chiave con ogni risorsa. La scrittura include la lettura.",
             "none": "Nessun accesso",
+            "unavailable": "Il tuo account non può concedere l’accesso a questa risorsa.",
+            "unavailableLevel": "Il livello di accesso selezionato non è disponibile. Scegli un altro livello.",
             "read": "Lettura",
             "write": "Scrittura"
         },
