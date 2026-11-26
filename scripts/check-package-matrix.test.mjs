@@ -265,18 +265,20 @@ test('the pull request variant runs only what the changed files can break', () =
                 `PHP ${cell.php} Laravel ${cell.laravel} ${cell['dependency-version']}${cell.skip ? ' (skipped)' : ''}`,
         );
 
-    // Docs only: the highest cell still reports, with its steps skipped.
+    // Docs only: both cells report with their steps skipped.
     assert.deepEqual(cellNames(['README.md', 'docs/install.md']), [
         'PHP 8.5 Laravel 13 stable (skipped)',
+        'PHP 8.3 Laravel 12 lowest (skipped)',
     ]);
     assert.equal(plan(['docs/install.md']).runDatabases, false);
     assert.equal(plan(['docs/install.md']).isDocsOnly, true);
     assert.equal(plan(['docs/install.md', 'src/Token.php']).isDocsOnly, false);
     assert.deepEqual(plan(['docs/install.md']).mutateClasses, []);
 
-    // Tests only: the highest cell, no lowest, no databases.
+    // Tests only: the highest cell runs, and the lowest cell only reports.
     assert.deepEqual(cellNames(['tests/Unit/TokenTest.php']), [
         'PHP 8.5 Laravel 13 stable',
+        'PHP 8.3 Laravel 12 lowest (skipped)',
     ]);
     assert.equal(plan(['tests/Unit/TokenTest.php']).runDatabases, false);
 
@@ -291,7 +293,10 @@ test('the pull request variant runs only what the changed files can break', () =
         true,
     );
     assert.equal(plan(['database/migrations/x.php']).runDatabases, true);
-    assert.deepEqual(cellNames(['composer.json']).length, 2);
+    assert.deepEqual(
+        cellNames(['composer.json']),
+        cellNames(['src/Token.php']),
+    );
 
     // Mutation: changed src/ classes only, never the fakes.
     assert.deepEqual(
@@ -301,7 +306,7 @@ test('the pull request variant runs only what the changed files can break', () =
     );
 });
 
-test('erasure source, tests and workflow changes select the server databases', () => {
+test('erasure, test bootstrap and workflow changes select the server databases', () => {
     const document = JSON.parse(fs.readFileSync(packageMatrixJsonPath, 'utf8'));
     const fullMatrix = createPackageMatrixOutputs(document, []).matrix;
 
@@ -309,6 +314,11 @@ test('erasure source, tests and workflow changes select the server databases', (
         'src/Erasure/ErasePersonAction.php',
         'tests/Erasure/fixture.php',
         'tests/Erasure/run.mjs',
+        'tests/Pest.php',
+        'tests/TestCase.php',
+        'tests/Support/PackageTestCase.php',
+        'TestCase.php',
+        'phpunit.xml',
         '.github/workflows/ci.yml',
         '.github/workflows/erasure.yaml',
     ]) {

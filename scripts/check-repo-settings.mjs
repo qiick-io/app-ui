@@ -17,7 +17,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+    createPackageMatrixOutputs,
+    createPullRequestPlan,
+    readPackageMatrixDocument,
+} from './export-package-matrix.mjs';
+
 const ORGANISATION = 'qiick-io';
+const packageMatrixDocument = readPackageMatrixDocument();
 
 /**
  * @typedef {{ name: string, color: string, description: string }} LabelDefinition
@@ -27,6 +34,7 @@ const ORGANISATION = 'qiick-io';
  *     branchProtection: { strict: boolean, enforceAdmins: boolean, requiredApprovingReviewCount: number, allowForcePushes: boolean, allowDeletions: boolean },
  *     requiredChecks: string[],
  *     requiredChecksExceptions: Record<string, string>,
+ *     packagePhpVersionExclusions: Record<string, string[]>,
  *     rulesets: string[],
  *     actions: Record<string, unknown>,
  *     privateVulnerabilityReporting: boolean,
@@ -78,6 +86,28 @@ export function findSettingsViolations(state, standard) {
 
     /** @type {Record<string, string[]>} */
     const requiredChecksByBranch = {};
+    const excludedPhpVersions = Object.hasOwn(
+        standard.packagePhpVersionExclusions,
+        state.name,
+    )
+        ? standard.packagePhpVersionExclusions[state.name]
+        : [];
+    const { matrix } = createPackageMatrixOutputs(
+        packageMatrixDocument,
+        excludedPhpVersions,
+    );
+    // The plan without code changes still emits every job that can be required.
+    const pullRequestPlan = createPullRequestPlan(
+        packageMatrixDocument,
+        matrix,
+        [],
+    );
+    const pullRequestCellNames = new Set(
+        pullRequestPlan.matrix.include.map(
+            (cell) =>
+                `PHP ${cell.php} Laravel ${cell.laravel} ${cell['dependency-version']}`,
+        ),
+    );
 
     for (const branch of standard.protectedBranches) {
         const protection = state.protections[branch];
@@ -110,13 +140,32 @@ export function findSettingsViolations(state, standard) {
             }
         }
 
-        requiredChecksByBranch[branch] = [
-            ...(protection.required_status_checks?.contexts ?? []),
+        const requiredStatusChecks = protection.required_status_checks;
+        const requiredChecks = [
+            ...new Set([
+                ...(requiredStatusChecks?.contexts ?? []),
+                ...(requiredStatusChecks?.checks ?? []).map(
+                    (check) => check.context,
+                ),
+            ]),
         ].sort();
+
+        requiredChecksByBranch[branch] = requiredChecks;
+
+        for (const check of requiredChecks) {
+            if (
+                /^PHP \d+\.\d+ Laravel \d+ (?:lowest|stable)$/.test(check) &&
+                !pullRequestCellNames.has(check)
+            ) {
+                violations.push(
+                    `F15 ${branch}: required check \`${check}\` is not emitted on every pull request by the package matrix.`,
+                );
+            }
+        }
 
         if (!Object.hasOwn(standard.requiredChecksExceptions, state.name)) {
             for (const check of standard.requiredChecks) {
-                if (!requiredChecksByBranch[branch].includes(check)) {
+                if (!requiredChecks.includes(check)) {
                     violations.push(
                         `F15 ${branch}: required check \`${check}\` is missing.`,
                     );

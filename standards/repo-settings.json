@@ -21,6 +21,9 @@
     "requiredChecksExceptions": {
         "app-ui": "The source of the standards: it checks PR titles with its own `pr-title` job and runs no drift check against itself (rules/release.md)."
     },
+    "packagePhpVersionExclusions": {
+        "laravel-audit": ["8.3"]
+    },
     "rulesets": [
         "main: merge commits only",
         "release tags: created by admins only",
