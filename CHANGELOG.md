@@ -8,6 +8,10 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ## [Unreleased]
 
+### Fixed
+
+- `secret-once-dialog` drops its own copies of the secret (the acknowledged and copied state) as soon as the app clears it, so the same value shown again starts unconfirmed; without the Clipboard API, Copy selects and copies from the secret field itself. `clipboard`: `copyTextToClipboard()` takes an optional source field for the `execCommand` fallback, needed inside a focus trap where a textarea appended to the body cannot take focus (#256).
+
 ## [0.15.0] - 2026-11-26
 
 ### Added
