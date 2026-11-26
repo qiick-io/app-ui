@@ -3,6 +3,7 @@ import type { ComponentType, ReactNode } from 'react';
 import registry from '../../registry/registry.json';
 import bluePreset from '../../registry/src/css/qiick-theme-blue.css?inline';
 import themeSource from '../../registry/src/css/qiick-theme.css?raw';
+import DatePickerDemo from './demos/date-picker';
 import { AssistantScreen } from './screens/assistant';
 import { ChatScreen } from './screens/chat';
 import type { ScreenName } from './screens/demo-shell';
@@ -25,12 +26,13 @@ const NESTED_MODE_CSS = `.light, .dark { ${[
 
 type PresetName = keyof typeof PRESETS;
 
-const SCREENS: Record<ScreenName, ComponentType> = {
+const SCREENS: Record<ScreenName | 'date-picker', ComponentType> = {
     users: UsersScreen,
     settings: SettingsScreen,
     assistant: AssistantScreen,
     chat: ChatScreen,
     files: FilesScreen,
+    'date-picker': DatePickerScreen,
 };
 
 const demoModules = import.meta.glob<{ default: ComponentType }>(
@@ -74,7 +76,7 @@ function useRoute() {
     const parts = hash.replace(/^#\/?/, '').split('/');
 
     return {
-        screen: parts[0] in SCREENS ? (parts[0] as ScreenName) : null,
+        screen: parts[0] in SCREENS ? (parts[0] as keyof typeof SCREENS) : null,
         isDark: parts.includes('dark'),
         preset: (parts.includes('blue') ? 'blue' : 'teal') as PresetName,
         isHighContrast: parts.includes('high-contrast'),
@@ -115,6 +117,15 @@ function HighContrastClass({ isHighContrast }: { isHighContrast: boolean }) {
     }, [isHighContrast]);
 
     return null;
+}
+
+/** Full-page demo so the calendar portal inherits the selected theme. */
+function DatePickerScreen() {
+    return (
+        <main className="p-6">
+            <DatePickerDemo />
+        </main>
+    );
 }
 
 /**

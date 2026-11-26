@@ -697,6 +697,34 @@
             ]
         },
         {
+            "name": "date-picker",
+            "type": "registry:component",
+            "title": "Date and date-time picker",
+            "description": "Optional pattern for typing or picking a Gregorian date or local date-time in the app locale, with inclusive bounds and ISO form values.",
+            "dependencies": [
+                "lucide-react",
+                "react-day-picker",
+                "react-i18next"
+            ],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/calendar",
+                "@qiick/field",
+                "@qiick/input",
+                "@qiick/popover"
+            ],
+            "files": [
+                {
+                    "path": "src/components/admin/date-picker.tsx",
+                    "type": "registry:component"
+                },
+                {
+                    "path": "src/lib/date-picker.ts",
+                    "type": "registry:lib"
+                }
+            ]
+        },
+        {
             "name": "date-range-picker",
             "type": "registry:component",
             "title": "Date range picker",

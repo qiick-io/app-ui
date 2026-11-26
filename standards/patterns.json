@@ -5,6 +5,10 @@
             "title": "Command palette and global search (⌘K)",
             "page": "docs/optional/command-palette.md"
         },
+        "date-picker": {
+            "title": "Date and date-time picker",
+            "page": "docs/optional/date-picker.md"
+        },
         "grouped-tabs": {
             "title": "Grouped view tabs with counts",
             "page": "docs/optional/grouped-tabs.md",
