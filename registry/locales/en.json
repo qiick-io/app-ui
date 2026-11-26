@@ -297,5 +297,10 @@
         "copyFailed": "The secret could not be copied. It is selected: copy it with your keyboard.",
         "acknowledge": "I have stored the secret somewhere safe",
         "done": "Done"
+    },
+    "rolePicker": {
+        "legend": "Roles",
+        "description": "Permissions from every selected role add up.",
+        "superAdminHint": "Every permission. Cannot be combined with other roles."
     }
 }

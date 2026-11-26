@@ -1,6 +1,6 @@
 # Roles and permissions
 
-**Registry:** none (backend, plus the list and form patterns for the roles screens).
+**Registry:** `@qiick/role-picker` (the user's role field); otherwise backend, plus the list and form patterns for the roles screens.
 
 **Copy from externa-core:** `app/Enums/PermissionEnum.php`, `app/Enums/RoleEnum.php`, `app/Console/Commands/SyncPermissionsCommand.php`, `app/Http/Middleware/EnsureUserHasPermissionMiddleware.php`, `app/Http/Requests/Concerns/AuthorizesWithPermissionTrait.php`, `app/Services/Authorization/EffectivePermissionResolverService.php`, `app/Models/Role.php`, `config/permission.php` (PHP, repo root); `resources/js/hooks/use-can.ts`, `resources/js/lib/permissions.ts`, roles screens `pages/admin/roles/{index,form}.tsx`. Policies: excubia-app `app/Policies/*Policy.php`.
 
@@ -8,6 +8,13 @@
 
 - `spatie/laravel-permission`. Permissions are cases of a string-backed `PermissionEnum`: `CanShowUsers = 'can-show-users'`, `CanCreateUsers`, `CanEditUsers`, `CanDeleteUsers`, `CanRestoreUsers`, `CanForceDeleteUsers`, `CanShowActivityLogs`, `CanUseAi` (`can-<verb>-<resource>`, kebab-case values).
 - Roles are a `RoleEnum`: `super-admin` (everything, through `Gate::before`), `admin` (every permission it was granted), `reader`, plus product roles. A system role that nobody can be assigned (externa's `public`) says so in the enum.
+
+## Role model (decision 2026-11-26)
+
+- **Super-admin is exclusive.** A user holds super-admin alone, or any combination of the other roles. The registry's `RolePicker` (`@qiick/role-picker`) disables the other roles once super-admin is picked and clears them; the server rejects the combination with laravel-access `Qiick\Access\Rules\ExclusiveSuperAdminRoleRule` on the role field of the user requests (`['array', new ExclusiveSuperAdminRoleRule]`).
+- **Permissions add up** across the selected roles; the picker says so in its helper text.
+- **Human labels:** the picker shows the role's label from `RoleEnum` (`label()`), never the raw slug; without a label it title-cases the name.
+- **API keys of a super-admin** reach every permission of `PermissionEnum` that the key's scopes cover (laravel-access `isWithinOwnerCeiling()`), never the `Gate::before` bypass. A product computes the grantable scopes with `isWithinOwnerCeiling()`, not `hasAssignedPermission()`, so a super-admin alone can create a key.
 
 ## Initial super admin
 

@@ -297,5 +297,10 @@
         "copyFailed": "Das Geheimnis konnte nicht kopiert werden. Es ist markiert: Kopieren Sie es mit der Tastatur.",
         "acknowledge": "Ich habe das Geheimnis sicher gespeichert",
         "done": "Fertig"
+    },
+    "rolePicker": {
+        "legend": "Rollen",
+        "description": "Die Berechtigungen aller ausgewählten Rollen gelten gemeinsam.",
+        "superAdminHint": "Alle Berechtigungen. Kann nicht mit anderen Rollen kombiniert werden."
     }
 }

@@ -297,5 +297,10 @@
         "copyFailed": "Impossibile copiare il segreto. È selezionato: copialo con la tastiera.",
         "acknowledge": "Ho salvato il segreto in un luogo sicuro",
         "done": "Fatto"
+    },
+    "rolePicker": {
+        "legend": "Ruoli",
+        "description": "I permessi di tutti i ruoli selezionati si sommano.",
+        "superAdminHint": "Tutti i permessi. Non si può combinare con altri ruoli."
     }
 }

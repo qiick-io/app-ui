@@ -10,6 +10,7 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Added
 
+- Registry `role-picker` and the role model of `docs/roles-and-permissions.md` (decision 2026-11-26): super-admin is exclusive (the picker clears and disables the other roles; laravel-access `ExclusiveSuperAdminRoleRule` on the server), permissions add up across the other roles, human labels instead of slugs, and a super-admin's API keys reach every permission of `PermissionEnum` within their scopes (`isWithinOwnerCeiling()`).
 - Conformance C77 checks that a real product policy grants its super-admin exception to a web session and denies it to a scoped API actor for the same user. Products with `usesLaravelAccess` add `policySuperAdminDecisions` to their conformance hooks on their next standards sync. See the [access-package checks](standards/CONFORMANCE.md#access-package-checks-c71c75-c77).
 
 ### Fixed
