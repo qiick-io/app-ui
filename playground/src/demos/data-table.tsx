@@ -56,6 +56,7 @@ export default function DataTableDemo() {
         direction: 'asc',
     });
     const [statuses, setStatuses] = useState<string[]>([]);
+    const [openedJob, setOpenedJob] = useState<Job>();
     // The server sorts and filters in the apps; the demo does it on a fixed page.
     const rows = JOBS.filter(
         (job) => statuses.length === 0 || statuses.includes(job.status),
@@ -80,7 +81,11 @@ export default function DataTableDemo() {
                 getRowId={(job) => String(job.id)}
                 sort={sort}
                 onSortChange={setSort}
+                onRowClick={setOpenedJob}
             />
+            <output className="text-sm text-muted-foreground">
+                {openedJob ? `Opened ${openedJob.name}` : null}
+            </output>
         </div>
     );
 }
