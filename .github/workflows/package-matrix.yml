@@ -6,9 +6,10 @@
 #   databases, mutation on every class;
 # - `pr` on pull requests, from the files the PR changes: the highest
 #   PHP / Laravel cell always, the lowest only when composer.json or src/
-#   changes, the databases only for database code, mutation only on the
-#   changed classes; a docs-only PR runs nothing. Every job keeps its name and
-#   reports, so required checks never wait: skip the steps, not the job.
+#   changes, the databases for database code, erasure code and tests, or CI
+#   workflows, and mutation only on the changed classes. A docs-only PR runs
+#   nothing. Every job keeps its name and reports, so required checks never
+#   wait: skip the steps, not the job.
 #
 # In a package:
 #

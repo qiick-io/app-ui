@@ -17,7 +17,7 @@
         "exclude": []
     },
     "pr": {
-        "$comment": "Path patterns are regular expressions on repo-relative paths. A pull request that touches only docsOnly paths runs nothing (every job still reports success under its name). Otherwise: the highest cell always, the lowest cell when it touches code, the server databases when it touches database code, mutation on the src/ classes it changed.",
+        "$comment": "Path patterns are regular expressions on repo-relative paths. A pull request that touches only docsOnly paths runs nothing (every job still reports success under its name). Otherwise: the highest cell always, the lowest cell when it touches code, the server databases when it touches database code, erasure code or tests, or a workflow that could contain the erasure step, and mutation on the src/ classes it changed.",
         "always": {
             "php": "highest",
             "laravel": "highest",
@@ -33,6 +33,9 @@
             "code": ["^composer\\.json$", "^src/"],
             "database": [
                 "^database/",
+                "^src/Erasure/",
+                "^tests/Erasure/",
+                "^\\.github/workflows/[^/]+\\.ya?ml$",
                 "^src/(?:.*/)?(?:Models?|Migrations?|Database|Eloquent|Stores?|Repositories|Queries|Builders|Schema)/",
                 "^src/.*(?:Model|Migration|Store|Repository|Query|Builder|Schema)\\.php$"
             ],
