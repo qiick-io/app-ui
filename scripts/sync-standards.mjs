@@ -54,7 +54,7 @@ import { fileURLToPath } from 'node:url';
 import { findConventionViolations } from '../standards/scripts/check-conventions.mjs';
 import {
     findPackageMatrixViolations,
-    readWorkflowsText,
+    listWorkflowFiles,
 } from '../standards/scripts/check-package-matrix.mjs';
 
 const CONFIG_FILE = 'qiick-standards.json';
@@ -975,23 +975,120 @@ function isErasureSuiteInstalled(config) {
  * leave it out of an ordinary `vendor/bin/pest` (an `<exclude>`, a suite, a
  * group filter). So a workflow must run the managed `tests/Erasure/run.mjs` as
  * a step of its own: it runs the suite by path and fails unless every check
- * passed. The step must be that command alone, so `|| true` cannot silence it.
+ * passed. The step must be that command alone, so `|| true` cannot silence it;
+ * neither the step nor its job may set `continue-on-error`; and when
+ * `qiick-standards.json` lists the repo's `requiredChecks`, one of them must
+ * name the job.
+ *
+ * shortcut: reads the workflow text by indentation, not as YAML, so a job that
+ * never runs on pull requests or a matrix leg that skips the step still
+ * passes; parse the YAML if a package is found doing that.
  *
  * @param {string} targetRoot
+ * @param {{ requiredChecks?: string[] }} config
  * @returns {string[]} Errors, empty when CI runs the suite
  */
-export function findErasureCiViolations(targetRoot) {
-    if (
-        /^\s*(?:-\s+)?run:\s*node tests\/Erasure\/run\.mjs\s*$/m.test(
-            readWorkflowsText(targetRoot),
-        )
-    ) {
+export function findErasureCiViolations(targetRoot, config) {
+    const stepProblems = [];
+
+    for (const workflowPath of listWorkflowFiles(targetRoot)) {
+        const lines = fs.readFileSync(workflowPath, 'utf8').split('\n');
+
+        lines.forEach((line, lineIndex) => {
+            if (
+                !/^\s*-\s+run:\s*node tests\/Erasure\/run\.mjs\s*$/.test(line)
+            ) {
+                return;
+            }
+
+            const problem = findErasureStepProblem(lines, lineIndex, config);
+
+            if (problem === null) {
+                stepProblems.push(null);
+            } else {
+                stepProblems.push(
+                    `${path.relative(targetRoot, workflowPath)}:${lineIndex + 1} ${problem}`,
+                );
+            }
+        });
+    }
+
+    if (stepProblems.includes(null)) {
         return [];
+    }
+
+    if (stepProblems.length > 0) {
+        return stepProblems.map(
+            (problem) =>
+                `erasure: the \`node tests/Erasure/run.mjs\` step at ${problem}.`,
+        );
     }
 
     return [
         'erasure: no workflow step runs `node tests/Erasure/run.mjs`, so CI would not prove the suite ran. Add `- run: node tests/Erasure/run.mjs` to the job that runs Pest.',
     ];
+}
+
+/**
+ * Why one `run.mjs` step cannot fail CI, or null when it can.
+ *
+ * @param {string[]} lines the workflow's lines
+ * @param {number} stepIndex the step's `- run:` line
+ * @param {{ requiredChecks?: string[] }} config
+ * @returns {string | null}
+ */
+function findErasureStepProblem(lines, stepIndex, config) {
+    const indentOf = (line) => line.search(/\S/);
+    const isTolerated = (line) =>
+        /^\s*continue-on-error:/.test(line) &&
+        !/continue-on-error:\s*false\s*$/.test(line);
+    const stepIndent = indentOf(lines[stepIndex]);
+
+    for (const line of lines.slice(stepIndex + 1)) {
+        if (line.trim() !== '' && indentOf(line) <= stepIndent) {
+            break;
+        }
+
+        if (isTolerated(line)) {
+            return 'sets continue-on-error';
+        }
+    }
+
+    const jobStart = lines
+        .slice(0, stepIndex)
+        .findLastIndex((line) => /^ {2}[\w-]+:\s*$/.test(line));
+    const nextJobOffset = lines
+        .slice(jobStart + 1)
+        .findIndex((line) => /^ {0,2}\S/.test(line));
+    const jobLines = lines.slice(
+        jobStart,
+        nextJobOffset === -1 ? lines.length : jobStart + 1 + nextJobOffset,
+    );
+
+    if (jobLines.some((line) => indentOf(line) === 4 && isTolerated(line))) {
+        return 'is in a job that sets continue-on-error';
+    }
+
+    const requiredChecks = config.requiredChecks ?? [];
+    const jobKey = jobLines[0]?.trim().replace(/:$/, '') ?? '';
+    const jobName =
+        jobLines
+            .find((line) => /^ {4}name:/.test(line))
+            ?.replace(/^ {4}name:\s*/, '')
+            .split('${{')[0]
+            .replace(/['"]/g, '')
+            .trim() ?? '';
+    const isRequired = requiredChecks.some(
+        (check) =>
+            check.includes(jobKey) ||
+            (jobName !== '' && check.includes(jobName)),
+    );
+
+    if (requiredChecks.length > 0 && !isRequired) {
+        return `is in the job ${jobKey}, which no entry of requiredChecks in qiick-standards.json names`;
+    }
+
+    return null;
 }
 
 /**
@@ -1211,7 +1308,7 @@ export function syncStandards(
         messages.push(...findConventionViolations(targetRoot, config));
 
         if (isErasureSuiteInstalled(config)) {
-            messages.push(...findErasureCiViolations(targetRoot));
+            messages.push(...findErasureCiViolations(targetRoot, config));
         }
     }
 

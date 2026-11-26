@@ -75,7 +75,8 @@ interface ErasureFixture
 
     /**
      * Tables whose rows belong to one organisation; an organisation-scoped run
-     * erases only their rows of that organisation and leaves every other table alone.
+     * erases only their rows of that organisation and leaves every other table
+     * alone. A table of additionalConnections() is named `connection:table`.
      *
      * @return list<string>
      */

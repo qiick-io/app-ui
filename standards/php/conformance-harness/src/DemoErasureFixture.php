@@ -39,6 +39,7 @@ final class DemoErasureFixture implements ErasureFixture
      * @param  bool  $isSecondCacheStoreSeeded  seed() also writes the person's key to the undeclared `second` store
      * @param  ?list<string>  $organisationScopedTables  overrides the honest `['demo_profiles']`
      * @param  ?string  $userId  a fixed user key instead of a fresh six-digit one
+     * @param  bool  $isArchiveScoped  the `demo_archive` connection's table is organisation-scoped too
      */
     public function __construct(
         private readonly string $eraserClass = DemoEraser::class,
@@ -52,6 +53,7 @@ final class DemoErasureFixture implements ErasureFixture
         private readonly ?string $userId = null,
         private readonly array $retainedCleartextColumns = [],
         private readonly bool $isSecondCacheStoreSeeded = false,
+        private readonly bool $isArchiveScoped = false,
     ) {}
 
     /** Fresh, distinct user keys: two random keys in one check could collide and look like one person. */
@@ -72,6 +74,7 @@ final class DemoErasureFixture implements ErasureFixture
         Schema::connection('demo_archive')->create('demo_archive_entries', function (Blueprint $table): void {
             $table->id();
             $table->string('owner_public_id', 36)->index();
+            $table->string('organisation_id', 36)->nullable();
             $table->string('email')->nullable();
             $table->string('dossier', 32)->nullable();
         });
@@ -161,6 +164,7 @@ final class DemoErasureFixture implements ErasureFixture
         if (! in_array('archive', $this->skippedSeeds, true)) {
             DB::connection('demo_archive')->table('demo_archive_entries')->insert([
                 'owner_public_id' => $person->publicIds[0],
+                'organisation_id' => $organisationId,
                 'email' => $person->identifiers[0],
                 // Not a search marker: the suite must compare it by value.
                 'dossier' => 'DOS'.random_int(10000000, 99999999),
@@ -187,7 +191,7 @@ final class DemoErasureFixture implements ErasureFixture
 
     public function organisationScopedTables(): array
     {
-        return $this->organisationScopedTables ?? ['demo_profiles'];
+        return $this->organisationScopedTables ?? ($this->isArchiveScoped ? ['demo_profiles', 'demo_archive:demo_archive_entries'] : ['demo_profiles']);
     }
 
     public function cacheKeys(ErasurePerson $person): array
@@ -207,7 +211,7 @@ final class DemoErasureFixture implements ErasureFixture
 
     public function additionalConnections(): array
     {
-        return ['demo_archive' => ['demo_archive_entries' => ['id' => 'other', 'owner_public_id' => 'personal', 'email' => 'personal', 'dossier' => 'personal']]];
+        return ['demo_archive' => ['demo_archive_entries' => ['id' => 'other', 'owner_public_id' => 'personal', 'organisation_id' => 'other', 'email' => 'personal', 'dossier' => 'personal']]];
     }
 
     public function call(Closure $erase): object

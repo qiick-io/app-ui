@@ -17,20 +17,24 @@ declare(strict_types=1);
 
 use Qiick\Standards\Erasure\Support\ErasureConformanceRunner;
 use Qiick\Standards\Erasure\Support\ErasureFixture;
+use Qiick\Standards\Erasure\Support\ErasurePerson;
+use Qiick\Standards\Erasure\Support\ErasureRecording;
 
-spl_autoload_register(static function (string $class): void {
-    $prefix = 'Qiick\\Standards\\Erasure\\';
+// The managed classes are loaded from this folder, never through Composer: a
+// package's autoload mapping of this namespace must not swap in its own runner.
+foreach (glob(__DIR__.'/Support/*.php') as $supportFile) {
+    require_once $supportFile;
+}
 
-    if (! str_starts_with($class, $prefix)) {
+foreach ([ErasureConformanceRunner::class, ErasureFixture::class, ErasurePerson::class, ErasureRecording::class] as $managedClass) {
+    if ((new ReflectionClass($managedClass))->getFileName() !== realpath(__DIR__.'/Support/'.substr($managedClass, strrpos($managedClass, '\\') + 1).'.php')) {
+        it('loads the managed erasure suite', function () use ($managedClass): void {
+            throw new LogicException("{$managedClass} is not loaded from tests/Erasure/Support; remove the package's autoload mapping of Qiick\\Standards\\Erasure.");
+        })->group('erasure');
+
         return;
     }
-
-    $path = __DIR__.'/'.str_replace('\\', '/', substr($class, strlen($prefix))).'.php';
-
-    if (is_file($path)) {
-        require_once $path;
-    }
-});
+}
 
 $erasureFixture = require __DIR__.'/fixture.php';
 

@@ -229,6 +229,64 @@ test('an opted-in package CI must run the erasure suite by path, whatever phpuni
     assert.deepEqual(ciErrors(runningRepo), []);
 });
 
+test('the erasure CI step fails when the step or its job tolerates failure, or the job is not required', () => {
+    /** @param {string} job */
+    const workflow = (job) => ({
+        '.github/workflows/tests.yml': `jobs:\n${job}\n  lint:\n    steps:\n      - run: npm run lint\n`,
+    });
+    const tolerantStepRepo = makeRepo(
+        { php: true, package: true, erasure: true },
+        workflow(
+            '  tests:\n    steps:\n      - run: node tests/Erasure/run.mjs\n        continue-on-error: true',
+        ),
+    );
+    const tolerantJobRepo = makeRepo(
+        { php: true, package: true, erasure: true },
+        workflow(
+            '  tests:\n    continue-on-error: ${{ matrix.experimental }}\n    steps:\n      - run: node tests/Erasure/run.mjs',
+        ),
+    );
+    const unrequiredJobRepo = makeRepo(
+        {
+            php: true,
+            package: true,
+            erasure: true,
+            requiredChecks: ['lint', 'app-ui-drift / standards'],
+        },
+        workflow(
+            '  tests:\n    steps:\n      - run: node tests/Erasure/run.mjs',
+        ),
+    );
+    const requiredJobRepo = makeRepo(
+        {
+            php: true,
+            package: true,
+            erasure: true,
+            requiredChecks: ['Tests PHP 8.5', 'lint'],
+        },
+        workflow(
+            '  tests:\n    name: Tests PHP ${{ matrix.php }}\n    continue-on-error: false\n    steps:\n      - run: node tests/Erasure/run.mjs',
+        ),
+    );
+
+    /** @param {string} root */
+    const ciErrors = (root) => {
+        syncStandards(root, { isCheck: false });
+
+        return syncStandards(root, { isCheck: true }).filter((message) =>
+            message.includes('tests/Erasure/run.mjs'),
+        );
+    };
+
+    assert.match(ciErrors(tolerantStepRepo).join(), /sets continue-on-error/);
+    assert.match(
+        ciErrors(tolerantJobRepo).join(),
+        /job that sets continue-on-error/,
+    );
+    assert.match(ciErrors(unrequiredJobRepo).join(), /requiredChecks/);
+    assert.deepEqual(ciErrors(requiredJobRepo), []);
+});
+
 test('erasure:true without php:true is an error, not a silent no-op', () => {
     const root = makeRepo({ php: false, package: true, erasure: true });
 

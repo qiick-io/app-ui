@@ -20,6 +20,7 @@ beforeEach(function (): void {
     DemoErasureFixture::migrate();
     DemoEraser::$defect = null;
     DemoEraser::$isOrganisationScopeSupported = true;
+    DemoEraser::$isArchiveScoped = false;
 });
 
 function expectErasureCheckFails(ErasureConformanceRunner $runner, string $checkId): void
@@ -77,6 +78,13 @@ it('RED: E1 fails on a signature that breaks the standard', function (): void {
 
 it('RED: E3b fails on an unclassified column', function (): void {
     expectErasureCheckFails(new ErasureConformanceRunner(new DemoErasureFixture(unclassifiedColumns: ['ip_address'])), 'E3b');
+});
+
+it('RED: E14 fails when an identifier is logged before the unsupported scope is refused', function (): void {
+    DemoEraser::$isOrganisationScopeSupported = false;
+    DemoEraser::$defect = 'log_identifier_on_unsupported_scope';
+
+    expectErasureCheckFails(new ErasureConformanceRunner(new DemoErasureFixture(isOrganisationScopeSupported: false)), 'E14');
 });
 
 it('RED: E14 fails when an unsupported organisation scope does not throw', function (): void {
@@ -137,6 +145,11 @@ it('RED: a cheat fails its check', function (string $checkId, ?string $defect, a
     'E5: a dry run that logs an identifier' => ['E5', 'log_identifier_on_dry_run', []],
     'E9: an anonymise run without a transaction' => ['E9', 'anonymise_without_transaction', []],
     'E11: an exception that echoes a non-string identifier' => ['E11', 'echo_non_string_identifier', []],
+    'E8: no event for an anonymise run' => ['E8', 'skip_event_on_anonymise', []],
+    'E6: an anonymise run that deletes everyone' => ['E6', 'erase_everyone_on_anonymise', []],
+    'E5: a dry run that writes an undeclared cache entry' => ['E5', 'dry_run_caches', []],
+    'E11: an identifier logged before invalid input is rejected' => ['E11', 'log_identifier_on_invalid_input', []],
+    'E2: an identifier logged for a person with no data' => ['E2', 'log_identifier_when_empty', []],
 ]);
 
 it('GREEN: a retained column declared cleartext, with its reason and its report entry, passes E3', function (): void {
@@ -147,6 +160,21 @@ it('GREEN: a retained column declared cleartext, with its reason and its report 
     (new ErasureConformanceRunner($fixture))->run('E3b');
 
     expect(true)->toBeTrue();
+});
+
+it('GREEN: an organisation-scoped table on another connection passes every check', function (string $checkId): void {
+    DemoEraser::$isArchiveScoped = true;
+
+    (new ErasureConformanceRunner(new DemoErasureFixture(isArchiveScoped: true)))->run($checkId);
+
+    expect(true)->toBeTrue();
+})->with(array_keys(ErasureConformanceRunner::CHECKS));
+
+it('RED: E12 fails when a scoped run leaves the organisation\'s rows on another connection', function (): void {
+    DemoEraser::$isArchiveScoped = true;
+    DemoEraser::$defect = 'skip_scoped_archive';
+
+    expectErasureCheckFails(new ErasureConformanceRunner(new DemoErasureFixture(isArchiveScoped: true)), 'E12');
 });
 
 it('GREEN: E12 passes on a tombstone kept by both modes', function (): void {

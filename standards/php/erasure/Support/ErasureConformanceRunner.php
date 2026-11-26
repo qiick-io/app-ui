@@ -164,6 +164,7 @@ final class ErasureConformanceRunner
         }
 
         $this->assertReport('E2', $report, $person, 'delete', false);
+        $this->assertNoSurfaceIdentifiesPerson('E2', $report, $recording, $person, [], 'a run for a person with no data');
 
         foreach ($report->stores as $storeName => $counts) {
             if ($counts['deleted'] + $counts['anonymised'] + $counts['kept'] !== 0) {
@@ -314,6 +315,11 @@ final class ErasureConformanceRunner
                 $this->fail('E5', "a {$mode} dry run dispatched a package event");
             }
 
+            // Declared entries are in the snapshot; this catches a new one.
+            if ($recording->writtenCacheEntries() !== []) {
+                $this->fail('E5', "a {$mode} dry run wrote a cache entry");
+            }
+
             $realReport = $this->erase($person, $mode);
 
             if ($dryReport->toArray()['stores'] !== $realReport->toArray()['stores']) {
@@ -324,14 +330,16 @@ final class ErasureConformanceRunner
 
     private function checkOtherPersonUntouched(): void
     {
-        $organisationId = $this->seedOrganisationId();
-        $otherPerson = $this->fixture->makePerson();
-        $this->fixture->seed($otherPerson, $organisationId);
-        $otherPersonRows = $this->snapshot([$otherPerson]);
-        $person = $this->fixture->makePerson();
-        $this->fixture->seed($person, $organisationId);
-        $this->erase($person, 'delete');
-        $this->assertRowsSurvive('E6', $otherPersonRows, $this->snapshot([$otherPerson]), 'the other person\'s data changed');
+        foreach (['delete', 'anonymise'] as $mode) {
+            $organisationId = $this->seedOrganisationId();
+            $otherPerson = $this->fixture->makePerson();
+            $this->fixture->seed($otherPerson, $organisationId);
+            $otherPersonRows = $this->snapshot([$otherPerson]);
+            $person = $this->fixture->makePerson();
+            $this->fixture->seed($person, $organisationId);
+            $this->erase($person, $mode);
+            $this->assertRowsSurvive('E6', $otherPersonRows, $this->snapshot([$otherPerson]), "a {$mode} run changed the other person's data");
+        }
     }
 
     private function checkNoIdentifierLeaks(): void
@@ -410,8 +418,24 @@ final class ErasureConformanceRunner
 
     private function checkEventAfterCommit(): void
     {
+        // Listeners rely on the event after every kind of run, not only a global delete.
+        $runs = [['delete', null], ['anonymise', null]];
+
+        if ($this->fixture->supportsOrganisationScope()) {
+            $runs[] = ['delete', (string) Str::uuid()];
+            $runs[] = ['anonymise', (string) Str::uuid()];
+        }
+
+        foreach ($runs as [$mode, $organisationId]) {
+            $this->checkEventAfterCommitIn($mode, $organisationId);
+        }
+    }
+
+    private function checkEventAfterCommitIn(string $mode, ?string $organisationId): void
+    {
         $person = $this->fixture->makePerson();
-        $this->fixture->seed($person, $this->seedOrganisationId());
+        $this->fixture->seed($person, $organisationId ?? $this->seedOrganisationId());
+        $runName = ($organisationId === null ? '' : 'organisation-scoped ')."{$mode} run";
         $baseTransactionLevel = $this->connection()->transactionLevel();
 
         // Inside a caller's transaction that is rolled back, the writes never
@@ -421,20 +445,20 @@ final class ErasureConformanceRunner
         $this->connection()->beginTransaction();
 
         try {
-            $this->erase($person, 'delete');
+            $this->erase($person, $mode, $organisationId);
         } finally {
             $this->connection()->rollBack();
             $rolledBackRecording->stop();
         }
 
         if ($this->erasedEvents($rolledBackRecording) !== []) {
-            $this->fail('E8', 'SubjectErasedEvent was dispatched although the caller\'s transaction rolled the writes back');
+            $this->fail('E8', "SubjectErasedEvent was dispatched although the caller's transaction rolled the writes of a {$runName} back");
         }
 
         $recording = $this->startRecording();
 
         try {
-            $this->erase($person, 'delete');
+            $this->erase($person, $mode, $organisationId);
         } finally {
             $recording->stop();
         }
@@ -442,11 +466,11 @@ final class ErasureConformanceRunner
         $erasedEvents = $this->erasedEvents($recording);
 
         if (count($erasedEvents) !== 1) {
-            $this->fail('E8', 'a real run dispatched '.count($erasedEvents).' SubjectErasedEvent events instead of one');
+            $this->fail('E8', "a real {$runName} dispatched ".count($erasedEvents).' SubjectErasedEvent events instead of one');
         }
 
         if ($erasedEvents[0]['transactionLevel'] !== $baseTransactionLevel) {
-            $this->fail('E8', 'SubjectErasedEvent was dispatched inside an open transaction, not after commit');
+            $this->fail('E8', "SubjectErasedEvent of a {$runName} was dispatched inside an open transaction, not after commit");
         }
     }
 
@@ -564,6 +588,8 @@ final class ErasureConformanceRunner
             'a non-string identifier' => ['identifiers' => [482_731], 'echo' => '482731'],
         ];
 
+        $recording = $this->startRecording();
+
         foreach ($invalidCases as $caseName => $overrides) {
             $echoedValue = $overrides['echo'];
             unset($overrides['echo']);
@@ -582,6 +608,14 @@ final class ErasureConformanceRunner
             }
 
             $this->fail('E11', "{$caseName} was accepted");
+        }
+
+        $recording->stop();
+        $echoedValues = array_values(array_filter(array_column($invalidCases, 'echo')));
+
+        // Rejected input must not reach a log record on its way out either.
+        if ($this->containsSeededValue($recording->logStrings(), $person) || $this->containsWholeValue($recording->logStrings(), [$person->userId, ...$echoedValues])) {
+            $this->fail('E11', 'a log record of a rejected run holds the input or a value of the person');
         }
 
         $this->assertSnapshotsEqual('E11', $before, $this->snapshot([$person]));
@@ -644,10 +678,20 @@ final class ErasureConformanceRunner
             $this->fail($checkId, 'the fixture supports an organisation scope but declares no organisation-scoped table');
         }
 
-        $unresolvedTables = array_diff($scopedTables, $this->personalTables());
+        $personalTablesOnEveryConnection = [...$this->personalTables()];
+
+        foreach ($this->fixture->additionalConnections() as $connectionName => $classifiedTables) {
+            foreach ($classifiedTables as $tableName => $classifiedColumns) {
+                if (in_array('personal', $classifiedColumns, true)) {
+                    $personalTablesOnEveryConnection[] = "{$connectionName}:{$tableName}";
+                }
+            }
+        }
+
+        $unresolvedTables = array_diff($scopedTables, $personalTablesOnEveryConnection);
 
         if ($unresolvedTables !== []) {
-            $this->fail($checkId, 'the organisation-scoped tables ['.implode(', ', $unresolvedTables).'] are not classified tables with a personal column');
+            $this->fail($checkId, 'the organisation-scoped tables ['.implode(', ', $unresolvedTables).'] are not classified tables with a personal column (`connection:table` on another connection)');
         }
 
         return array_values($scopedTables);
@@ -724,10 +768,17 @@ final class ErasureConformanceRunner
         $this->fixture->seed($person, null);
         $before = $this->snapshot([$person]);
         $expectedClass = $this->erasureNamespace().'\\OrganisationScopeUnsupportedException';
+        $recording = $this->startRecording();
 
         try {
             $this->erase($person, 'delete', (string) Str::uuid());
         } catch (Throwable $exception) {
+            $recording->stop();
+
+            if ($this->containsSeededValue($recording->logStrings(), $person) || $this->containsWholeValue($recording->logStrings(), [$person->userId])) {
+                $this->fail('E14', 'a log record of the refused run holds a value of the person');
+            }
+
             if (! $exception instanceof LogicException || $exception::class !== $expectedClass) {
                 $this->fail('E14', 'an unsupported organisation scope threw '.$exception::class." instead of {$expectedClass}");
             }
@@ -737,6 +788,7 @@ final class ErasureConformanceRunner
             return;
         }
 
+        $recording->stop();
         $this->fail('E14', 'an organisation-scoped run on a store that cannot filter by organisation did not throw');
     }
 
@@ -994,7 +1046,8 @@ final class ErasureConformanceRunner
         foreach ($values as $value) {
             $pattern = '/(?<![[:alnum:]])'.preg_quote($value, '/').'(?![[:alnum:]])/u';
 
-            if (preg_grep($pattern, $strings) !== []) {
+            // A pattern error (a seeded value that is not valid UTF-8) is no match.
+            if ((preg_grep($pattern, $strings) ?: []) !== []) {
                 return true;
             }
         }
@@ -1008,20 +1061,12 @@ final class ErasureConformanceRunner
      * declared cleartext columns are left out.
      *
      * @param  list<string>  $seededValues
-     * @param  ?list<string>  $tableNames  only these tables of the package's connection
+     * @param  ?list<string>  $tableNames  only these tables (`table`, or `connection:table` on another connection)
      * @return list<string>
      */
     private function columnsHoldingPerson(ErasurePerson $person, array $seededValues, ?array $tableNames = null): array
     {
-        $stores = [['', $this->connection(), $this->fixture->tables()]];
-
-        if ($tableNames === null) {
-            foreach ($this->fixture->additionalConnections() as $connectionName => $classifiedTables) {
-                $stores[] = ["{$connectionName}:", DB::connection($connectionName), $classifiedTables];
-            }
-        } else {
-            $stores[0][2] = array_intersect_key($stores[0][2], array_flip($tableNames));
-        }
+        $stores = $this->classifiedStores($tableNames);
 
         $cleartextColumns = $this->fixture->retainedCleartextColumns();
         $columnsHoldingPerson = [];
@@ -1174,7 +1219,7 @@ final class ErasureConformanceRunner
 
         $personalValues = $this->columnValues(['personal'], $tableNames);
 
-        foreach (array_intersect($tableNames, $this->personalTables()) as $tableName) {
+        foreach ($tableNames as $tableName) {
             foreach ($personalValues as $qualifiedColumn => $values) {
                 if ($values === [] && str_starts_with($qualifiedColumn, "{$tableName}.")) {
                     $this->fail($checkId, "seed() left the personal column {$qualifiedColumn} empty, so there is nothing to check");
@@ -1185,24 +1230,16 @@ final class ErasureConformanceRunner
 
     /**
      * Every non-null value of every column of the given classes, as strings:
-     * on the package's connection (`table.column`) and, unless tables are
-     * named, on each additional connection (`connection:table.column`).
+     * on the package's connection (`table.column`) and on each additional
+     * connection (`connection:table.column`).
      *
      * @param  list<string>  $columnClasses
-     * @param  ?list<string>  $tableNames  only these tables of the package's connection
+     * @param  ?list<string>  $tableNames  only these tables (`table`, or `connection:table` on another connection)
      * @return array<string, list<string>> qualified column => values
      */
     private function columnValues(array $columnClasses, ?array $tableNames = null): array
     {
-        $stores = [['', $this->connection(), $this->fixture->tables()]];
-
-        if ($tableNames === null) {
-            foreach ($this->fixture->additionalConnections() as $connectionName => $classifiedTables) {
-                $stores[] = ["{$connectionName}:", DB::connection($connectionName), $classifiedTables];
-            }
-        } else {
-            $stores[0][2] = array_intersect_key($stores[0][2], array_flip($tableNames));
-        }
+        $stores = $this->classifiedStores($tableNames);
 
         $valuesByColumn = [];
 
@@ -1227,6 +1264,37 @@ final class ErasureConformanceRunner
         }
 
         return $valuesByColumn;
+    }
+
+    /**
+     * The classified tables of every declared connection, as [prefix,
+     * connection, table => column => class]; with table names, only those
+     * (`table` on the package's connection, `connection:table` elsewhere).
+     *
+     * @param  ?list<string>  $tableNames
+     * @return list<array{0: string, 1: Connection, 2: array<string, array<string, string>>}>
+     */
+    private function classifiedStores(?array $tableNames = null): array
+    {
+        $stores = [['', $this->connection(), $this->fixture->tables()]];
+
+        foreach ($this->fixture->additionalConnections() as $connectionName => $classifiedTables) {
+            $stores[] = ["{$connectionName}:", DB::connection($connectionName), $classifiedTables];
+        }
+
+        if ($tableNames === null) {
+            return $stores;
+        }
+
+        foreach ($stores as $index => [$prefix]) {
+            $stores[$index][2] = array_filter(
+                $stores[$index][2],
+                fn (string $tableName): bool => in_array($prefix.$tableName, $tableNames, true),
+                ARRAY_FILTER_USE_KEY,
+            );
+        }
+
+        return $stores;
     }
 
     /**

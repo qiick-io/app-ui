@@ -35,6 +35,9 @@ final class DemoEraser
     /** False makes every organisation-scoped run throw OrganisationScopeUnsupportedException (E14). */
     public static bool $isOrganisationScopeSupported = true;
 
+    /** True scopes the `demo_archive` connection by organisation too, as the fixture's `isArchiveScoped` declares. */
+    public static bool $isArchiveScoped = false;
+
     /**
      * @param  list<string>  $publicIds
      * @param  list<string>  $identifiers
@@ -48,6 +51,10 @@ final class DemoEraser
         ?string $organisationId = null,
         bool $dryRun = false,
     ): ErasureReport {
+        if (in_array(self::$defect, ['log_identifier_on_invalid_input', 'log_identifier_on_unsupported_scope'], true) && $identifiers !== []) {
+            Log::info('Erasure requested for '.$identifiers[0]);
+        }
+
         $this->validate($userPublicId, $mode, $publicIds, $identifiers);
 
         if ($organisationId !== null && ! self::$isOrganisationScopeSupported) {
@@ -83,9 +90,12 @@ final class DemoEraser
         $cacheCount = Cache::has($cacheKey) ? 1 : 0;
         $avatarPath = "avatars/{$userPublicId}.txt";
         $avatarCount = Storage::disk('demo')->exists($avatarPath) ? 1 : 0;
-        $archiveEntries = fn (): Builder => DB::connection('demo_archive')->table('demo_archive_entries')->whereIn('owner_public_id', [$userPublicId, ...$publicIds]);
-        $archiveCount = $archiveEntries()->count();
         $isGlobalRun = $organisationId === null;
+        $isArchiveInScope = $isGlobalRun || (self::$isArchiveScoped && self::$defect !== 'skip_scoped_archive');
+        $archiveEntries = fn (): Builder => DB::connection('demo_archive')->table('demo_archive_entries')
+            ->whereIn('owner_public_id', [$userPublicId, ...$publicIds])
+            ->when($organisationId !== null && $isArchiveInScope, fn (Builder $query): Builder => $query->where('organisation_id', $organisationId));
+        $archiveCount = $archiveEntries()->count();
 
         $stores = [
             'demo_profiles' => $this->counts($profileCount, $isDeleting, $phantomChange, null),
@@ -98,11 +108,11 @@ final class DemoEraser
                 : $this->counts(0, true, 0, $cacheCount > 0 ? 'outside_organisation_scope' : null, $cacheCount),
         ];
 
-        // The disk and the archive are not organisation-scoped either.
+        // The disk is not organisation-scoped either; the archive only when declared so.
         $stores['disk:demo'] = $isGlobalRun
             ? $this->counts($avatarCount, true, 0, null)
             : $this->counts(0, true, 0, $avatarCount > 0 ? 'outside_organisation_scope' : null, $avatarCount);
-        $stores['connection:demo_archive'] = $isGlobalRun
+        $stores['connection:demo_archive'] = $isArchiveInScope
             ? $this->counts($archiveCount, $isDeleting, 0, null)
             : $this->counts(0, $isDeleting, 0, $archiveCount > 0 ? 'outside_organisation_scope' : null, $archiveCount);
 
@@ -150,6 +160,14 @@ final class DemoEraser
             Storage::disk('demo')->put($avatarPath, 'replaced by a dry run');
         }
 
+        if ($dryRun && self::$defect === 'dry_run_caches') {
+            Cache::put("dry-run:{$userPublicId}", $identifiers[0] ?? '', 3600);
+        }
+
+        if (self::$defect === 'log_identifier_when_empty' && $profileCount + $linkCount === 0 && $identifiers !== []) {
+            Log::info('Nothing to erase for '.$identifiers[0]);
+        }
+
         if ($dryRun && ! $isDryRunWriting) {
             return $report;
         }
@@ -163,7 +181,7 @@ final class DemoEraser
                 $profiles()->update(['note' => DB::raw('email')]);
             }
 
-            if (self::$defect === 'erase_everyone') {
+            if (self::$defect === 'erase_everyone' || (self::$defect === 'erase_everyone_on_anonymise' && ! $isDeleting)) {
                 DB::table('demo_profiles')->delete();
             } elseif ($profileCount > 0 && self::$defect === 'org_scrub_keep_national_id' && $organisationId !== null) {
                 $profiles()->update(['user_id' => 'erased', 'email' => null, 'ip_address' => null]);
@@ -210,7 +228,7 @@ final class DemoEraser
         }
 
         // Stores outside the package's transaction follow only once it commits.
-        DB::afterCommit(function () use ($cacheKey, $report, $isGlobalRun, $avatarPath, $archiveEntries, $isDeleting): void {
+        DB::afterCommit(function () use ($cacheKey, $report, $isGlobalRun, $isArchiveInScope, $avatarPath, $archiveEntries, $isDeleting): void {
             $isCacheKept = self::$defect === 'keep_cache' || (self::$defect === 'keep_cache_on_anonymise' && ! $isDeleting);
 
             if (self::$defect === 'cache_audit_email' && Cache::has($cacheKey)) {
@@ -225,7 +243,7 @@ final class DemoEraser
                 Storage::disk('demo')->delete($avatarPath);
             }
 
-            if ($isGlobalRun && self::$defect !== 'keep_archive') {
+            if ($isArchiveInScope && self::$defect !== 'keep_archive') {
                 $scrubbedArchive = match (self::$defect) {
                     'keep_dossier' => ['owner_public_id' => 'erased', 'email' => null],
                     'append_to_dossier' => ['owner_public_id' => 'erased', 'email' => null, 'dossier' => DB::raw("dossier || '|erased'")],
@@ -234,7 +252,8 @@ final class DemoEraser
                 $isDeleting ? $archiveEntries()->delete() : $archiveEntries()->update($scrubbedArchive);
             }
 
-            $isEventSkipped = self::$defect === 'skip_event_when_empty' && $report->changed() === 0;
+            $isEventSkipped = (self::$defect === 'skip_event_when_empty' && $report->changed() === 0)
+                || (self::$defect === 'skip_event_on_anonymise' && ! $isDeleting);
 
             if (! $isEventSkipped && ! in_array(self::$defect, ['event_inside_transaction', 'event_before_writes'], true)) {
                 event(new SubjectErasedEvent($report));
