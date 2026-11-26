@@ -65,7 +65,8 @@ it('shows the open view count on a group trigger that names that view, not the g
 
     expect(trigger.textContent).toContain('46');
     expect(trigger.textContent).not.toContain('49');
-    expect(trigger.textContent).not.toContain('Critical');
+    expect(trigger.textContent).toContain('Has warnings');
+    expect(trigger.textContent).not.toContain('Has critical problems');
 });
 
 it('keeps the sum and the worst severity on a group trigger whose views are not open', () => {
@@ -81,4 +82,5 @@ it('keeps the sum and the worst severity on a group trigger whose views are not 
     const trigger = screen.getByRole('tab', { name: /^Issues/ });
 
     expect(trigger.textContent).toContain('49');
+    expect(trigger.textContent).toContain('Has critical problems');
 });

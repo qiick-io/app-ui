@@ -19,7 +19,7 @@ An app picks one and declares it (`grouped-tabs:sub-menu` or `grouped-tabs:two-r
 
 - Everything in the core view-tab rules still holds: under the header, above `PageLayout`, every view with its own URL, the server passes the active view, no view state in the page.
 - Group by question, not by data source. A typical order is Overview, Issues, Health, Dependencies, Alerts, History. Overview is always first and on its own. A group with one view shows that view's label.
-- `count` is the number of **open** items in the view (unresolved, active), and is hidden at 0. `severity` is the worst open problem (`warning` or `critical`). A group shows the sum of its counts and its worst severity. Pass only values the page already loads: never one query per tab.
+- `count` is the number of **open** items in the view (unresolved, active), and is hidden at 0. `severity` is the worst open problem (`warning` or `critical`). A group shows the sum of its counts and its worst severity; a sub-menu trigger that names the open view ("Issues: Findings") shows that view's count and severity instead, so it matches the list below. Pass only values the page already loads: never one query per tab.
 - Below `sm`, both variants become one native select of every view, grouped, that navigates on change.
 
 ## Keyboard and accessibility
