@@ -52,7 +52,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findConventionViolations } from '../standards/scripts/check-conventions.mjs';
-import { findPackageMatrixViolations } from '../standards/scripts/check-package-matrix.mjs';
+import {
+    findPackageMatrixViolations,
+    readWorkflowsText,
+} from '../standards/scripts/check-package-matrix.mjs';
 
 const CONFIG_FILE = 'qiick-standards.json';
 const SOURCE_URL = 'https://github.com/qiick-io/app-ui/tree/develop/standards';
@@ -959,37 +962,26 @@ function isErasureSuiteInstalled(config) {
 }
 
 /**
- * The installed suite proves nothing unless Pest runs it: phpunit.xml (or
- * phpunit.xml.dist) must list `tests` or `tests/Erasure` as a directory, so a
- * package's ordinary `vendor/bin/pest` cannot skip it.
+ * The installed suite proves nothing unless CI runs it, and phpunit.xml can
+ * leave it out of an ordinary `vendor/bin/pest` (an `<exclude>`, a suite, a
+ * group filter). So a workflow must run the managed `tests/Erasure/run.mjs` as
+ * a step of its own: it runs the suite by path and fails unless every check
+ * passed. The step must be that command alone, so `|| true` cannot silence it.
  *
  * @param {string} targetRoot
- * @returns {string[]} Errors, empty when the suite is discovered
+ * @returns {string[]} Errors, empty when CI runs the suite
  */
-export function findErasureDiscoveryViolations(targetRoot) {
-    const configPath = ['phpunit.xml', 'phpunit.xml.dist']
-        .map((fileName) => path.join(targetRoot, fileName))
-        .find((candidatePath) => fs.existsSync(candidatePath));
-    const directories =
-        configPath === undefined
-            ? []
-            : [
-                  ...fs
-                      .readFileSync(configPath, 'utf8')
-                      .matchAll(/<directory[^>]*>([^<]+)<\/directory>/g),
-              ].map((match) =>
-                  match[1].trim().replace(/^\.\//, '').replace(/\/+$/, ''),
-              );
-
+export function findErasureCiViolations(targetRoot) {
     if (
-        directories.includes('tests') ||
-        directories.includes('tests/Erasure')
+        /^\s*(?:-\s+)?run:\s*node tests\/Erasure\/run\.mjs\s*$/m.test(
+            readWorkflowsText(targetRoot),
+        )
     ) {
         return [];
     }
 
     return [
-        'erasure: phpunit.xml does not discover tests/Erasure, so `vendor/bin/pest` would skip the suite. Add <directory>tests/Erasure</directory> to a test suite (or list tests/).',
+        'erasure: no workflow step runs `node tests/Erasure/run.mjs`, so CI would not prove the suite ran. Add `- run: node tests/Erasure/run.mjs` to the job that runs Pest.',
     ];
 }
 
@@ -1210,7 +1202,7 @@ export function syncStandards(
         messages.push(...findConventionViolations(targetRoot, config));
 
         if (isErasureSuiteInstalled(config)) {
-            messages.push(...findErasureDiscoveryViolations(targetRoot));
+            messages.push(...findErasureCiViolations(targetRoot));
         }
     }
 

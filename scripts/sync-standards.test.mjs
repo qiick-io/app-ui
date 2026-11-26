@@ -190,48 +190,43 @@ test('the repo-owned conformance hooks file is written once and never overwritte
     assert.match(read(root, 'tests/Conformance/hooks.php'), /assertErasure/);
 });
 
-/** A phpunit.xml whose suite discovers every folder under tests/. */
-const PHPUNIT_WITH_TESTS =
-    '<phpunit><testsuites><testsuite name="All"><directory>./tests</directory></testsuite></testsuites></phpunit>\n';
+/** A package CI step that runs the erasure suite by path and proves it ran. */
+const ERASURE_CI_FILES = {
+    '.github/workflows/tests.yml':
+        'jobs:\n  tests:\n    steps:\n      - run: vendor/bin/pest\n      - run: node tests/Erasure/run.mjs\n',
+};
 
-test('an opted-in package must let Pest discover the erasure suite', () => {
-    /** @param {string} directories */
-    const phpunit = (directories) =>
-        `<phpunit><testsuites><testsuite name="Package">${directories}</testsuite></testsuites></phpunit>\n`;
-    const hiddenSuiteRepo = makeRepo(
+test('an opted-in package CI must run the erasure suite by path, whatever phpunit.xml excludes', () => {
+    const phpunitExcludingSuite =
+        '<phpunit><testsuites><testsuite name="All"><directory>tests</directory><exclude>tests/Erasure</exclude></testsuite></testsuites></phpunit>\n';
+    const excludedSuiteRepo = makeRepo(
+        { php: true, package: true, erasure: true },
+        { 'phpunit.xml': phpunitExcludingSuite },
+    );
+    const silencedStepRepo = makeRepo(
         { php: true, package: true, erasure: true },
         {
-            'phpunit.xml': phpunit(
-                '<directory>tests/Arch</directory><directory>tests/Feature</directory>',
-            ),
+            '.github/workflows/tests.yml':
+                'jobs:\n  tests:\n    steps:\n      - run: node tests/Erasure/run.mjs || true\n',
         },
     );
-    const missingConfigRepo = makeRepo({
-        php: true,
-        package: true,
-        erasure: true,
-    });
-    const listedSuiteRepo = makeRepo(
+    const runningRepo = makeRepo(
         { php: true, package: true, erasure: true },
-        {
-            'phpunit.xml.dist': phpunit(
-                '<directory>tests/Feature</directory><directory>./tests/Erasure/</directory>',
-            ),
-        },
+        { 'phpunit.xml': phpunitExcludingSuite, ...ERASURE_CI_FILES },
     );
 
     /** @param {string} root */
-    const discoveryErrors = (root) => {
+    const ciErrors = (root) => {
         syncStandards(root, { isCheck: false });
 
         return syncStandards(root, { isCheck: true }).filter((message) =>
-            message.includes('discover'),
+            message.includes('tests/Erasure/run.mjs'),
         );
     };
 
-    assert.equal(discoveryErrors(hiddenSuiteRepo).length, 1);
-    assert.equal(discoveryErrors(missingConfigRepo).length, 1);
-    assert.deepEqual(discoveryErrors(listedSuiteRepo), []);
+    assert.equal(ciErrors(excludedSuiteRepo).length, 1);
+    assert.equal(ciErrors(silencedStepRepo).length, 1);
+    assert.deepEqual(ciErrors(runningRepo), []);
 });
 
 test('erasure:true without php:true is an error, not a silent no-op', () => {
@@ -250,7 +245,7 @@ test('PHP repos get the erasure standard; only erasure:true repos get the suite'
     const packageRepo = makeRepo({ php: true, package: true });
     const optedInPackageRepo = makeRepo(
         { php: true, package: true, erasure: true },
-        { 'phpunit.xml': PHPUNIT_WITH_TESTS },
+        ERASURE_CI_FILES,
     );
     const optedOutPackageRepo = makeRepo({
         php: true,
@@ -347,7 +342,7 @@ test('from 1.0 on, a package that has not opted in to erasure fails the check', 
         { php: true, package: true, erasure: true },
         {
             'CHANGELOG.md': changelog('## [1.2.0] - 2026-12-01'),
-            'phpunit.xml': PHPUNIT_WITH_TESTS,
+            ...ERASURE_CI_FILES,
         },
     );
 
@@ -476,7 +471,7 @@ test('the repo-owned erasure fixture is written once and never overwritten', () 
     const root = makeRepo(
         { php: true, package: true, erasure: true },
         {
-            'phpunit.xml': PHPUNIT_WITH_TESTS,
+            ...ERASURE_CI_FILES,
             'tests/Erasure/fixture.php':
                 '<?php\n\ndeclare(strict_types=1);\n\nreturn new PackageErasureFixture();\n',
         },

@@ -132,6 +132,10 @@ final class DemoEraser
             Log::info('Erasing a profile', ['national_id' => $profiles()->value('national_id')]);
         }
 
+        if (self::$defect === 'log_identifier_on_dry_run' && $dryRun && $identifiers !== []) {
+            Log::info('Would erase '.$identifiers[0]);
+        }
+
         if (self::$defect === 'log_identifier_on_anonymise' && ! $isDeleting && $identifiers !== []) {
             Log::info('Anonymising '.$identifiers[0]);
         }
@@ -163,6 +167,9 @@ final class DemoEraser
                 DB::table('demo_profiles')->delete();
             } elseif ($profileCount > 0 && self::$defect === 'org_scrub_keep_national_id' && $organisationId !== null) {
                 $profiles()->update(['user_id' => 'erased', 'email' => null, 'ip_address' => null]);
+            } elseif ($profileCount > 0 && $isDeleting && self::$defect === 'tombstone_on_delete') {
+                // Compliant: audit evidence kept as a constant tombstone, nothing of the person left.
+                $profiles()->update(['user_id' => 'erased', 'email' => null, 'ip_address' => null, 'national_id' => null]);
             } elseif ($profileCount > 0 && $isDeleting) {
                 $profiles()->delete();
             } elseif ($profileCount > 0) {
@@ -190,7 +197,7 @@ final class DemoEraser
             event(new SubjectErasedEvent($report));
         }
 
-        if (self::$defect === 'no_transaction') {
+        if (self::$defect === 'no_transaction' || (self::$defect === 'anonymise_without_transaction' && ! $isDeleting)) {
             $writeStores();
         } elseif (self::$defect === 'swallow_failure') {
             try {
@@ -205,6 +212,10 @@ final class DemoEraser
         // Stores outside the package's transaction follow only once it commits.
         DB::afterCommit(function () use ($cacheKey, $report, $isGlobalRun, $avatarPath, $archiveEntries, $isDeleting): void {
             $isCacheKept = self::$defect === 'keep_cache' || (self::$defect === 'keep_cache_on_anonymise' && ! $isDeleting);
+
+            if (self::$defect === 'cache_audit_email' && Cache::has($cacheKey)) {
+                Cache::put("demo-audit:{$cacheKey}", Cache::get($cacheKey), 3600);
+            }
 
             if ($isGlobalRun && ! $isCacheKept) {
                 Cache::forget($cacheKey);
@@ -252,6 +263,10 @@ final class DemoEraser
         foreach ($identifiers as $identifier) {
             if (self::$defect === 'trim_before_type_check' && trim($identifier) === '') {
                 throw new InvalidArgumentException('Every identifier must be a non-empty string.');
+            }
+
+            if (! is_string($identifier) && self::$defect === 'echo_non_string_identifier') {
+                throw new InvalidArgumentException("Invalid identifier: {$identifier}");
             }
 
             if (! is_string($identifier)) {

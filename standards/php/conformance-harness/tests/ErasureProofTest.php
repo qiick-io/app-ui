@@ -132,6 +132,11 @@ it('RED: a cheat fails its check', function (string $checkId, ?string $defect, a
     'E5: a dry run that replaces a declared file' => ['E5', 'dry_run_replaces_avatar', []],
     'E9: a row on another connection deleted before the failing write' => ['E9', 'archive_before_primary', []],
     'E11: an identifier trimmed before its type is checked' => ['E11', 'trim_before_type_check', []],
+    'E12: an email moved into an other column of the scoped row' => ['E12', 'copy_email_to_note', []],
+    'E13: the email rewritten to a new key of the declared store' => ['E13', 'cache_audit_email', []],
+    'E5: a dry run that logs an identifier' => ['E5', 'log_identifier_on_dry_run', []],
+    'E9: an anonymise run without a transaction' => ['E9', 'anonymise_without_transaction', []],
+    'E11: an exception that echoes a non-string identifier' => ['E11', 'echo_non_string_identifier', []],
 ]);
 
 it('GREEN: a retained column declared cleartext, with its reason and its report entry, passes E3', function (): void {
@@ -143,6 +148,26 @@ it('GREEN: a retained column declared cleartext, with its reason and its report 
 
     expect(true)->toBeTrue();
 });
+
+it('GREEN: E12 passes on a tombstone kept by both modes', function (): void {
+    DemoEraser::$defect = 'tombstone_on_delete';
+
+    (new ErasureConformanceRunner(new DemoErasureFixture()))->run('E12');
+
+    expect(true)->toBeTrue();
+});
+
+it('RED: E3b fails on two tables of one name in different schemas, which the suite cannot tell apart', function (): void {
+    DB::statement('CREATE SCHEMA erasure_legacy');
+
+    try {
+        DB::statement('CREATE TABLE erasure_legacy.demo_profiles (id integer, email varchar(255))');
+
+        expectErasureCheckFails(new ErasureConformanceRunner(new DemoErasureFixture()), 'E3b');
+    } finally {
+        DB::statement('DROP SCHEMA erasure_legacy CASCADE');
+    }
+})->skip(fn (): bool => DB::connection()->getDriverName() !== 'pgsql', 'schemas within one database are PostgreSQL only');
 
 it('RED: E3b fails on a system-versioned personal table, whose history keeps the erased rows', function (): void {
     DB::statement('ALTER TABLE demo_profiles ADD SYSTEM VERSIONING');

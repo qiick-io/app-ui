@@ -11,8 +11,8 @@ use Illuminate\Log\Events\MessageLogged;
 
 /**
  * Records, while one erasure or one seeding runs, the package's own events
- * and every log record, as flat lists of strings, and the cache keys written,
- * so E5, E7, E8 and E13 can inspect them.
+ * and every log record, as flat lists of strings, and the cache entries
+ * written with the strings of their values, so E5, E7, E8 and E13 can inspect them.
  *
  * It listens through a wildcard listener that cannot be removed again, so
  * stop() only disarms it.
@@ -27,6 +27,9 @@ final class ErasureRecording
 
     /** @var list<string> */
     private array $writtenCacheEntries = [];
+
+    /** @var list<array{0: string, 1: string, 2: list<string>}> store, key and the strings of the value */
+    private array $writtenCacheValues = [];
 
     private bool $isRecording = true;
 
@@ -52,7 +55,9 @@ final class ErasureRecording
         }
 
         if ($eventName === KeyWritten::class && ($payload[0] ?? null) instanceof KeyWritten) {
-            $this->writtenCacheEntries[] = ($payload[0]->storeName ?? Cache::getDefaultDriver()).'|'.$payload[0]->key;
+            $storeName = $payload[0]->storeName ?? Cache::getDefaultDriver();
+            $this->writtenCacheEntries[] = $storeName.'|'.$payload[0]->key;
+            $this->writtenCacheValues[] = [$storeName, $payload[0]->key, $this->collectStrings($payload[0]->value)];
 
             return;
         }
@@ -85,6 +90,14 @@ final class ErasureRecording
     public function writtenCacheEntries(): array
     {
         return $this->writtenCacheEntries;
+    }
+
+    /**
+     * @return list<array{0: string, 1: string, 2: list<string>}>
+     */
+    public function writtenCacheValues(): array
+    {
+        return $this->writtenCacheValues;
     }
 
     /**
