@@ -13,13 +13,16 @@
     },
     "autoload": {
         "psr-4": {
-            "Qiick\\Standards\\Conformance\\": "../conformance/"
+            "Qiick\\Standards\\Conformance\\": "../conformance/",
+            "Qiick\\Standards\\Erasure\\": "../erasure/"
         }
     },
     "autoload-dev": {
         "psr-4": {
             "Qiick\\ConformanceHarness\\": "src/",
-            "Tests\\": "tests/"
+            "Tests\\": "tests/",
+            "Qiick\\Demo\\": "demo/",
+            "Qiick\\DemoBroken\\": "demo-broken/"
         }
     },
     "scripts": {

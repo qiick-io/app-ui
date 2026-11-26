@@ -100,7 +100,8 @@ jobs:
           test -z "$(git status --porcelain -- public/r)"
 
   # RED/GREEN proofs for every fleet conformance check (standards/php/conformance-harness).
-  # Engine-dependent proofs also run on PostgreSQL, MySQL and MariaDB service containers.
+  # Engine-dependent proofs also run on the engines and versions the products'
+  # package matrix pins (standards/package-matrix.json): PostgreSQL 17, MySQL 8.4, MariaDB 11.4.
   conformance:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -110,7 +111,7 @@ jobs:
         database: [sqlite, pgsql, mysql, mariadb]
     services:
       postgres:
-        image: postgres:16
+        image: postgres:17@sha256:87c8b42f423b45d5247e6aa8fdb2e7762fec164c68a50fe3eb07e7bfcaf4dbcf
         env:
           POSTGRES_DB: conformance
           POSTGRES_USER: conformance
@@ -123,7 +124,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       mysql:
-        image: mysql:8.4
+        image: mysql:8.4@sha256:8c233bad33d520a7aae1c1e619c3a9775f4a1ba2d463d692fada04ec7f40be00
         env:
           MYSQL_DATABASE: conformance
           MYSQL_USER: conformance
@@ -137,7 +138,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
       mariadb:
-        image: mariadb:11.4
+        image: mariadb:11.4@sha256:a8992b5e5404d11e03c54a31d0c1bdea3fd116d283aa6d1a627551f29045309b
         env:
           MARIADB_DATABASE: conformance
           MARIADB_USER: conformance
