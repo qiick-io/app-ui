@@ -54,7 +54,11 @@ changes:
 | anything else                                    | lint, PHPStan and Pest on the highest cell (highest PHP, highest Laravel, `stable`, SQLite) |
 | `composer.json` or `src/`                        | also the lowest cell (lowest PHP, lowest Laravel, `lowest`)                                 |
 | `database/`, models, stores, queries, migrations | also the server databases (PostgreSQL, MySQL, MariaDB)                                      |
+| `src/Erasure/`, `tests/Erasure/`, workflow YAML  | also the server databases for erasure verification                                          |
 | classes in `src/` (not `src/Testing/`)           | mutation on those classes only, with the per-class gate; a deleted class is not mutated     |
+
+Any `.github/workflows/*.yml` or `.yaml` file can contain the erasure CI step,
+so changes to those files select the server databases too.
 
 On push to `develop` and `main`, nightly and on `workflow_dispatch`, the
 `full` variant runs everything: the whole matrix, the databases, mutation on

@@ -301,6 +301,24 @@ test('the pull request variant runs only what the changed files can break', () =
     );
 });
 
+test('erasure source, tests and workflow changes select the server databases', () => {
+    const document = JSON.parse(fs.readFileSync(packageMatrixJsonPath, 'utf8'));
+    const fullMatrix = createPackageMatrixOutputs(document, []).matrix;
+
+    for (const changedFile of [
+        'src/Erasure/ErasePersonAction.php',
+        'tests/Erasure/fixture.php',
+        'tests/Erasure/run.mjs',
+        '.github/workflows/ci.yml',
+        '.github/workflows/erasure.yaml',
+    ]) {
+        const plan = createPullRequestPlan(document, fullMatrix, [changedFile]);
+
+        assert.equal(plan.runDatabases, true, changedFile);
+        assert.equal(plan.matrix.include[0].skip, false, changedFile);
+    }
+});
+
 test('the lowest cell follows a package PHP exclusion', () => {
     const document = JSON.parse(fs.readFileSync(packageMatrixJsonPath, 'utf8'));
     const fullMatrix = createPackageMatrixOutputs(document, ['8.3']).matrix;
