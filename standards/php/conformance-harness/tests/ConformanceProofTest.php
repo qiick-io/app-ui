@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Illuminate\Contracts\Auth\Access\Authorizable;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
@@ -82,7 +84,7 @@ function hookedBehaviourCheckIds(): array
     return [
         'C7', 'C8', 'C13', 'C17', 'C19', 'C20', 'C21', 'C22', 'C23', 'C24', 'C25',
         'C27', 'C28', 'C29', 'C30', 'C31', 'C32',
-        'C71', 'C73', 'C74',
+        'C71', 'C73', 'C74', 'C77',
     ];
 }
 
@@ -127,6 +129,40 @@ describe('GREEN fixture', function (): void {
 });
 
 describe('RED fixtures', function (): void {
+    it('C77 rejects an unproven or unsafe super-admin policy decision', function (array $callables, string $expectedError): void {
+        $runner = new ConformanceRunner(
+            harnessBasePath(),
+            new ConformanceHooks(['usesLaravelAccess' => true], $callables),
+            new SchemaInspector(),
+        );
+
+        expect(fn () => $runner->run(catalogById()['C77']))->toThrow(RuntimeException::class, $expectedError);
+    })->with([
+        'missing hook' => [[], 'Conformance hook "policySuperAdminDecisions" is required'],
+        'no web grant' => [
+            ['policySuperAdminDecisions' => static fn (): array => ['web' => false, 'api' => false]],
+            'must report a super-admin web actor allowed',
+        ],
+        'missing API verdict' => [
+            ['policySuperAdminDecisions' => static fn (): array => ['web' => true]],
+            'did not report a denial',
+        ],
+        'API actor inherits super-admin' => [
+            ['policySuperAdminDecisions' => static fn (): array => ['web' => true, 'api' => true]],
+            'granted super-admin authority to an API actor',
+        ],
+    ]);
+
+    it('C77 is inapplicable to products without laravel-access', function (): void {
+        $hooks = new ConformanceHooks([], [
+            'policySuperAdminDecisions' => static fn (): never => throw new RuntimeException('C77 ran for a product without laravel-access.'),
+        ]);
+
+        $runner = new ConformanceRunner(harnessBasePath(), $hooks, new SchemaInspector());
+
+        expect(fn () => $runner->run(catalogById()['C77']))->not->toThrow(RuntimeException::class);
+    });
+
     it('C1 goes red when public_id is missing', function (): void {
         GreenSchema::migrate();
         // Dependent FKs block DROP users on PostgreSQL; remove them first.
@@ -684,6 +720,15 @@ YAML);
         GreenSchema::migrate();
         config(['permission.register_permission_check_method' => false]);
         Gate::before(static fn (): ?bool => true);
+
+        expect(fn () => runCheck('C71'))
+            ->toThrow(RuntimeException::class, 'Gate::before callback granted');
+    });
+
+    it('C71 detects a Spatie callback after an Authenticatable-only Gate::before', function (): void {
+        Gate::before(static fn (?Authenticatable $actor): ?bool => null);
+        Gate::before(static fn (Authorizable $actor, string $ability): ?bool => method_exists($actor, 'checkPermissionTo')
+            && $actor->checkPermissionTo($ability) ? true : null);
 
         expect(fn () => runCheck('C71'))
             ->toThrow(RuntimeException::class, 'Gate::before callback granted');

@@ -17,7 +17,7 @@ declare(strict_types=1);
  * Omit a key until the product is ready; the check fails until you implement
  * it or declare a divergence in `qiick-standards.json`.
  *
- * @return array<string, callable(\Qiick\Standards\Conformance\Support\ConformanceBehaviourProbe|null): void>
+ * @return array<string, callable>
  */
 return [
     // C3 needs one users row. It uses the factory of conformance.userModel; without
@@ -47,4 +47,6 @@ return [
     // 'assertExpiredMembershipGrantsNothing' => function ($probe): void { ... },
     // C74:
     // 'assertAccessActivityUuidOnly' => function ($probe): void { ... },
+    // C77 — return the actual policy decisions for the same user, ability and subject:
+    // 'policySuperAdminDecisions' => function (): array { ... return ['web' => $isWebAllowed, 'api' => $isApiAllowed]; },
 ];

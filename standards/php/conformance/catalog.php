@@ -248,7 +248,7 @@ return [
     [
         'id' => 'C71',
         'tag' => 'behaviour',
-        'description' => 'events_enabled true, register_permission_check_method false, Gate::before inactive for Spatie-shaped non-user actors; role detach clears resolver and API actors are denied super-admin (proved hooks; usesLaravelAccess)',
+        'description' => 'events_enabled true, register_permission_check_method false, Gate::before inactive for Spatie-shaped generic actors; role detach clears resolver and API actors are denied super-admin (proved hooks; usesLaravelAccess)',
         'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
     ],
     [
@@ -280,5 +280,11 @@ return [
         'tag' => 'schema',
         'description' => 'Every foreign key is served by an index: its columns lead an index, unique index or primary key of its table (every engine; PostgreSQL and SQLite never add one themselves)',
         'decision' => 'knowledge/decisions/2026-11-24-fleet-conventions',
+    ],
+    [
+        'id' => 'C77',
+        'tag' => 'behaviour',
+        'description' => 'The same super-admin user passes a product policy exception as a web actor and is denied as a scoped API actor (usesLaravelAccess)',
+        'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
     ],
 ];

@@ -103,6 +103,7 @@ MySQL and MariaDB).
 | C74 | behaviour | Role/group/membership activity properties use public UUIDs only, proved via probe (usesLaravelAccess)                                                                                                              | [laravel-access](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-22-laravel-access-package.md)                                                    |
 | C75 | schema    | Access group tables (incl. `organisation_id` / `is_instance` XOR) + bidirectional Spatie allowlist; migration scan (usesLaravelAccess)                                                                             | [laravel-access](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-22-laravel-access-package.md)                                                    |
 | C76 | schema    | Every foreign key is served by an index: its columns lead an index, unique index or primary key of its table (every engine; packages run the same `SchemaInspector::foreignKeysWithoutIndex()` in their own suite) | [fleet-conventions](https://github.com/LucaGiardi20/knowledge/blob/main/decisions/2026-11-24-fleet-conventions.md)                                                      |
+| C77 | behaviour | A product policy grants a super-admin exception to the web actor and denies it to a scoped API actor for the same user, ability and subject (usesLaravelAccess)                                                    | [laravel-access #49](https://github.com/qiick-io/laravel-access/issues/49)                                                                                              |
 
 Source of the ordered list: merged OpenCode cross-review §5 and Cursor cross-review §5
 (2026-11-20), with Cursor's `permission:setup-teams` check kept as C36 and the
@@ -140,14 +141,14 @@ hook instead. Only when neither exists does it insert a minimal row, which
 fails on any extra `NOT NULL` column without a default (excubia's
 `first_name`).
 
-## Access-package checks (C71–C75)
+## Access-package checks (C71–C75, C77)
 
 Set `conformance.usesLaravelAccess: true` when the product adopts
-`qiick/laravel-access`. Until then the five checks are no-ops.
+`qiick/laravel-access`. Until then these checks are no-ops.
 
 - **C71:** `permission.events_enabled === true`,
   `permission.register_permission_check_method === false`, and a runtime
-  `Gate::before` probe (a Spatie-shaped non-user actor must not be granted);
+  `Gate::before` probe (a Spatie-shaped `GenericUser` must be denied);
   proved hooks `assertRoleDetachClearsResolver` and
   `assertApiActorDeniedSuperAdmin`.
 - **C73:** proved hook `assertExpiredMembershipGrantsNothing`.
@@ -161,6 +162,15 @@ Set `conformance.usesLaravelAccess: true` when the product adopts
   concatenation heuristics) is only an extra signal. Comments are stripped so
   examples do not false-positive. Externa 1.x keeps the columns unused
   (`is_instance=false`, `organisation_id` null) with teams off.
+- **C77:** the `policySuperAdminDecisions` hook returns the actual verdicts
+  `['web' => $isWebAllowed, 'api' => $isApiAllowed]` from a real product policy.
+  Use the same super-admin, ability and subject in both calls. Choose a policy
+  whose super-admin exception is necessary for that subject and give the API
+  credential the ordinary scopes needed to reach it. Evaluate it with
+  `Gate::forUser($actor)->allows($ability, $subject)` under both the web session
+  and the verified API actor context, then restore the actor and guard state.
+  The runner requires `true` for web and `false` for API. The product hook
+  supplies the fixture and is reviewed to ensure both calls reach the policy.
 
 Source: `knowledge/projects/qiick/packages/laravel-access-standards-review.md`
 §3.3.

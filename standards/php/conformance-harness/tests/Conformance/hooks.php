@@ -10,7 +10,7 @@ use Qiick\Standards\Conformance\Support\ConformanceBehaviourProbe;
  * must call `$probe->pass()`; an empty no-op stays red. Other checks still use
  * presence-only callables.
  *
- * @return array<string, callable(ConformanceBehaviourProbe|null): void>
+ * @return array<string, callable>
  */
 return [
     'assertSoftDeletedGroupGrantsNothing' => static function (): void {},
@@ -43,4 +43,5 @@ return [
     'assertAccessActivityUuidOnly' => static function (?ConformanceBehaviourProbe $probe = null): void {
         $probe?->pass();
     },
+    'policySuperAdminDecisions' => static fn (): array => ['web' => true, 'api' => false],
 ];
