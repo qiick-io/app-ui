@@ -17,6 +17,8 @@
  *         "eslint": true,                  // repos still on ESLint: the shared ESLint config
  *         "app": true,                     // self-hosted app: stack and distribution rules
  *         "package": true,                 // Composer package: must consume package-matrix.yml
+ *         "erasure": true,                 // package with an eraser: gets tests/Erasure (false: no personal data)
+ *         "erasureExemptReason": "…",      // required with "erasure": false: why the package holds no personal data
  *         "patterns": ["command-palette"], // optional UI patterns it adopts (standards/patterns.json)
  *         "requiredItems": ["page-layout"], // registry items it must install (check-drift.mjs)
  *         "divergences": {                  // registry strings and/or conformance objects
@@ -50,7 +52,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findConventionViolations } from '../standards/scripts/check-conventions.mjs';
-import { findPackageMatrixViolations } from '../standards/scripts/check-package-matrix.mjs';
+import {
+    findPackageMatrixViolations,
+    listWorkflowFiles,
+} from '../standards/scripts/check-package-matrix.mjs';
 
 const CONFIG_FILE = 'qiick-standards.json';
 const SOURCE_URL = 'https://github.com/qiick-io/app-ui/tree/develop/standards';
@@ -225,9 +230,12 @@ function renderRulePages(config, catalogue) {
         ...(config.app ? { stack: readSource('rules/stack.md') } : {}),
         code: readSource('rules/code.md'),
         graphify: readSource('rules/graphify.md'),
-        ...(config.php ? { backend: readSource('rules/backend.md') } : {}),
         ...(config.php
-            ? { conventions: readSource('rules/conventions.md') }
+            ? {
+                  backend: readSource('rules/backend.md'),
+                  conventions: readSource('rules/conventions.md'),
+                  erasure: readSource('rules/erasure.md'),
+              }
             : {}),
         ...(config.package
             ? { dependencies: readSource('rules/dependencies.md') }
@@ -349,7 +357,7 @@ const cursorRule = (description, frontmatter, body) =>
 
 /**
  * Everything the pack writes into a repo with this config.
- * @param {{ uiPreset?: string, php?: boolean, eslint?: boolean, oxlint?: boolean, app?: boolean, package?: boolean, conventions?: object, frontendRoots?: string[], patterns?: string[] }} config
+ * @param {{ uiPreset?: string, php?: boolean, eslint?: boolean, oxlint?: boolean, app?: boolean, package?: boolean, conventions?: object, frontendRoots?: string[], patterns?: string[], erasure?: boolean }} config
  * @param {PatternCatalogue} [catalogue] - Defaults to `standards/patterns.json`
  * @returns {{ path: string, kind: 'file' | 'block' | 'template', content: string }[]}
  */
@@ -431,6 +439,15 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
             content: readSource('rules/comments.md'),
         },
     ];
+
+    // F8 / C76: packages prove foreign key indexes in their own suite (the conformance suite is app-scoped).
+    if (config.package && config.php) {
+        outputs.push({
+            path: 'tests/Feature/ForeignKeyIndexTest.php',
+            kind: 'template',
+            content: readSource('php/ForeignKeyIndexTest.php'),
+        });
+    }
 
     if (config.package) {
         outputs.push({
@@ -524,6 +541,26 @@ export function renderOutputs(config, catalogue = readPatternCatalogue()) {
                 path: `tests/Conformance/${posixRelative}`,
                 kind: 'file',
                 content: readSource(`php/conformance/${posixRelative}`),
+            });
+        }
+    }
+
+    // Package erasure suite (E1–E14): opt-in, so a re-sync never turns a package
+    // red before it has an eraser; each package sets `"erasure": true` in the PR
+    // that adds its eraser. fixture.php is the package's own.
+    if (isErasureSuiteInstalled(config)) {
+        const erasureRoot = path.join(standardsRoot, 'php/erasure');
+
+        for (const absolutePath of listFilesRecursive(erasureRoot)) {
+            const posixRelative = path
+                .relative(erasureRoot, absolutePath)
+                .split(path.sep)
+                .join('/');
+
+            outputs.push({
+                path: `tests/Erasure/${posixRelative}`,
+                kind: posixRelative === 'fixture.php' ? 'template' : 'file',
+                content: readSource(`php/erasure/${posixRelative}`),
             });
         }
     }
@@ -924,14 +961,208 @@ export function findDependencyRegisterViolations(targetRoot) {
 }
 
 /**
+ * One predicate for rendering the erasure suite and for removing it again.
+ *
+ * @param {{ php?: boolean, erasure?: boolean }} config
+ * @returns {boolean}
+ */
+function isErasureSuiteInstalled(config) {
+    return config.php === true && config.erasure === true;
+}
+
+/**
+ * The installed suite proves nothing unless CI runs it, and phpunit.xml can
+ * leave it out of an ordinary `vendor/bin/pest` (an `<exclude>`, a suite, a
+ * group filter). So a workflow must run the managed `tests/Erasure/run.mjs` as
+ * a step of its own: it runs the suite by path and fails unless every check
+ * passed. The step must be that command alone, so `|| true` cannot silence it;
+ * neither the step nor its job may set `continue-on-error`; and when
+ * `qiick-standards.json` lists the repo's `requiredChecks`, one of them must
+ * name the job.
+ *
+ * shortcut: reads the workflow text by indentation, not as YAML, so a job that
+ * never runs on pull requests or a matrix leg that skips the step still
+ * passes; parse the YAML if a package is found doing that.
+ *
  * @param {string} targetRoot
- * @param {{ isCheck: boolean, catalogue?: PatternCatalogue }} options
+ * @param {{ requiredChecks?: string[] }} config
+ * @returns {string[]} Errors, empty when CI runs the suite
+ */
+export function findErasureCiViolations(targetRoot, config) {
+    const stepProblems = [];
+
+    for (const workflowPath of listWorkflowFiles(targetRoot)) {
+        const lines = fs.readFileSync(workflowPath, 'utf8').split('\n');
+
+        lines.forEach((line, lineIndex) => {
+            if (
+                !/^\s*-\s+run:\s*node tests\/Erasure\/run\.mjs\s*$/.test(line)
+            ) {
+                return;
+            }
+
+            const problem = findErasureStepProblem(lines, lineIndex, config);
+
+            if (problem === null) {
+                stepProblems.push(null);
+            } else {
+                stepProblems.push(
+                    `${path.relative(targetRoot, workflowPath)}:${lineIndex + 1} ${problem}`,
+                );
+            }
+        });
+    }
+
+    if (stepProblems.includes(null)) {
+        return [];
+    }
+
+    if (stepProblems.length > 0) {
+        return stepProblems.map(
+            (problem) =>
+                `erasure: the \`node tests/Erasure/run.mjs\` step at ${problem}.`,
+        );
+    }
+
+    return [
+        'erasure: no workflow step runs `node tests/Erasure/run.mjs`, so CI would not prove the suite ran. Add `- run: node tests/Erasure/run.mjs` to the job that runs Pest.',
+    ];
+}
+
+/**
+ * Why one `run.mjs` step might not fail CI, or null when it must. Strict on
+ * purpose: anything in the job that could tolerate a failure (a
+ * `continue-on-error` that is not `false`, in any quoting, a `set +e`, a
+ * custom shell, an `if:` on the step) rejects it, and the job's name must be
+ * one of `requiredChecks` exactly (a `${{ }}` in it matches one matrix value).
+ *
+ * @param {string[]} lines the workflow's lines
+ * @param {number} stepIndex the step's `- run:` line
+ * @param {{ requiredChecks?: string[] }} config
+ * @returns {string | null}
+ */
+function findErasureStepProblem(lines, stepIndex, config) {
+    const indentOf = (line) => line.search(/\S/);
+    const isCode = (line) => line.trim() !== '' && !line.trim().startsWith('#');
+    const keyPattern = (key) =>
+        new RegExp(`^\\s*(?:-\\s+)?["']?${key}["']?\\s*:\\s*(.*)$`);
+    const stepIndent = indentOf(lines[stepIndex]);
+    const stepEnd = lines.findIndex(
+        (line, index) =>
+            index > stepIndex && isCode(line) && indentOf(line) <= stepIndent,
+    );
+    const stepLines = lines.slice(
+        stepIndex + 1,
+        stepEnd === -1 ? lines.length : stepEnd,
+    );
+
+    if (stepLines.some((line) => isCode(line) && keyPattern('if').test(line))) {
+        return 'has an if: that can skip it';
+    }
+
+    const jobStart = lines
+        .slice(0, stepIndex)
+        .findLastIndex((line) => /^ {2}["']?[\w-]+["']?:\s*$/.test(line));
+    const jobEnd = lines.findIndex(
+        (line, index) =>
+            index > jobStart && /^ {0,2}\S/.test(line) && isCode(line),
+    );
+    const jobLines = lines.slice(
+        jobStart,
+        jobEnd === -1 ? lines.length : jobEnd,
+    );
+    // The workflow-level `defaults:` can set the shell of every job.
+    const scannedLines = [
+        ...jobLines,
+        ...lines.filter(
+            (line) => /^\s+shell\s*:/.test(line) && indentOf(line) < 4,
+        ),
+    ].filter(isCode);
+    const isTolerated = scannedLines.some((line) => {
+        const continueOnError = line.match(keyPattern('continue-on-error'));
+
+        return (
+            (continueOnError !== null &&
+                !/^["']?false["']?\s*(?:#.*)?$/.test(continueOnError[1])) ||
+            /set\s+\+e/.test(line) ||
+            keyPattern('shell').test(line)
+        );
+    });
+
+    if (isTolerated) {
+        return 'is in a job that can tolerate its failure (continue-on-error, set +e or a custom shell)';
+    }
+
+    const requiredChecks = config.requiredChecks ?? [];
+    const jobKey = jobLines[0]?.trim().replace(/["':]/g, '') ?? '';
+    const jobName =
+        jobLines
+            .find((line) => /^ {4}name\s*:/.test(line))
+            ?.replace(/^ {4}name\s*:\s*/, '')
+            .replace(/^["']|["']\s*$/g, '')
+            .trim() || jobKey;
+    const jobNamePattern = new RegExp(
+        `^${jobName
+            .split(/\$\{\{.*?\}\}/)
+            .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .join('[^/]+')}$`,
+    );
+
+    if (
+        requiredChecks.length > 0 &&
+        !requiredChecks.some((check) => jobNamePattern.test(check))
+    ) {
+        return `is in the job "${jobName}", which is not one of requiredChecks in qiick-standards.json`;
+    }
+
+    return null;
+}
+
+/**
+ * The synced, never hand-edited files of the erasure suite, as repo paths.
+ *
+ * @returns {string[]}
+ */
+function managedErasurePaths() {
+    const erasureRoot = path.join(standardsRoot, 'php/erasure');
+
+    return listFilesRecursive(erasureRoot)
+        .map((absolutePath) =>
+            path.relative(erasureRoot, absolutePath).split(path.sep).join('/'),
+        )
+        .filter((relativePath) => relativePath !== 'fixture.php')
+        .map((relativePath) => `tests/Erasure/${relativePath}`);
+}
+
+/**
+ * Whether CHANGELOG.md has a stable `## [X.Y.Z]` section with X >= 1: the repo
+ * has released 1.0, or its release PR is preparing it. The changelog, not the
+ * tags, because CI checks out without tags.
+ *
+ * @param {string} targetRoot
+ * @returns {boolean}
+ */
+function hasStableMajorRelease(targetRoot) {
+    const changelogPath = path.join(targetRoot, 'CHANGELOG.md');
+
+    if (!fs.existsSync(changelogPath)) {
+        return false;
+    }
+
+    return /^## \[v?[1-9]\d*\.\d+\.\d+\]/m.test(
+        fs.readFileSync(changelogPath, 'utf8'),
+    );
+}
+
+/**
+ * @param {string} targetRoot
+ * @param {{ isCheck: boolean, catalogue?: PatternCatalogue, warnings?: string[] }} options - `warnings` collects non-blocking findings in check mode
  * @returns {string[]} Errors (check mode) or written paths (sync mode)
  * @throws {Error} In sync mode, when `patterns` names an unknown pattern or variant
  */
 export function syncStandards(
     targetRoot,
-    { isCheck, catalogue = readPatternCatalogue() },
+    { isCheck, catalogue = readPatternCatalogue(), warnings = [] },
 ) {
     const configPath = path.join(targetRoot, CONFIG_FILE);
 
@@ -940,6 +1171,28 @@ export function syncStandards(
     }
 
     const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+
+    // A warning while packages turn the erasure suite on one by one, and an
+    // error from 1.0 on: the 1.0 release PR cannot pass without the decision,
+    // and an exemption (`"erasure": false`) only counts with its reason written down.
+    const hasErasureExemptReason =
+        typeof config.erasureExemptReason === 'string' &&
+        config.erasureExemptReason.trim() !== '';
+    const erasureDecisionMessage =
+        !isCheck || config.package !== true
+            ? null
+            : typeof config.erasure !== 'boolean'
+              ? `erasure: this package has not opted in yet. Set "erasure": true in ${CONFIG_FILE} in the PR that adds its eraser, or "erasure": false with an "erasureExemptReason" if it holds no personal data (.qiick/standards/erasure.md).`
+              : config.erasure === false && !hasErasureExemptReason
+                ? `erasure: "erasure": false needs an "erasureExemptReason" in ${CONFIG_FILE} that says why the package holds no personal data (.qiick/standards/erasure.md).`
+                : null;
+    const isErasureDecisionRequired =
+        erasureDecisionMessage !== null && hasStableMajorRelease(targetRoot);
+
+    if (erasureDecisionMessage !== null && !isErasureDecisionRequired) {
+        warnings.push(erasureDecisionMessage);
+    }
+
     const patternErrors = validatePatterns(config, catalogue);
 
     if (patternErrors.length > 0) {
@@ -951,7 +1204,20 @@ export function syncStandards(
     }
 
     /** @type {string[]} */
-    const messages = [];
+    const messages = isErasureDecisionRequired
+        ? [`${erasureDecisionMessage} Required from 1.0.0 on.`]
+        : [];
+
+    // The suite is PHP: an opt-in without "php": true would install nothing and pass.
+    if (config.erasure === true && config.php !== true) {
+        const message = `erasure: "erasure": true needs "php": true in ${CONFIG_FILE}; without it the suite is never installed.`;
+
+        if (!isCheck) {
+            throw new Error(message);
+        }
+
+        messages.push(message);
+    }
 
     for (const output of renderOutputs(config, catalogue)) {
         const absolutePath = path.join(targetRoot, output.path);
@@ -1015,6 +1281,37 @@ export function syncStandards(
         }
     }
 
+    // A package that opts out loses the managed erasure suite; its own
+    // fixture.php stays, since Pest runs only *Test.php files.
+    if (!isErasureSuiteInstalled(config)) {
+        for (const managedPath of managedErasurePaths()) {
+            const absolutePath = path.join(targetRoot, managedPath);
+
+            if (!fs.existsSync(absolutePath)) {
+                continue;
+            }
+
+            if (isCheck) {
+                messages.push(
+                    `${managedPath} belongs to the erasure suite, which this repo has not opted in to.`,
+                );
+            } else {
+                fs.rmSync(absolutePath);
+                messages.push(managedPath);
+            }
+        }
+
+        const supportDirectory = path.join(targetRoot, 'tests/Erasure/Support');
+
+        if (
+            !isCheck &&
+            fs.existsSync(supportDirectory) &&
+            fs.readdirSync(supportDirectory).length === 0
+        ) {
+            fs.rmdirSync(supportDirectory);
+        }
+    }
+
     if (isCheck) {
         if (config.package) {
             messages.push(...findDependencyRegisterViolations(targetRoot));
@@ -1036,6 +1333,10 @@ export function syncStandards(
         }
 
         messages.push(...findConventionViolations(targetRoot, config));
+
+        if (isErasureSuiteInstalled(config)) {
+            messages.push(...findErasureCiViolations(targetRoot, config));
+        }
     }
 
     return messages;
@@ -1047,7 +1348,18 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         targetFlag === -1 ? process.cwd() : process.argv[targetFlag + 1],
     );
     const isCheck = process.argv.includes('--check');
-    const messages = syncStandards(targetRoot, { isCheck });
+    /** @type {string[]} */
+    const warnings = [];
+    const messages = syncStandards(targetRoot, { isCheck, warnings });
+
+    for (const warning of warnings) {
+        // GitHub Actions shows `::warning::` lines as annotations on the run.
+        console.warn(
+            process.env.GITHUB_ACTIONS === 'true'
+                ? `::warning::${warning}`
+                : `warning: ${warning}`,
+        );
+    }
 
     if (isCheck && messages.length > 0) {
         console.error(`check-standards:\n\n${messages.join('\n')}`);

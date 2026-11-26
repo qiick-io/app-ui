@@ -20,6 +20,9 @@ declare(strict_types=1);
  * @return array<string, callable(\Qiick\Standards\Conformance\Support\ConformanceBehaviourProbe|null): void>
  */
 return [
+    // C3 needs one users row. It uses the factory of conformance.userModel; without
+    // one, return a created user (or its key) here:
+    // 'fixtureUser' => fn () => \App\Models\User::query()->create([...]),
     // 'assertSoftDeletedGroupGrantsNothing' => function (): void { ... },
     // 'assertGlobalRoleGuard' => function (): void { ... },
     // 'assertApiKeyActivityUuid' => function (): void { ... },

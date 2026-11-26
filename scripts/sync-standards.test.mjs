@@ -190,6 +190,430 @@ test('the repo-owned conformance hooks file is written once and never overwritte
     assert.match(read(root, 'tests/Conformance/hooks.php'), /assertErasure/);
 });
 
+/** A package CI step that runs the erasure suite by path and proves it ran. */
+const ERASURE_CI_FILES = {
+    '.github/workflows/tests.yml':
+        'jobs:\n  tests:\n    steps:\n      - run: vendor/bin/pest\n      - run: node tests/Erasure/run.mjs\n',
+};
+
+test('an opted-in package CI must run the erasure suite by path, whatever phpunit.xml excludes', () => {
+    const phpunitExcludingSuite =
+        '<phpunit><testsuites><testsuite name="All"><directory>tests</directory><exclude>tests/Erasure</exclude></testsuite></testsuites></phpunit>\n';
+    const excludedSuiteRepo = makeRepo(
+        { php: true, package: true, erasure: true },
+        { 'phpunit.xml': phpunitExcludingSuite },
+    );
+    const silencedStepRepo = makeRepo(
+        { php: true, package: true, erasure: true },
+        {
+            '.github/workflows/tests.yml':
+                'jobs:\n  tests:\n    steps:\n      - run: node tests/Erasure/run.mjs || true\n',
+        },
+    );
+    const runningRepo = makeRepo(
+        { php: true, package: true, erasure: true },
+        { 'phpunit.xml': phpunitExcludingSuite, ...ERASURE_CI_FILES },
+    );
+
+    /** @param {string} root */
+    const ciErrors = (root) => {
+        syncStandards(root, { isCheck: false });
+
+        return syncStandards(root, { isCheck: true }).filter((message) =>
+            message.includes('tests/Erasure/run.mjs'),
+        );
+    };
+
+    assert.equal(ciErrors(excludedSuiteRepo).length, 1);
+    assert.equal(ciErrors(silencedStepRepo).length, 1);
+    assert.deepEqual(ciErrors(runningRepo), []);
+});
+
+test('the erasure CI step fails when the step or its job tolerates failure, or the job is not required', () => {
+    /** @param {string} job */
+    const workflow = (job) => ({
+        '.github/workflows/tests.yml': `jobs:\n${job}\n  lint:\n    steps:\n      - run: npm run lint\n`,
+    });
+    const tolerantStepRepo = makeRepo(
+        { php: true, package: true, erasure: true },
+        workflow(
+            '  tests:\n    steps:\n      - run: node tests/Erasure/run.mjs\n        continue-on-error: true',
+        ),
+    );
+    const tolerantJobRepo = makeRepo(
+        { php: true, package: true, erasure: true },
+        workflow(
+            '  tests:\n    continue-on-error: ${{ matrix.experimental }}\n    steps:\n      - run: node tests/Erasure/run.mjs',
+        ),
+    );
+    const unrequiredJobRepo = makeRepo(
+        {
+            php: true,
+            package: true,
+            erasure: true,
+            requiredChecks: ['lint', 'app-ui-drift / standards'],
+        },
+        workflow(
+            '  tests:\n    steps:\n      - run: node tests/Erasure/run.mjs',
+        ),
+    );
+    const requiredJobRepo = makeRepo(
+        {
+            php: true,
+            package: true,
+            erasure: true,
+            requiredChecks: ['Tests PHP 8.5', 'lint'],
+        },
+        workflow(
+            '  tests:\n    name: Tests PHP ${{ matrix.php }}\n    continue-on-error: false\n    steps:\n      - run: node tests/Erasure/run.mjs',
+        ),
+    );
+
+    /** @param {string} root */
+    const ciErrors = (root) => {
+        syncStandards(root, { isCheck: false });
+
+        return syncStandards(root, { isCheck: true }).filter((message) =>
+            message.includes('tests/Erasure/run.mjs'),
+        );
+    };
+
+    assert.match(ciErrors(tolerantStepRepo).join(), /tolerate its failure/);
+    assert.match(ciErrors(tolerantJobRepo).join(), /tolerate its failure/);
+    assert.match(ciErrors(unrequiredJobRepo).join(), /requiredChecks/);
+    assert.deepEqual(ciErrors(requiredJobRepo), []);
+});
+
+test('the erasure CI step rejects every way to tolerate its failure, and partial required-check names', () => {
+    const step = '      - run: node tests/Erasure/run.mjs';
+    /** @type {Record<string, [string, string[]?]>} loophole => [jobs, requiredChecks] */
+    const loopholes = {
+        'a shell operator': [
+            '  tests:\n    steps:\n      - run: node tests/Erasure/run.mjs || true',
+        ],
+        'set +e in a multi-line run': [
+            '  tests:\n    steps:\n      - run: |\n          set +e\n          node tests/Erasure/run.mjs',
+        ],
+        'a comment that splits the step from continue-on-error': [
+            `  tests:\n    steps:\n${step}\n      # Temporary waiver.\n        continue-on-error: true`,
+        ],
+        'a quoted continue-on-error key': [
+            `  tests:\n    steps:\n${step}\n        "continue-on-error": true`,
+        ],
+        'continue-on-error as an expression': [
+            `  tests:\n    steps:\n${step}\n        continue-on-error: \${{ github.event_name == 'pull_request' }}`,
+        ],
+        'an if: that can skip the step': [
+            `  tests:\n    steps:\n${step}\n        if: \${{ false }}`,
+        ],
+        'a shell that ignores the exit code': [
+            `  tests:\n    steps:\n${step}\n        shell: bash --noprofile --norc {0} || true`,
+        ],
+        'set +e in a job default shell': [
+            `  tests:\n    defaults:\n      run:\n        shell: bash -c "set +e; {0}"\n    steps:\n${step}`,
+        ],
+        'a required check that only contains the job name': [
+            `  tests:\n    steps:\n${step}`,
+            ['tests-extra'],
+        ],
+    };
+    const ciErrors = (jobs, requiredChecks) => {
+        const root = makeRepo(
+            {
+                php: true,
+                package: true,
+                erasure: true,
+                ...(requiredChecks ? { requiredChecks } : {}),
+            },
+            {
+                '.github/workflows/tests.yml': `on: pull_request\njobs:\n${jobs}\n`,
+            },
+        );
+        syncStandards(root, { isCheck: false });
+
+        return syncStandards(root, { isCheck: true }).filter((message) =>
+            message.includes('tests/Erasure/run.mjs'),
+        );
+    };
+
+    for (const [loophole, [jobs, requiredChecks]] of Object.entries(
+        loopholes,
+    )) {
+        assert.notDeepEqual(ciErrors(jobs, requiredChecks), [], loophole);
+    }
+
+    assert.deepEqual(ciErrors(`  tests:\n    steps:\n${step}`, ['tests']), []);
+    assert.deepEqual(
+        ciErrors(
+            `  tests:\n    name: Tests PHP \${{ matrix.php }}\n    steps:\n${step}`,
+            ['Tests PHP 8.5'],
+        ),
+        [],
+    );
+});
+
+test('erasure:true without php:true is an error, not a silent no-op', () => {
+    const root = makeRepo({ php: false, package: true, erasure: true });
+
+    assert.throws(() => syncStandards(root, { isCheck: false }), /erasure/);
+    assert.ok(
+        syncStandards(root, { isCheck: true }).some((message) =>
+            message.includes('"php": true'),
+        ),
+    );
+});
+
+test('PHP repos get the erasure standard; only erasure:true repos get the suite', () => {
+    const appRepo = makeRepo({ php: true });
+    const packageRepo = makeRepo({ php: true, package: true });
+    const optedInPackageRepo = makeRepo(
+        { php: true, package: true, erasure: true },
+        ERASURE_CI_FILES,
+    );
+    const optedOutPackageRepo = makeRepo({
+        php: true,
+        package: true,
+        erasure: false,
+    });
+
+    for (const root of [
+        appRepo,
+        packageRepo,
+        optedInPackageRepo,
+        optedOutPackageRepo,
+    ]) {
+        syncStandards(root, { isCheck: false });
+    }
+
+    assert.match(read(appRepo, 'AGENTS.md'), /^## Personal data erasure$/m);
+    assert.match(read(appRepo, '.qiick/standards/erasure.md'), /E14/);
+
+    for (const root of [appRepo, packageRepo, optedOutPackageRepo]) {
+        assert.equal(fs.existsSync(path.join(root, 'tests/Erasure')), false);
+    }
+
+    assert.match(
+        read(optedInPackageRepo, 'tests/Erasure/ErasureConformanceTest.php'),
+        /ErasureConformanceRunner::CHECKS/,
+    );
+    assert.ok(
+        fs.existsSync(
+            path.join(
+                optedInPackageRepo,
+                'tests/Erasure/Support/ErasureConformanceRunner.php',
+            ),
+        ),
+    );
+    assert.match(
+        read(optedInPackageRepo, 'tests/Erasure/fixture.php'),
+        /return null;/,
+    );
+    assert.deepEqual(
+        syncStandards(optedInPackageRepo, { isCheck: true }).filter((message) =>
+            message.includes('tests/Erasure'),
+        ),
+        [],
+    );
+});
+
+test('a package that has not opted in to erasure gets a warning, not an error', () => {
+    const undecidedPackageRepo = makeRepo({ php: true, package: true });
+    const decidedPackageRepo = makeRepo({
+        php: true,
+        package: true,
+        erasure: false,
+        erasureExemptReason: 'The package stores no personal data.',
+    });
+    const appRepo = makeRepo({ php: true });
+
+    for (const root of [undecidedPackageRepo, decidedPackageRepo, appRepo]) {
+        syncStandards(root, { isCheck: false });
+    }
+
+    /** @param {string} root */
+    const check = (root) => {
+        /** @type {string[]} */
+        const warnings = [];
+        const errors = syncStandards(root, { isCheck: true, warnings });
+
+        return { warnings, errors };
+    };
+    const undecided = check(undecidedPackageRepo);
+
+    assert.equal(undecided.warnings.length, 1);
+    assert.match(undecided.warnings[0], /"erasure": true/);
+    assert.deepEqual(
+        undecided.errors.filter((message) => message.includes('erasure')),
+        [],
+    );
+    assert.deepEqual(check(decidedPackageRepo).warnings, []);
+    assert.deepEqual(check(appRepo).warnings, []);
+});
+
+test('from 1.0 on, a package that has not opted in to erasure fails the check', () => {
+    const changelog = (heading) =>
+        `# Changelog\n\n## [Unreleased]\n\n${heading}\n\n- Initial release.\n`;
+    const releasedRepo = makeRepo(
+        { php: true, package: true },
+        { 'CHANGELOG.md': changelog('## [1.0.0] - 2026-12-01') },
+    );
+    const betaRepo = makeRepo(
+        { php: true, package: true },
+        { 'CHANGELOG.md': changelog('## [1.0.0-beta.3] - 2026-11-20') },
+    );
+    const decidedReleasedRepo = makeRepo(
+        { php: true, package: true, erasure: true },
+        {
+            'CHANGELOG.md': changelog('## [1.2.0] - 2026-12-01'),
+            ...ERASURE_CI_FILES,
+        },
+    );
+
+    for (const root of [releasedRepo, betaRepo, decidedReleasedRepo]) {
+        syncStandards(root, { isCheck: false });
+    }
+
+    /** @param {string} root */
+    const erasureErrors = (root) =>
+        syncStandards(root, { isCheck: true }).filter((message) =>
+            message.startsWith('erasure:'),
+        );
+
+    assert.equal(erasureErrors(releasedRepo).length, 1);
+    assert.match(erasureErrors(releasedRepo)[0], /Required from 1\.0\.0 on/);
+    assert.deepEqual(erasureErrors(betaRepo), []);
+    assert.deepEqual(erasureErrors(decidedReleasedRepo), []);
+});
+
+test('erasure:false needs a written reason, and from 1.0 on the check fails without one', () => {
+    const releasedChangelog =
+        '# Changelog\n\n## [1.0.0] - 2026-12-01\n\n- Initial release.\n';
+    const unexplainedReleasedRepo = makeRepo(
+        { php: true, package: true, erasure: false },
+        { 'CHANGELOG.md': releasedChangelog },
+    );
+    const blankReasonReleasedRepo = makeRepo(
+        {
+            php: true,
+            package: true,
+            erasure: false,
+            erasureExemptReason: '  ',
+        },
+        { 'CHANGELOG.md': releasedChangelog },
+    );
+    const explainedReleasedRepo = makeRepo(
+        {
+            php: true,
+            package: true,
+            erasure: false,
+            erasureExemptReason: 'The package stores no personal data.',
+        },
+        { 'CHANGELOG.md': releasedChangelog },
+    );
+    const unexplainedBetaRepo = makeRepo({
+        php: true,
+        package: true,
+        erasure: false,
+    });
+
+    for (const root of [
+        unexplainedReleasedRepo,
+        blankReasonReleasedRepo,
+        explainedReleasedRepo,
+        unexplainedBetaRepo,
+    ]) {
+        syncStandards(root, { isCheck: false });
+    }
+
+    /** @param {string} root */
+    const check = (root) => {
+        /** @type {string[]} */
+        const warnings = [];
+        const errors = syncStandards(root, { isCheck: true, warnings }).filter(
+            (message) => message.startsWith('erasure:'),
+        );
+
+        return { warnings, errors };
+    };
+
+    for (const root of [unexplainedReleasedRepo, blankReasonReleasedRepo]) {
+        assert.equal(check(root).errors.length, 1);
+        assert.match(check(root).errors[0], /erasureExemptReason/);
+    }
+
+    assert.deepEqual(check(explainedReleasedRepo), {
+        warnings: [],
+        errors: [],
+    });
+    assert.deepEqual(check(unexplainedBetaRepo).errors, []);
+    assert.match(check(unexplainedBetaRepo).warnings[0], /erasureExemptReason/);
+});
+
+test('opting out of erasure removes the managed suite and keeps the fixture', () => {
+    const root = makeRepo({ php: true, package: true, erasure: true });
+
+    syncStandards(root, { isCheck: false });
+    fs.writeFileSync(
+        path.join(root, 'qiick-standards.json'),
+        JSON.stringify({
+            php: true,
+            package: true,
+            erasure: false,
+            erasureExemptReason: 'The package stores no personal data.',
+        }),
+    );
+
+    assert.ok(
+        syncStandards(root, { isCheck: true }).some((message) =>
+            message.includes('tests/Erasure/ErasureConformanceTest.php'),
+        ),
+    );
+
+    syncStandards(root, { isCheck: false });
+
+    assert.equal(
+        fs.existsSync(
+            path.join(root, 'tests/Erasure/ErasureConformanceTest.php'),
+        ),
+        false,
+    );
+    assert.equal(
+        fs.existsSync(path.join(root, 'tests/Erasure/Support')),
+        false,
+    );
+    assert.ok(fs.existsSync(path.join(root, 'tests/Erasure/fixture.php')));
+    assert.deepEqual(
+        syncStandards(root, { isCheck: true }).filter((message) =>
+            message.includes('Erasure'),
+        ),
+        [],
+    );
+});
+
+test('the repo-owned erasure fixture is written once and never overwritten', () => {
+    const root = makeRepo(
+        { php: true, package: true, erasure: true },
+        {
+            ...ERASURE_CI_FILES,
+            'tests/Erasure/fixture.php':
+                '<?php\n\ndeclare(strict_types=1);\n\nreturn new PackageErasureFixture();\n',
+        },
+    );
+
+    syncStandards(root, { isCheck: false });
+
+    assert.match(
+        read(root, 'tests/Erasure/fixture.php'),
+        /PackageErasureFixture/,
+    );
+    assert.deepEqual(
+        syncStandards(root, { isCheck: true }).filter((message) =>
+            message.includes('tests/Erasure'),
+        ),
+        [],
+    );
+});
+
 test('non-kebab-case frontend names fail the check', () => {
     const root = makeRepo(
         { frontendRoots: ['resources/js'] },
@@ -310,6 +734,15 @@ test('every repo gets the repository rules; adopting the conventions writes thei
     );
     assert.match(read(appRepo, 'docs/privacy.md'), /^## Telemetry$/m);
     assert.ok(!fs.existsSync(path.join(packageRepo, 'docs/runbooks')));
+    assert.match(
+        read(packageRepo, 'tests/Feature/ForeignKeyIndexTest.php'),
+        /foreignKeysWithoutIndex\(\)/,
+    );
+    assert.ok(
+        !fs.existsSync(
+            path.join(appRepo, 'tests/Feature/ForeignKeyIndexTest.php'),
+        ),
+    );
     assert.match(
         read(frontendOnlyRepo, 'AGENTS.md'),
         /^## Security, data and operations$/m,

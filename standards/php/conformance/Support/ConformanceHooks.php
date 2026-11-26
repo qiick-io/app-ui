@@ -148,6 +148,24 @@ final class ConformanceHooks
         }
     }
 
+    /**
+     * The key of a users row created by the product's `fixtureUser` hook, for
+     * products whose user model has no factory; null when there is no hook.
+     * The hook returns the created model or its key.
+     */
+    public function fixtureUserKey(): int|string|null
+    {
+        $callback = $this->callables['fixtureUser'] ?? null;
+
+        if (! is_callable($callback)) {
+            return null;
+        }
+
+        $created = $callback();
+
+        return $created instanceof \Illuminate\Database\Eloquent\Model ? $created->getKey() : $created;
+    }
+
     public function hasCallable(string $key): bool
     {
         return is_callable($this->callables[$key] ?? null);
