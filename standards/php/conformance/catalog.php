@@ -248,7 +248,7 @@ return [
     [
         'id' => 'C71',
         'tag' => 'behaviour',
-        'description' => 'events_enabled true, register_permission_check_method false, Gate::before inactive for Spatie-shaped non-user actors; role detach clears resolver and API actors are denied super-admin (proved hooks; usesLaravelAccess)',
+        'description' => 'events_enabled true, register_permission_check_method false, Gate::before inactive for Spatie-shaped generic actors; role detach clears resolver and API actors are denied super-admin (proved hooks; usesLaravelAccess)',
         'decision' => 'knowledge/decisions/2026-11-22-laravel-access-package',
     ],
     [

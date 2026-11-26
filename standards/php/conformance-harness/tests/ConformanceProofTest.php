@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Illuminate\Contracts\Auth\Access\Authorizable;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
@@ -718,6 +720,15 @@ YAML);
         GreenSchema::migrate();
         config(['permission.register_permission_check_method' => false]);
         Gate::before(static fn (): ?bool => true);
+
+        expect(fn () => runCheck('C71'))
+            ->toThrow(RuntimeException::class, 'Gate::before callback granted');
+    });
+
+    it('C71 detects a Spatie callback after an Authenticatable-only Gate::before', function (): void {
+        Gate::before(static fn (?Authenticatable $actor): ?bool => null);
+        Gate::before(static fn (Authorizable $actor, string $ability): ?bool => method_exists($actor, 'checkPermissionTo')
+            && $actor->checkPermissionTo($ability) ? true : null);
 
         expect(fn () => runCheck('C71'))
             ->toThrow(RuntimeException::class, 'Gate::before callback granted');

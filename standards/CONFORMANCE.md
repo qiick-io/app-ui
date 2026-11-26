@@ -148,7 +148,7 @@ Set `conformance.usesLaravelAccess: true` when the product adopts
 
 - **C71:** `permission.events_enabled === true`,
   `permission.register_permission_check_method === false`, and a runtime
-  `Gate::before` probe (a Spatie-shaped non-user actor must not be granted);
+  `Gate::before` probe (a Spatie-shaped `GenericUser` must be denied);
   proved hooks `assertRoleDetachClearsResolver` and
   `assertApiActorDeniedSuperAdmin`.
 - **C73:** proved hook `assertExpiredMembershipGrantsNothing`.

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Qiick\Standards\Conformance\Support;
 
+use Illuminate\Auth\GenericUser;
 use Illuminate\Contracts\Auth\Access\Authorizable;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Auth\Access\Authorizable as AuthorizableTrait;
@@ -793,13 +794,14 @@ final class ConformanceRunner
     }
 
     /**
-     * Fail when a Gate::before grants to a Spatie-shaped non-user actor (Spatie's
+     * Fail when a Gate::before grants to a Spatie-shaped generic actor (Spatie's
      * register_permission_check_method before, or an unconditional grant-all).
-     * A product super-admin before that only passes for the User model stays green.
+     * The fixture satisfies the package GateBefore's Authenticatable contract
+     * while remaining distinct from the product's User model.
      */
     private function assertSpatiePermissionGateBeforeIsInactive(): void
     {
-        $spatieShapedActor = new class implements Authorizable
+        $spatieShapedActor = new class(['id' => 'qiick-conformance-c71']) extends GenericUser implements Authorizable
         {
             use AuthorizableTrait;
 
@@ -811,7 +813,7 @@ final class ConformanceRunner
 
         if (Gate::forUser($spatieShapedActor)->allows('__qiick_conformance_spatie_gate_probe__')) {
             throw new \RuntimeException(
-                'A Gate::before callback granted a permission to a non-user Spatie-shaped actor; keep register_permission_check_method off and do not re-register a grant-all before after boot.',
+                'A Gate::before callback granted a permission to a Spatie-shaped generic actor; keep register_permission_check_method off and do not re-register a grant-all before after boot.',
             );
         }
     }
