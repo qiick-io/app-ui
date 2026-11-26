@@ -55,6 +55,7 @@ changes:
 | `composer.json` or `src/`                        | also the lowest cell (lowest PHP, lowest Laravel, `lowest`)                                 |
 | `database/`, models, stores, queries, migrations | also the server databases (PostgreSQL, MySQL, MariaDB)                                      |
 | `src/Erasure/`, `tests/Erasure/`, workflow YAML  | also the server databases for erasure verification                                          |
+| `tests/Pest.php`, `*TestCase.php`, `phpunit.xml` | also the server databases because test setup can change how erasure runs                    |
 | classes in `src/` (not `src/Testing/`)           | mutation on those classes only, with the per-class gate; a deleted class is not mutated     |
 
 Any `.github/workflows/*.yml` or `.yaml` file can contain the erasure CI step,
@@ -67,17 +68,21 @@ nightly run.
 
 **Never skip a job, skip its steps.** A required check that never reports
 stays pending forever (`rules/checks.md`, CI cost), so the jobs always run:
-the test cell carries `skip: true` on a docs-only PR, the databases job reads
-`run-databases`, the mutation job reads `mutate-classes` (an empty list passes
-at once), and lint, PHPStan and every other required job read `docs-only`.
+both test cells carry `skip: true` on a docs-only PR, and the lowest cell also
+carries `skip: true` when the PR changes neither `composer.json` nor `src/`.
+The database jobs read `run-databases`. The mutation job reads `mutate-classes`
+(an empty list passes at once), and lint, PHPStan and every other required job
+read `docs-only`.
 A docs-only PR runs no tests, yet every required check reports success under
 its usual name. Never use `paths:` or `paths-ignore:`.
 
-**Required checks are the jobs a PR always reports:** the highest cell
-(`PHP 8.5 Laravel 13 stable`), the database jobs, the mutation gate
-(`Mutation (per-class ≥95%)`), lint and PHPStan. The lowest cell and the other
-full-matrix cells are not required: they run on the PRs that touch code and
-after every merge, and a red one on `develop` is fixed first.
+**Only jobs a PR always reports can be required checks.** These include the
+highest cell (`PHP 8.5 Laravel 13 stable`), the lowest cell, the database jobs,
+the mutation gate (`Mutation (per-class ≥95%)`), lint and PHPStan. The other
+cells run on the full variant. `node scripts/check-repo-settings.mjs <repo>`
+reports required package cell names outside the PR plan, including before
+adoption. Keep `packagePhpVersionExclusions` in `standards/repo-settings.json`
+aligned with any package-specific `exclude-php-versions` inputs.
 
 ```yaml
 on:
@@ -169,9 +174,7 @@ For each package (`laravel-oidc`, `laravel-outbound`, `laravel-api-keys`,
 `laravel-audit`):
 
 0. **First, the maintainer cuts the required checks** on `develop` and `main`
-   down to the jobs that report on every pull request: the highest cell, the
-   database jobs, `Mutation (per-class ≥95%)`, lint, PHPStan and the shared
-   checks ("Required checks are the jobs a PR always reports" above). A
+   down to the jobs that report on every pull request (see above). A
    package that requires every cell today (laravel-http-basics requires
    `PHP 8.3 Laravel 12 stable` and fifteen more) would otherwise leave each
    pull request waiting for checks the reduced matrix never runs. Changing

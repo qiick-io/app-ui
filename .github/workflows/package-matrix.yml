@@ -4,12 +4,11 @@
 # Two variants (input `variant`, default `auto`):
 # - `full` on push, schedule and manual runs: the whole matrix, the server
 #   databases, mutation on every class;
-# - `pr` on pull requests, from the files the PR changes: the highest
-#   PHP / Laravel cell always, the lowest only when composer.json or src/
-#   changes, the databases for database code, erasure code and tests, or CI
-#   workflows, and mutation only on the changed classes. A docs-only PR runs
-#   nothing. Every job keeps its name and reports, so required checks never
-#   wait: skip the steps, not the job.
+# - `pr` on pull requests: both PHP / Laravel endpoint cells report. The
+#   lowest runs its steps when composer.json or src/ changes. Server databases
+#   run for database code, erasure, test bootstrap or workflow changes, and
+#   mutation runs on changed classes. A docs-only PR runs nothing. Jobs skip
+#   their steps so their required checks still report.
 #
 # In a package:
 #

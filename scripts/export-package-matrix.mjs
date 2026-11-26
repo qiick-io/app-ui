@@ -19,6 +19,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+/** Reads the canonical matrix for the workflow and the repository settings audit. */
+export function readPackageMatrixDocument() {
+    return JSON.parse(
+        fs.readFileSync(
+            new URL('../standards/package-matrix.json', import.meta.url),
+            'utf8',
+        ),
+    );
+}
+
 /**
  * Applies package-specific PHP exclusions and removes SQLite from the
  * service-container list.
@@ -95,7 +105,7 @@ export function createPullRequestPlan(
         changedFiles.length > 0 &&
         touches(changedFiles, paths.docsOnly).length === changedFiles.length;
     // `lowest` / `highest` name the ends of an axis, after the package's exclusions.
-    const cell = (shape) => {
+    const cell = (shape, shouldSkip) => {
         const pick = (axis) =>
             shape[axis] === 'lowest'
                 ? fullMatrix[axis][0]
@@ -109,17 +119,19 @@ export function createPullRequestPlan(
             testbench: fullMatrix.include.find(
                 (entry) => entry.laravel === laravel,
             )?.testbench,
-            skip: isDocsOnly,
+            skip: shouldSkip,
         };
     };
-    const include = [cell(always)];
-
-    if (!isDocsOnly && touches(changedFiles, paths.code).length > 0) {
-        include.push(cell(whenCodeChanges));
-    }
+    const hasCodeChanges = touches(changedFiles, paths.code).length > 0;
 
     return {
-        matrix: { include },
+        matrix: {
+            include: [
+                cell(always, isDocsOnly),
+                // Keep the job's check name on every PR, even without code to test.
+                cell(whenCodeChanges, isDocsOnly || !hasCodeChanges),
+            ],
+        },
         isDocsOnly,
         runDatabases:
             !isDocsOnly && touches(changedFiles, paths.database).length > 0,
@@ -130,15 +142,7 @@ export function createPullRequestPlan(
 const scriptPath = fileURLToPath(import.meta.url);
 
 if (process.argv[1] === scriptPath) {
-    const repositoryRoot = path.resolve(path.dirname(scriptPath), '..');
-    const packageMatrixPath = path.join(
-        repositoryRoot,
-        'standards',
-        'package-matrix.json',
-    );
-    const packageMatrixDocument = JSON.parse(
-        fs.readFileSync(packageMatrixPath, 'utf8'),
-    );
+    const packageMatrixDocument = readPackageMatrixDocument();
     const excludedPhpVersions = JSON.parse(
         process.env.EXCLUDE_PHP_VERSIONS ?? '[]',
     );

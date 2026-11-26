@@ -93,6 +93,48 @@ test('app-ui needs only identical required checks, not the shared names', () => 
     assert.deepEqual(findSettingsViolations(state, standard), []);
 });
 
+test('required package cells are checked against the endpoint jobs emitted on every PR', () => {
+    const state = conformingState();
+
+    for (const branch of standard.protectedBranches) {
+        state.protections[branch].required_status_checks.contexts.push(
+            'PHP 8.3 Laravel 12 lowest',
+            'PHP 8.5 Laravel 13 stable',
+            'PHP 8.4 Laravel 13 stable',
+        );
+    }
+
+    assert.deepEqual(
+        findSettingsViolations(state, standard),
+        standard.protectedBranches.map(
+            (branch) =>
+                `F15 ${branch}: required check \`PHP 8.4 Laravel 13 stable\` is not emitted on every pull request by the package matrix.`,
+        ),
+    );
+});
+
+test('the required cell audit respects the PHP minimum for laravel-audit', () => {
+    const state = conformingState('laravel-audit');
+
+    for (const branch of standard.protectedBranches) {
+        state.protections[branch].required_status_checks.contexts.push(
+            'PHP 8.4 Laravel 12 lowest',
+            'PHP 8.5 Laravel 13 stable',
+        );
+        state.protections[branch].required_status_checks.checks = [
+            { context: 'PHP 8.3 Laravel 12 lowest', app_id: 15368 },
+        ];
+    }
+
+    assert.deepEqual(
+        findSettingsViolations(state, standard),
+        standard.protectedBranches.map(
+            (branch) =>
+                `F15 ${branch}: required check \`PHP 8.3 Laravel 12 lowest\` is not emitted on every pull request by the package matrix.`,
+        ),
+    );
+});
+
 test('an unprotected private repo is reported as convention only', () => {
     const state = conformingState();
 
