@@ -32,12 +32,8 @@ export default function UserAvatarDemo() {
                     <span className="font-medium">Elena Marchetti</span>
                 </span>
                 <span className="flex items-center gap-2">
-                    <UserAvatar
-                        userId={2}
-                        name="Luca Bianchi"
-                        isOnline={false}
-                    />
-                    <span className="font-medium">Luca Bianchi</span>
+                    <UserAvatar userId={2} name="Élodie 👩🏽‍🚀" isOnline={false} />
+                    <span className="font-medium">Élodie 👩🏽‍🚀</span>
                 </span>
                 <span className="flex items-center gap-2">
                     <UserAvatar userId={3} name="" email="ops@example.com" />
