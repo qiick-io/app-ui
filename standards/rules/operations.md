@@ -171,6 +171,8 @@ TODO: Add a `security@` mailbox as a second `Contact` once the maintainer sets i
 
 Call the pinned `codeql.yml` and `scorecard.yml` reusable workflows on pushes to `develop` and weekly. CodeQL analyzes `actions` and `javascript-typescript` where there is JavaScript or TypeScript source. CodeQL [does not support PHP](https://docs.github.com/en/code-security/tutorials/customize-code-scanning/prepare-code-for-analysis). Packages gate on PHPStan at `max` and retain their existing checks. Apps keep their existing PHPStan gate and run a separate advisory `max` pass until they can enforce that level.
 
+Pin every app-ui reusable workflow to a full commit SHA reachable from app-ui's `develop`, `main`, or a published tag. Use that same SHA for any `standards-ref` input. After a squash merge, use the squash commit from the target branch. A pin to the pull request head can stop resolving when GitHub deletes the source branch.
+
 Upload the Scorecard SARIF to GitHub code scanning. Scorecard publishes badge data from the default branch, so include pushes to `main` when it is the default branch. Add the [official Scorecard badge](https://github.com/ossf/scorecard-action#scorecard-badge) to the README. Keep both scans outside the required checks. Use standard GitHub-hosted Ubuntu runners on public `qiick-io` repositories only. Private repositories and the marketing sites are outside F32.
 
 **Checked by.** `fleet-security-check.yml` verifies the public repository's scanner calls, triggers and README badge. The workflow runs show whether GitHub accepted the SARIF and Scorecard published the badge data.
