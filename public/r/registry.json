@@ -2070,6 +2070,37 @@
             ]
         },
         {
+            "name": "info-hint",
+            "type": "registry:component",
+            "title": "Info hint",
+            "description": "An info icon next to a page or card title that opens a short explanation in a popover, instead of an intro paragraph under the title (docs/page.md, Page text).",
+            "dependencies": ["lucide-react"],
+            "registryDependencies": ["@qiick/button", "@qiick/popover"],
+            "files": [
+                {
+                    "path": "src/components/info-hint.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "card-table-scroll",
+            "type": "registry:component",
+            "title": "Card table scroll",
+            "description": "The scroll box of a table inside a card: the rows scroll under a sticky header on the card surface, with a fixed maximum height or filling a card that fills its row (docs/dashboard.md, Card grids).",
+            "dependencies": ["react-i18next"],
+            "registryDependencies": [
+                "@qiick/use-scroll-region",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/layout/card-table-scroll.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
             "name": "timeline",
             "type": "registry:component",
             "title": "Timeline",

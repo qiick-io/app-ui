@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "card-table-scroll",
+  "title": "Card table scroll",
+  "description": "The scroll box of a table inside a card: the rows scroll under a sticky header on the card surface, with a fixed maximum height or filling a card that fills its row (docs/dashboard.md, Card grids).",
+  "dependencies": [
+    "react-i18next"
+  ],
+  "registryDependencies": [
+    "@qiick/use-scroll-region",
+    "@qiick/utils"
+  ],
+  "files": [
+    {
+      "path": "src/components/layout/card-table-scroll.tsx",
+      "content": "import type { ReactNode } from 'react';\nimport { useTranslation } from 'react-i18next';\nimport { useScrollRegion } from '@/hooks/use-scroll-region';\nimport { cn } from '@/lib/utils';\n\n/**\n * The scroll box of a table inside a card (app-ui docs/dashboard.md, \"Card grids\"): the rows\n * scroll under a sticky header row on the card surface, so a long table never stretches its\n * row of cards. Give it a height: `max-h-80` for a fixed one, or `flex-1` inside a card that\n * fills its row (`h-full`, `CardContent` a flex column). The Table's own wrapper stops\n * scrolling, so the header sticks to this box; the bottom rule is an inset shadow because\n * collapsed borders scroll away. While it scrolls it is a named, focusable region.\n */\nexport function CardTableScroll({\n    className,\n    children,\n}: {\n    className?: string;\n    children: ReactNode;\n}) {\n    const { t } = useTranslation();\n    const scrollRegionRef = useScrollRegion<HTMLDivElement>(\n        t('a11y.scrollableTable'),\n    );\n\n    return (\n        <div\n            ref={scrollRegionRef}\n            data-slot=\"card-table-scroll\"\n            className={cn(\n                'min-h-0 overflow-auto outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&_[data-slot=table-container]]:overflow-visible [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead]:bg-card [&_thead_th]:shadow-[inset_0_-1px_0_var(--color-border)] [&_thead_tr]:border-b-0',\n                className,\n            )}\n        >\n            {children}\n        </div>\n    );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

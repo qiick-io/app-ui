@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "info-hint",
+  "title": "Info hint",
+  "description": "An info icon next to a page or card title that opens a short explanation in a popover, instead of an intro paragraph under the title (docs/page.md, Page text).",
+  "dependencies": [
+    "lucide-react"
+  ],
+  "registryDependencies": [
+    "@qiick/button",
+    "@qiick/popover"
+  ],
+  "files": [
+    {
+      "path": "src/components/info-hint.tsx",
+      "content": "import { Info } from 'lucide-react';\nimport type { ReactNode } from 'react';\nimport { Button } from '@/components/ui/button';\nimport {\n    Popover,\n    PopoverContent,\n    PopoverTrigger,\n} from '@/components/ui/popover';\n\n/**\n * The one place a page or card explains itself: an info icon next to its title that opens a\n * short popover, instead of a paragraph under the title (app-ui docs/page.md, \"Page text\").\n * A popover rather than a tooltip, so it opens on touch and stays open while it is read.\n */\nexport function InfoHint({\n    label,\n    children,\n}: {\n    /** The accessible name of the icon button, e.g. \"About upgrade readiness\". */\n    label: string;\n    children: ReactNode;\n}) {\n    return (\n        <Popover>\n            <PopoverTrigger asChild>\n                <Button\n                    type=\"button\"\n                    variant=\"ghost\"\n                    size=\"icon-sm\"\n                    aria-label={label}\n                    className=\"text-muted-foreground\"\n                >\n                    <Info />\n                </Button>\n            </PopoverTrigger>\n            <PopoverContent className=\"w-72 text-sm text-muted-foreground\">\n                {children}\n            </PopoverContent>\n        </Popover>\n    );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}

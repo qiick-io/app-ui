@@ -20,6 +20,17 @@ AppLayout breadcrumbs headerActions
 - `scrollContent` makes the body the scroll container. Use it for panes that must scroll inside the panel (dashboard, files grid, long forms); lists use `TablePanel`, which scrolls itself with a sticky table head.
 - Filter row: search and filters on the left (`filters`), view/sort/segmented controls on the right (`filtersRight`). In selection mode pass `filtersRight={null}`.
 
+## Page text
+
+The breadcrumb, the view tab, the card titles, the column headers and the empty states say what a page shows. Nothing else does.
+
+- **No intro paragraph** under the header, a tab or a card title ("The alerts of this project: what was sent…", "Packages with known advisories, abandoned or stale…"). `PageLayout`'s `description` is for a short status the page cannot show otherwise ("3 jobs pending"), not for an explanation.
+- **An explanation that is really needed** (a definition, a rule the numbers follow) sits behind an `InfoHint` next to the card or section title: an info icon (`Button variant="ghost" size="icon-sm"`, `aria-label` "About <title>") that opens a short popover. A longer guide is a link to the docs.
+- **Data, not prose.** A subtitle that carries a number or a scope ("8 of 22 open problems", "Last hour, updated every minute") stays; a sentence that restates the title, lists the columns or describes the sort order goes.
+- Empty states explain themselves (`PageEmptyState`: title, one line, an action or a docs link) and replace the intro text that used to say what would appear.
+
+Source: Excubia `pages/fleet/index.tsx` (the readiness definition behind the Projects card's info icon), `components/reports/alerts-view.tsx`.
+
 ## Header actions
 
 - Page actions go in `AppLayout`'s `headerActions`, in the header, **right-aligned**. The primary action (e.g. "New user", "New chat") is the **rightmost**, default variant, with a lucide icon before the label.
