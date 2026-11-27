@@ -6,6 +6,7 @@ import themeSource from '../../registry/src/css/qiick-theme.css?raw';
 import DatePickerDemo from './demos/date-picker';
 import { AssistantScreen } from './screens/assistant';
 import { ChatScreen } from './screens/chat';
+import { DashboardScreen } from './screens/dashboard';
 import type { ScreenName } from './screens/demo-shell';
 import { FilesScreen } from './screens/files';
 import { SettingsScreen } from './screens/settings';
@@ -27,6 +28,7 @@ const NESTED_MODE_CSS = `.light, .dark { ${[
 type PresetName = keyof typeof PRESETS;
 
 const SCREENS: Record<ScreenName | 'date-picker', ComponentType> = {
+    dashboard: DashboardScreen,
     users: UsersScreen,
     settings: SettingsScreen,
     assistant: AssistantScreen,

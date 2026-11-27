@@ -38,7 +38,8 @@ import {
 } from '@/components/ui/sidebar';
 import { DemoUserMenu } from './demo-user-menu';
 
-export type ScreenName = 'users' | 'settings' | 'assistant' | 'chat' | 'files';
+export type ScreenName =
+    'dashboard' | 'users' | 'settings' | 'assistant' | 'chat' | 'files';
 
 type NavEntry = {
     title: string;
@@ -47,7 +48,7 @@ type NavEntry = {
 };
 
 const PLATFORM: NavEntry[] = [
-    { title: 'Dashboard', icon: LayoutGrid },
+    { title: 'Dashboard', icon: LayoutGrid, screen: 'dashboard' },
     { title: 'Files', icon: Folder, screen: 'files' },
     { title: 'Collections', icon: Database },
     { title: 'Chat', icon: MessageCircle, screen: 'chat' },

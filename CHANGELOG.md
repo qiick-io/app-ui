@@ -10,6 +10,7 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Added
 
+- Chart and KPI pattern ([`docs/charts.md`](docs/charts.md), core): registry `kpi-tile` (delta coloured by what the change means, `kpiDeltaOf()`, 30-day `sparkline`), `segmented-bar` for compositions instead of pie or donut charts, `time-series-chart` (metric switch, series toggles with totals, loading and empty states), `entity-bar-chart` and `chart-data-table`; theme tokens `--chart-critical` … `--chart-skipped`, a fixed semantic palette checked by `a11y:contrast`. The playground's `#/dashboard` rebuilds the Excubia project overview. Apps re-pull `@qiick/theme` for the tokens; the `standards/rules/ui.md` pattern table gained the page, so every repo re-syncs (#282).
 - Registry `role-picker` and the role model of `docs/roles-and-permissions.md` (decision 2026-11-26): super-admin is exclusive (the picker clears and disables the other roles; laravel-access `ExclusiveSuperAdminRoleRule` on the server), permissions add up across the other roles, human labels instead of slugs, and a super-admin's API keys reach every permission of `PermissionEnum` within their scopes (`isWithinOwnerCeiling()`).
 - Conformance C77 checks that a real product policy grants its super-admin exception to a web session and denies it to a scoped API actor for the same user. Products with `usesLaravelAccess` add `policySuperAdminDecisions` to their conformance hooks on their next standards sync. See the [access-package checks](standards/CONFORMANCE.md#access-package-checks-c71c75-c77).
 

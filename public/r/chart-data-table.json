@@ -1,0 +1,16 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "chart-data-table",
+  "title": "Chart data table",
+  "description": "Visually hidden table with the numbers behind a chart, for screen readers.",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "src/components/charts/chart-data-table.tsx",
+      "content": "/**\n * The numbers behind a chart as a real table, visually hidden: a screen reader gets\n * every value with its row and column headers instead of an SVG it cannot read.\n * Sighted readers already see the numbers in the chart's legend or labels.\n */\nexport function ChartDataTable({\n    caption,\n    columnHeaders,\n    rows,\n}: {\n    /** The chart's title, read as the table caption. */\n    caption: string;\n    /** The header of every column, the row header column first (\"Date\", \"Cost\", …). */\n    columnHeaders: string[];\n    /** One row per category or date: its header, then the formatted values. */\n    rows: { header: string; values: string[] }[];\n}) {\n    return (\n        <table className=\"sr-only\">\n            <caption>{caption}</caption>\n            <thead>\n                <tr>\n                    {columnHeaders.map((columnHeader) => (\n                        <th key={columnHeader} scope=\"col\">\n                            {columnHeader}\n                        </th>\n                    ))}\n                </tr>\n            </thead>\n            <tbody>\n                {rows.map((row) => (\n                    <tr key={row.header}>\n                        <th scope=\"row\">{row.header}</th>\n                        {row.values.map((value, columnIndex) => (\n                            <td\n                                key={\n                                    columnHeaders[columnIndex + 1] ??\n                                    columnIndex\n                                }\n                            >\n                                {value}\n                            </td>\n                        ))}\n                    </tr>\n                ))}\n            </tbody>\n        </table>\n    );\n}\n",
+      "type": "registry:component"
+    }
+  ],
+  "type": "registry:component"
+}
