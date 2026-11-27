@@ -1,6 +1,6 @@
 # Dashboard
 
-**Registry:** `card`, `stat-card`, `page-layout`, `tabs`, `toggle-group`, `table`, `page-empty-state`.
+**Registry:** `card`, `kpi-tile`, `stat-card`, `page-layout`, `tabs`, `toggle-group`, `table`, `page-empty-state`.
 
 **Copy from externa-core:** `pages/dashboard.tsx`. Key numbers come from the shadcn [`dashboard-01` block](https://ui.shadcn.com/blocks) (`section-cards.tsx`).
 
@@ -12,10 +12,6 @@
 
 ## Key numbers
 
-A row of key numbers at the top of a dashboard uses **`StatCard`** (the shadcn `dashboard-01` section cards), not a `CardHeader` + `CardContent` card with a small value:
+A row of key numbers at the top of a dashboard uses **`KpiTile`**, with its delta coloured by what the change means and a 30-day `Sparkline`; compositions (severity, check outcomes) go in one card under the row. See [charts.md](charts.md) for the layout, the palette and when not to chart.
 
-- Grid `grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-12`, each `StatCard` `xl:col-span-3` (four per row).
-- `label` is the metric name (one line). `value` is the formatted number; it renders large (`text-2xl`, `text-3xl` from 250px card width) with `tabular-nums`.
-- `trend` is the change vs the previous period, from `trendOf(value, previous)`: a percentage when there is a previous value, the absolute change otherwise. It shows as an outline `Badge` with a lucide trend icon next to the value; leave it out when there is no comparison.
-- `headline` is one short line that explains the number (a breakdown such as "11 medium · 3 low", or what counts). `context` is the muted second line, for the comparison period ("vs previous 14 days") or a scope. No long descriptions: move them to a tooltip.
-- Colour never carries the trend alone: the badge always has the icon and the signed text.
+`StatCard` (the shadcn `dashboard-01` section cards) stays for existing screens: its badge does not say whether a change is good news, so new dashboards use `KpiTile`.

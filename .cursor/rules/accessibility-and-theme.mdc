@@ -53,6 +53,7 @@ Tokens come from the `@qiick/theme` registry item: one shared base (surfaces, th
 | Destructive actions                                              | https://github.com/qiick-io/app-ui/blob/develop/docs/destructive-actions.md |
 | API keys: storage, scopes, show-once secret, rotation, key list  | https://github.com/qiick-io/app-ui/blob/develop/docs/api-keys.md            |
 | Dashboard cards                                                  | https://github.com/qiick-io/app-ui/blob/develop/docs/dashboard.md           |
+| Charts and key numbers: KPI tiles, compositions, time series     | https://github.com/qiick-io/app-ui/blob/develop/docs/charts.md              |
 | Notifications: toasts, bell and drawer                           | https://github.com/qiick-io/app-ui/blob/develop/docs/notifications.md       |
 | Chat and Assistant                                               | https://github.com/qiick-io/app-ui/blob/develop/docs/chat-and-assistant.md  |
 | Files grid                                                       | https://github.com/qiick-io/app-ui/blob/develop/docs/files-grid.md          |

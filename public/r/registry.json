@@ -956,6 +956,107 @@
             ]
         },
         {
+            "name": "kpi-tile",
+            "type": "registry:component",
+            "title": "KPI tile",
+            "description": "Key number of a dashboard row (docs/charts.md): label, large value, delta whose colour says good or bad news (kpiDeltaOf), one secondary line, optional full-bleed 30-day sparkline.",
+            "dependencies": ["lucide-react"],
+            "registryDependencies": [
+                "@qiick/card",
+                "@qiick/stat-card",
+                "@qiick/sparkline",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/charts/kpi-tile.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "sparkline",
+            "type": "registry:component",
+            "title": "Sparkline",
+            "description": "30-day trend area under a key number: no axes, no tooltip, not animated, hidden from screen readers.",
+            "dependencies": ["recharts"],
+            "registryDependencies": ["@qiick/chart", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/charts/sparkline.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "segmented-bar",
+            "type": "registry:component",
+            "title": "Segmented bar",
+            "description": "A composition (severity, check outcomes) as one horizontal bar in the fixed semantic chart palette, every count in the legend. Replaces pie and donut charts.",
+            "dependencies": [],
+            "registryDependencies": ["@qiick/theme", "@qiick/utils"],
+            "files": [
+                {
+                    "path": "src/components/charts/segmented-bar.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "chart-data-table",
+            "type": "registry:component",
+            "title": "Chart accessibility",
+            "description": "What every interactive chart shares for keyboard and screen readers: the visually hidden data table, the tooltip as a polite live region, and the focus ring around the plot.",
+            "dependencies": [],
+            "registryDependencies": [],
+            "files": [
+                {
+                    "path": "src/components/charts/chart-data-table.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "time-series-chart",
+            "type": "registry:component",
+            "title": "Time series chart",
+            "description": "Stacked area chart over time for up to five series: metric switch, legend toggles with each series' total, tooltip, keyboard, loading and empty states, hidden data table.",
+            "dependencies": ["recharts"],
+            "registryDependencies": [
+                "@qiick/button",
+                "@qiick/card",
+                "@qiick/chart",
+                "@qiick/chart-data-table",
+                "@qiick/skeleton",
+                "@qiick/toggle-group",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/charts/time-series-chart.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
+            "name": "entity-bar-chart",
+            "type": "registry:component",
+            "title": "Entity bar chart",
+            "description": "Vertical bars comparing entities (projects) on one measure, the value on every bar, hidden data table.",
+            "dependencies": ["recharts"],
+            "registryDependencies": [
+                "@qiick/chart",
+                "@qiick/chart-data-table",
+                "@qiick/utils"
+            ],
+            "files": [
+                {
+                    "path": "src/components/charts/entity-bar-chart.tsx",
+                    "type": "registry:component"
+                }
+            ]
+        },
+        {
             "name": "context-menu",
             "type": "registry:ui",
             "title": "Context menu",

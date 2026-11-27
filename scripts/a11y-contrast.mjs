@@ -513,6 +513,25 @@ const colourPairs = [
         bg: `--avatar-${index + 1}`,
         need: 4.5,
     })),
+    // The fixed semantic chart palette: every mark ≥3:1 on the surfaces a chart sits on.
+    ...[
+        'critical',
+        'high',
+        'medium',
+        'low',
+        'info',
+        'pass',
+        'warn',
+        'fail',
+        'skipped',
+    ].flatMap((tone) =>
+        ['--card', '--background'].map((surface) => ({
+            name: `chart-${tone} / ${surface.slice(2)} (chart mark)`,
+            fg: `--chart-${tone}`,
+            bg: surface,
+            need: 3.0,
+        })),
+    ),
 ];
 
 /*
