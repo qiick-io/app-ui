@@ -48,18 +48,15 @@ reduced plan (decision of 2026-11-24) and the full matrix runs after the merge.
 data in `standards/package-matrix.json` (`pr`), applied to the files the PR
 changes:
 
-| The PR changes                                   | It runs                                                                                     |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------- |
-| only docs (`*.md`, `docs/`, `LICENSE`)           | nothing: every job reports success with its steps skipped                                   |
-| anything else                                    | lint, PHPStan and Pest on the highest cell (highest PHP, highest Laravel, `stable`, SQLite) |
-| `composer.json` or `src/`                        | also the lowest cell (lowest PHP, lowest Laravel, `lowest`)                                 |
-| `database/`, models, stores, queries, migrations | also the server databases (PostgreSQL, MySQL, MariaDB)                                      |
-| `src/Erasure/`, `tests/Erasure/`, workflow YAML  | also the server databases for erasure verification                                          |
-| `tests/Pest.php`, `*TestCase.php`, `phpunit.xml` | also the server databases because test setup can change how erasure runs                    |
-| classes in `src/` (not `src/Testing/`)           | mutation on those classes only, with the per-class gate; a deleted class is not mutated     |
+| The PR changes                         | It runs                                                                                                                         |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| only docs (`*.md`, `docs/`, `LICENSE`) | nothing: every job reports success with its steps skipped                                                                       |
+| anything else                          | lint, PHPStan and Pest on the highest cell (highest PHP, highest Laravel, `stable`, SQLite), plus PostgreSQL, MySQL and MariaDB |
+| `composer.json` or `src/`              | also the lowest cell (lowest PHP, lowest Laravel, `lowest`)                                                                     |
+| classes in `src/` (not `src/Testing/`) | mutation on those classes only, with the per-class gate; a deleted class is not mutated                                         |
 
-Any `.github/workflows/*.yml` or `.yaml` file can contain the erasure CI step,
-so changes to those files select the server databases too.
+Service classes and test-only changes can alter database behavior. The
+server jobs run for every non-docs PR.
 
 On push to `develop` and `main`, nightly and on `workflow_dispatch`, the
 `full` variant runs everything: the whole matrix, the databases, mutation on

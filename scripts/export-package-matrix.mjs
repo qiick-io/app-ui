@@ -90,7 +90,7 @@ const touches = (files, patterns) =>
 /**
  * What a pull request runs, from the files it changes (`pr` in package-matrix.json).
  *
- * @param {{pr: {always: Record<string, string>, whenCodeChanges: Record<string, string>, paths: Record<'docsOnly' | 'code' | 'database' | 'mutation', string[]>}}} packageMatrixDocument
+ * @param {{pr: {always: Record<string, string>, whenCodeChanges: Record<string, string>, paths: Record<'docsOnly' | 'code' | 'mutation', string[]>}}} packageMatrixDocument
  * @param {{php: string[], laravel: string[], include: {laravel: string, testbench: string}[]}} fullMatrix - After PHP exclusions
  * @param {string[]} changedFiles
  * @returns {{matrix: {include: Record<string, string | boolean>[]}, isDocsOnly: boolean, runDatabases: boolean, mutateClasses: string[]}}
@@ -133,8 +133,7 @@ export function createPullRequestPlan(
             ],
         },
         isDocsOnly,
-        runDatabases:
-            !isDocsOnly && touches(changedFiles, paths.database).length > 0,
+        runDatabases: !isDocsOnly,
         mutateClasses: isDocsOnly ? [] : touches(changedFiles, paths.mutation),
     };
 }

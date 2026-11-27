@@ -275,19 +275,19 @@ test('the pull request variant runs only what the changed files can break', () =
     assert.equal(plan(['docs/install.md', 'src/Token.php']).isDocsOnly, false);
     assert.deepEqual(plan(['docs/install.md']).mutateClasses, []);
 
-    // Tests only: the highest cell runs, and the lowest cell only reports.
+    // Tests only: the highest cell and databases run, the lowest only reports.
     assert.deepEqual(cellNames(['tests/Unit/TokenTest.php']), [
         'PHP 8.5 Laravel 13 stable',
         'PHP 8.3 Laravel 12 lowest (skipped)',
     ]);
-    assert.equal(plan(['tests/Unit/TokenTest.php']).runDatabases, false);
+    assert.equal(plan(['tests/Unit/TokenTest.php']).runDatabases, true);
 
-    // Code: both ends; the databases only for database code.
+    // Code: both ends and the databases.
     assert.deepEqual(cellNames(['src/Token.php']), [
         'PHP 8.5 Laravel 13 stable',
         'PHP 8.3 Laravel 12 lowest',
     ]);
-    assert.equal(plan(['src/Token.php']).runDatabases, false);
+    assert.equal(plan(['src/Token.php']).runDatabases, true);
     assert.equal(
         plan(['src/Stores/DatabaseTokenStore.php']).runDatabases,
         true,
@@ -306,11 +306,15 @@ test('the pull request variant runs only what the changed files can break', () =
     );
 });
 
-test('erasure, test bootstrap and workflow changes select the server databases', () => {
+test('non-docs PRs select the server databases without matching implementation paths', () => {
     const document = JSON.parse(fs.readFileSync(packageMatrixJsonPath, 'utf8'));
     const fullMatrix = createPackageMatrixOutputs(document, []).matrix;
 
     for (const changedFile of [
+        'src/Delivery/WebhookDeliveryCoordinator.php',
+        'src/Webhooks/SecretRotator.php',
+        'src/Webhooks/DatabaseWebhookSecretResolver.php',
+        'tests/Feature/Webhooks/Delivery/ParallelWorkersTest.php',
         'src/Erasure/ErasePersonAction.php',
         'tests/Erasure/fixture.php',
         'tests/Erasure/run.mjs',
