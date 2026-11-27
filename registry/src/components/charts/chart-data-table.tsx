@@ -1,3 +1,24 @@
+import type { ReactNode } from 'react';
+
+/**
+ * The plot takes focus for arrow-key navigation, and `ChartContainer` hides the SVG's
+ * outline, so the wrapper draws the focus ring.
+ */
+export const CHART_FOCUS_CLASS =
+    'aspect-auto h-64 w-full rounded-md has-[.recharts-surface:focus-visible]:ring-2 has-[.recharts-surface:focus-visible]:ring-ring';
+
+/**
+ * Wraps the tooltip in a polite live region, so moving through the plot with the arrow
+ * keys reads each point; shadcn's tooltip content is a plain div.
+ */
+export function AnnouncedTooltip({ children }: { children: ReactNode }) {
+    return (
+        <div aria-live="polite" aria-atomic="true">
+            {children}
+        </div>
+    );
+}
+
 /**
  * The numbers behind a chart as a real table, visually hidden: a screen reader gets
  * every value with its row and column headers instead of an SVG it cannot read.

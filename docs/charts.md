@@ -54,7 +54,7 @@ One card (`TimeSeriesChart`), on its own row or `xl:col-span-8` next to an entit
 
 ## Comparing entities
 
-`EntityBarChart` compares projects (or services, queues) on **one** measure: vertical bars in `--chart-1`, largest first, the value printed on every bar. Not for time (that is a `TimeSeriesChart`) and not for shares of a whole (a `SegmentedBar`). Long names are shortened under the bar; the tooltip and the table keep them whole. More than about eight entities: a table sorted by the measure.
+`EntityBarChart` compares projects (or services, queues) on **one** measure: vertical bars in `--chart-1`, largest first, the value printed on every bar. Not for time (that is a `TimeSeriesChart`) and not for shares of a whole (a `SegmentedBar`). Names are shortened under the bar so every bar keeps one down to a 320px screen; the tooltip and the table keep them whole. More than about eight entities: a table sorted by the measure.
 
 ## Palette
 
@@ -78,7 +78,7 @@ Every token is ≥3:1 on the card and the page in light, dark and high contrast 
 
 - **Numbers are always visible** next to the chart: legend counts, legend totals or bar labels. Hover adds detail, never the only reading.
 - Screen readers get the data, not the SVG: `SegmentedBar` reads its legend list, `TimeSeriesChart` and `EntityBarChart` render a visually hidden `ChartDataTable` with caption and headers. A sparkline is hidden; its tile's text states the number and the period.
-- Keyboard: the metric switch and the legend toggles are buttons; the plots take focus and move the tooltip with the arrow keys.
+- Keyboard: the metric switch and the legend toggles are buttons; the plots take focus (a ring around the plot shows it), move the tooltip with the arrow keys, and the tooltip is a polite live region, so each point is read as it is reached. A sparkline is no Tab stop.
 - **No animation.** Charts render with `isAnimationActive={false}`, so reduced motion holds without a media query.
 - Phone width: tiles stack, the composition card stacks, the time series header wraps; nothing scrolls sideways. Check light and dark.
 

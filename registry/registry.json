@@ -1005,8 +1005,8 @@
         {
             "name": "chart-data-table",
             "type": "registry:component",
-            "title": "Chart data table",
-            "description": "Visually hidden table with the numbers behind a chart, for screen readers.",
+            "title": "Chart accessibility",
+            "description": "What every interactive chart shares for keyboard and screen readers: the visually hidden data table, the tooltip as a polite live region, and the focus ring around the plot.",
             "dependencies": [],
             "registryDependencies": [],
             "files": [

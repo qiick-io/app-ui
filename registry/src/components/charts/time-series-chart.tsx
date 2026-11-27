@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { ChartDataTable } from '@/components/charts/chart-data-table';
+import {
+    AnnouncedTooltip,
+    CHART_FOCUS_CLASS,
+    ChartDataTable,
+} from '@/components/charts/chart-data-table';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -30,6 +34,9 @@ export type TimeSeriesMetric = {
 };
 
 const SERIES_LIMIT = 5;
+
+/** Colours are set on the marks themselves (see `seriesByKey`). */
+const NO_CONFIG = {} satisfies ChartConfig;
 
 /**
  * The sum of each series over the period, so the legend states the numbers instead of
@@ -94,18 +101,25 @@ export function TimeSeriesChart({
         metrics.find((candidate) => candidate.key === metricKey) ?? metrics[0];
     const rows = metric?.rows ?? [];
     const totals = seriesTotals(rows, series);
-    const isEmpty = Object.values(totals).every((total) => total === 0);
-    const visibleSeries = series.filter(
+    // Recorded zeros are data; only a period without rows is empty.
+    const isEmpty = rows.length === 0;
+    const shownSeries = series.filter(
         (entry) => !hiddenSeriesKeys.includes(entry.key),
     );
-    // Colour follows the series, not its rank, so hiding one never repaints the others.
-    const config = Object.fromEntries(
+    // A changed `series` prop can leave only hidden keys: then show them all again.
+    const visibleSeries = shownSeries.length > 0 ? shownSeries : series;
+    /*
+     * Colour follows the series, not its rank, so hiding one never repaints the others.
+     * Colours go straight onto the marks: series keys are caller data and never reach
+     * ChartConfig, whose keys `ChartStyle` writes into a stylesheet unescaped.
+     */
+    const seriesByKey = Object.fromEntries(
         series.map((entry, seriesIndex) => [
             entry.key,
             { label: entry.label, color: `var(--chart-${seriesIndex + 1})` },
         ]),
-    ) satisfies ChartConfig;
-    const colorOf = (seriesKey: string) => config[seriesKey]?.color;
+    );
+    const colorOf = (seriesKey: string) => seriesByKey[seriesKey]?.color;
 
     const toggleSeries = (seriesKey: string) =>
         setHiddenSeriesKeys((current) =>
@@ -148,12 +162,13 @@ export function TimeSeriesChart({
                 ) : (
                     <>
                         <ChartContainer
-                            config={config}
-                            className="aspect-auto h-64 w-full"
+                            config={NO_CONFIG}
+                            className={CHART_FOCUS_CLASS}
                         >
                             <AreaChart
                                 data={rows}
                                 accessibilityLayer
+                                title={title}
                                 margin={{
                                     top: 4,
                                     right: 4,
@@ -176,32 +191,38 @@ export function TimeSeriesChart({
                                     width={64}
                                 />
                                 <ChartTooltip
-                                    content={
-                                        <ChartTooltipContent
-                                            labelFormatter={(_, payload) =>
-                                                formatDate(
-                                                    String(
-                                                        payload[0]?.payload
-                                                            ?.date ?? '',
-                                                    ),
-                                                )
-                                            }
-                                            formatter={(value, name) => (
-                                                <TooltipRow
-                                                    color={colorOf(
-                                                        String(name),
-                                                    )}
-                                                    label={
-                                                        config[String(name)]
-                                                            ?.label ?? name
-                                                    }
-                                                    value={metric.formatValue(
-                                                        Number(value),
-                                                    )}
-                                                />
-                                            )}
-                                        />
-                                    }
+                                    content={(tooltipProps) => (
+                                        <AnnouncedTooltip>
+                                            <ChartTooltipContent
+                                                active={tooltipProps.active}
+                                                payload={tooltipProps.payload}
+                                                label={tooltipProps.label}
+                                                labelFormatter={(_, payload) =>
+                                                    formatDate(
+                                                        String(
+                                                            payload[0]?.payload
+                                                                ?.date ?? '',
+                                                        ),
+                                                    )
+                                                }
+                                                formatter={(value, name) => (
+                                                    <TooltipRow
+                                                        color={colorOf(
+                                                            String(name),
+                                                        )}
+                                                        label={
+                                                            seriesByKey[
+                                                                String(name)
+                                                            ]?.label ?? name
+                                                        }
+                                                        value={metric.formatValue(
+                                                            Number(value),
+                                                        )}
+                                                    />
+                                                )}
+                                            />
+                                        </AnnouncedTooltip>
+                                    )}
                                 />
                                 {visibleSeries.map((entry) => (
                                     <Area
@@ -209,9 +230,9 @@ export function TimeSeriesChart({
                                         dataKey={entry.key}
                                         type="monotone"
                                         stackId="total"
-                                        stroke={`var(--color-${entry.key})`}
+                                        stroke={colorOf(entry.key)}
                                         strokeWidth={1.5}
-                                        fill={`var(--color-${entry.key})`}
+                                        fill={colorOf(entry.key)}
                                         fillOpacity={0.25}
                                         isAnimationActive={false}
                                     />
@@ -239,7 +260,7 @@ export function TimeSeriesChart({
             {!isLoading && !isEmpty && metric ? (
                 <ul aria-label={title} className="flex flex-wrap gap-1 px-3">
                     {series.map((entry) => {
-                        const isVisible = !hiddenSeriesKeys.includes(entry.key);
+                        const isVisible = visibleSeries.includes(entry);
 
                         return (
                             <li key={entry.key}>
@@ -292,6 +313,10 @@ export function TimeSeriesChart({
     );
 }
 
+/**
+ * One tooltip line: swatch, series name, and the value in the metric's own unit (the
+ * default row prints raw numbers, so "$12.40" would read 1240).
+ */
 function TooltipRow({
     color,
     label,

@@ -33,6 +33,8 @@ export function Sparkline({
         >
             <AreaChart
                 data={points}
+                // Decorative: no Tab stop inside an aria-hidden chart.
+                accessibilityLayer={false}
                 margin={{ top: 2, right: 0, bottom: 0, left: 0 }}
             >
                 <defs>

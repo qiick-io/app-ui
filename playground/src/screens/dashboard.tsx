@@ -18,6 +18,7 @@ import {
     formatShortDate,
 } from './excubia-data';
 
+/** A ratio whose denominator is muted, so the eye lands on the count that changes. */
 function Ratio({ value, total }: { value: number; total: number }) {
     return (
         <>

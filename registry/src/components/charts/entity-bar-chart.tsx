@@ -1,5 +1,9 @@
 import { Bar, BarChart, LabelList, XAxis } from 'recharts';
-import { ChartDataTable } from '@/components/charts/chart-data-table';
+import {
+    AnnouncedTooltip,
+    CHART_FOCUS_CLASS,
+    ChartDataTable,
+} from '@/components/charts/chart-data-table';
 import {
     ChartContainer,
     ChartTooltip,
@@ -37,6 +41,11 @@ export function EntityBarChart({
     formatValue?: (value: number) => string;
     className?: string;
 }) {
+    // About 36 characters of axis fit a 320px-wide plot; each bar gets its share.
+    const maximumLabelLength = Math.max(
+        4,
+        Math.floor(36 / Math.max(1, entities.length)),
+    );
     const config = {
         value: { label: valueLabel, color: 'var(--chart-1)' },
     } satisfies ChartConfig;
@@ -45,11 +54,12 @@ export function EntityBarChart({
         <>
             <ChartContainer
                 config={config}
-                className={cn('aspect-auto h-64 w-full', className)}
+                className={cn(CHART_FOCUS_CLASS, className)}
             >
                 <BarChart
                     data={entities}
                     accessibilityLayer
+                    title={title}
                     margin={{ top: 20, right: 0, bottom: 0, left: 0 }}
                 >
                     <XAxis
@@ -58,14 +68,34 @@ export function EntityBarChart({
                         axisLine={false}
                         interval={0}
                         tickMargin={8}
-                        // Every bar keeps its name at phone width; the tooltip and table have it in full.
+                        // Every bar keeps a name that fits its slot at 320px; tooltip and table keep it whole.
                         tickFormatter={(label: string) =>
-                            label.length > 10 ? `${label.slice(0, 9)}…` : label
+                            label.length > maximumLabelLength
+                                ? `${label.slice(0, maximumLabelLength - 1)}…`
+                                : label
                         }
                     />
                     <ChartTooltip
                         cursor={false}
-                        content={<ChartTooltipContent />}
+                        content={(tooltipProps) => (
+                            <AnnouncedTooltip>
+                                <ChartTooltipContent
+                                    active={tooltipProps.active}
+                                    payload={tooltipProps.payload}
+                                    label={tooltipProps.label}
+                                    formatter={(value) => (
+                                        <span className="flex w-full justify-between gap-4">
+                                            <span className="text-muted-foreground">
+                                                {valueLabel}
+                                            </span>
+                                            <span className="font-medium text-foreground tabular-nums">
+                                                {formatValue(Number(value))}
+                                            </span>
+                                        </span>
+                                    )}
+                                />
+                            </AnnouncedTooltip>
+                        )}
                     />
                     <Bar
                         dataKey="value"

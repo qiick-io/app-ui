@@ -142,3 +142,69 @@ it('shows the empty state instead of a plot when the period has no data', () => 
     expect(screen.queryByRole('table')).toBeNull();
     expect(screen.queryByRole('button', { name: /Claude/ })).toBeNull();
 });
+
+it('treats recorded zeros as data, not as an empty period', () => {
+    renderChart(
+        METRICS.map((metric) => ({
+            ...metric,
+            rows: [{ date: '2026-11-27', claude: 0, codex: 0 }],
+        })),
+    );
+
+    expect(screen.queryByText('No runs')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Claude $0.00' })).toBeTruthy();
+});
+
+it('shows every series again when a new series prop leaves only hidden ones', () => {
+    const { rerender } = renderChart();
+
+    fireEvent.click(screen.getByRole('button', { name: /Claude/ }));
+
+    rerender(
+        <TimeSeriesChart
+            title="Agent usage"
+            series={[{ key: 'claude', label: 'Claude' }]}
+            metrics={METRICS}
+            formatDate={(date) => date}
+            metricSwitchLabel="Metric"
+            dateColumnHeader="Date"
+            emptyState="No runs"
+        />,
+    );
+
+    expect(
+        screen
+            .getByRole('button', { name: /Claude/ })
+            .getAttribute('aria-pressed'),
+    ).toBe('true');
+});
+
+it('never writes caller series keys into the chart stylesheet', () => {
+    const { container } = render(
+        <TimeSeriesChart
+            title="Agent usage"
+            series={[
+                { key: 'billing eu} body{color:red', label: 'Billing EU' },
+            ]}
+            metrics={[
+                {
+                    key: 'cost',
+                    label: 'Cost',
+                    formatValue: String,
+                    rows: [
+                        { date: '2026-11-27', 'billing eu} body{color:red': 3 },
+                    ],
+                },
+            ]}
+            formatDate={(date) => date}
+            metricSwitchLabel="Metric"
+            dateColumnHeader="Date"
+            emptyState="No runs"
+        />,
+    );
+
+    expect(container.querySelector('style')?.textContent ?? '').not.toContain(
+        'billing',
+    );
+    expect(screen.getByRole('button', { name: 'Billing EU 3' })).toBeTruthy();
+});

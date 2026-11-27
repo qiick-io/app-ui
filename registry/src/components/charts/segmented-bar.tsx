@@ -55,7 +55,12 @@ export function SegmentedBar({
         <div className={cn('flex flex-col gap-2', className)}>
             <div
                 aria-hidden="true"
-                className="flex h-2 w-full gap-0.5 overflow-hidden rounded-full bg-muted"
+                // The gaps show the card, so every segment keeps its 3:1 edge; an all-zero bar shows the muted track.
+                className={cn(
+                    'flex h-2 w-full gap-0.5 overflow-hidden rounded-full',
+                    segments.every((segment) => segment.value === 0) &&
+                        'bg-muted',
+                )}
             >
                 {/* Zero counts draw nothing; the legend still lists them ("Critical 0"). */}
                 {segments
