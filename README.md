@@ -8,6 +8,8 @@
 
 # qiick app UI
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/qiick-io/app-ui/badge)](https://scorecard.dev/viewer/?uri=github.com/qiick-io/app-ui)
+
 Shared admin UI for the open-source, installable [qiick](https://qiick.io) apps: [Externa](https://github.com/qiick-io/externa-core), [Excubia](https://github.com/qiick-io/excubia-app), and the apps that follow.
 
 > **Status:** in use by externa-core and excubia-app. Releases are tagged `vX.Y.Z` (see [`RELEASING.md`](RELEASING.md)); apps pin a tag, never `develop`.

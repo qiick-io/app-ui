@@ -1,0 +1,39 @@
+name: Fleet security
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+  schedule:
+    - cron: '17 5 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  conformance:
+    uses: ./.github/workflows/fleet-security-check.yml
+    with:
+      security-txt: playground/public/.well-known/security.txt
+  codeql:
+    if: github.event_name != 'pull_request'
+    needs: conformance
+    uses: ./.github/workflows/codeql.yml
+    with:
+      is-public-fleet: ${{ needs.conformance.outputs.is-public-fleet == 'true' }}
+      languages: '["actions","javascript-typescript"]'
+    permissions:
+      contents: read
+      security-events: write
+  scorecard:
+    if: github.event_name != 'pull_request'
+    needs: conformance
+    uses: ./.github/workflows/scorecard.yml
+    with:
+      is-public-fleet: ${{ needs.conformance.outputs.is-public-fleet == 'true' }}
+      is-default-branch: ${{ needs.conformance.outputs.is-default-branch == 'true' }}
+    permissions:
+      contents: read
+      id-token: write
+      security-events: write

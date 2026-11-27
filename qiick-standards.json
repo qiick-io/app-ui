@@ -4,5 +4,10 @@
     "uiPreset": "Teal",
     "php": false,
     "frontendRoots": ["registry/src", "playground/src"],
-    "eslint": true
+    "eslint": true,
+    "fleetSecurity": {
+        "repository": "qiick-io/app-ui",
+        "securityTxt": "playground/public/.well-known/security.txt",
+        "isPublicFleet": true
+    }
 }

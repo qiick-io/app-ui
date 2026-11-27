@@ -1,6 +1,6 @@
 # Release tags of app-ui itself: the signed tag check (F23) runs on every
-# `v*` tag the maintainer pushes. app-ui publishes nothing from CI, so the
-# check is the whole workflow.
+# `v*` tag the maintainer pushes. The SBOM workflow verifies the tag again
+# when the maintainer publishes the GitHub release.
 name: release tag
 
 on:

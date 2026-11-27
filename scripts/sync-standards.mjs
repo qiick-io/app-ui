@@ -52,6 +52,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findConventionViolations } from '../standards/scripts/check-conventions.mjs';
+import { findFleetSecurityViolations } from '../standards/scripts/check-fleet-security.mjs';
 import {
     findPackageMatrixViolations,
     listWorkflowFiles,
@@ -1333,6 +1334,18 @@ export function syncStandards(
         }
 
         messages.push(...findConventionViolations(targetRoot, config));
+
+        if (config.fleetSecurity) {
+            const { errors, warnings } = findFleetSecurityViolations(
+                targetRoot,
+                config.fleetSecurity,
+            );
+            messages.push(...errors);
+
+            for (const warning of warnings) {
+                console.warn(`::warning::${warning}`);
+            }
+        }
 
         if (isErasureSuiteInstalled(config)) {
             messages.push(...findErasureCiViolations(targetRoot, config));

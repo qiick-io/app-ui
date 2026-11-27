@@ -1,0 +1,74 @@
+name: Fleet security conformance
+
+on:
+  workflow_call:
+    inputs:
+      security-txt:
+        description: Tracked path served at /.well-known/security.txt, if the repository has a deployment
+        type: string
+        default: ''
+      standards-ref:
+        description: Immutable app-ui commit containing the checker (empty only in app-ui)
+        type: string
+        default: ''
+    outputs:
+      is-public-fleet:
+        description: Whether the caller is a public qiick-io repository
+        value: ${{ jobs.conventions.outputs.is-public-fleet }}
+      is-default-branch:
+        description: Whether the workflow runs on the default branch
+        value: ${{ jobs.conventions.outputs.is-default-branch }}
+
+permissions:
+  contents: read
+
+jobs:
+  conventions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      is-public-fleet: ${{ steps.repository.outputs.is-public-fleet }}
+      is-default-branch: ${{ steps.repository.outputs.is-default-branch }}
+    steps:
+      - name: Read the caller's repository metadata
+        id: repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+          REF: ${{ github.ref }}
+          STANDARDS_REF: ${{ inputs.standards-ref }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$REPOSITORY" != qiick-io/app-ui && ! "$STANDARDS_REF" =~ ^[a-f0-9]{40}$ ]]; then
+            echo "::error::External callers must provide the app-ui standards commit SHA."
+            exit 1
+          fi
+
+          if [[ "$OWNER" != qiick-io ]]; then
+            exit 0
+          fi
+
+          # Scheduled runs need metadata independent of the event payload.
+          gh api "repos/$REPOSITORY" | jq -r --arg ref "$REF" '[
+            "is-public-fleet=" + ((.private == false) | tostring),
+            "is-default-branch=" + (("refs/heads/" + .default_branch == $ref) | tostring)
+          ] | .[]' >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        if: inputs.standards-ref != ''
+        with:
+          repository: qiick-io/app-ui
+          ref: ${{ inputs.standards-ref }}
+          path: .fleet-standards
+          persist-credentials: false
+      - name: Check the security conventions
+        env:
+          REPOSITORY: ${{ github.repository }}
+          SECURITY_TXT: ${{ inputs.security-txt }}
+          IS_PUBLIC_FLEET: ${{ steps.repository.outputs.is-public-fleet }}
+          CHECKER_ROOT: ${{ inputs.standards-ref != '' && '.fleet-standards' || '.' }}
+        run: node "$CHECKER_ROOT/standards/scripts/check-fleet-security.mjs" "$REPOSITORY" "$SECURITY_TXT" "$IS_PUBLIC_FLEET"
