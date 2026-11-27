@@ -98,3 +98,39 @@ it('leaves clicks and key presses in an action cell to its own control', () => {
 it('keeps non-actionable rows out of the tab order', () => {
     expect(renderTable().getAttribute('tabindex')).toBeNull();
 });
+
+it('pins columns with sticky offsets and keeps the cell order', () => {
+    const columns: ColumnDef<typeof record>[] = [
+        { id: 'select', size: 40, header: 'Select', cell: () => null },
+        { accessorKey: 'name', header: 'Name' },
+        { id: 'owner', header: 'Owner', cell: () => 'Ada' },
+        { id: 'actions', header: 'Actions', cell: () => null },
+    ];
+
+    render(
+        <DataTable
+            columns={columns}
+            data={[record]}
+            getRowId={(row) => row.id}
+            columnPinning={{ left: ['select', 'name'], right: ['actions'] }}
+        />,
+    );
+
+    const headers = screen.getAllByRole('columnheader');
+    expect(headers.map((header) => header.textContent)).toEqual([
+        'Select',
+        'Name',
+        'Owner',
+        'Actions',
+    ]);
+    expect(headers[0].dataset.pinned).toBe('left');
+    expect(headers[0].dataset.pinnedEdge).toBeUndefined();
+    expect(headers[1].style.left).toBe('40px');
+    expect(headers[1].dataset.pinnedEdge).toBe('');
+    expect(headers[2].dataset.pinned).toBeUndefined();
+    expect(headers[3].dataset.pinned).toBe('right');
+    expect(headers[3].style.right).toBe('0px');
+    expect(screen.getByRole('cell', { name: record.name }).dataset.pinned).toBe(
+        'left',
+    );
+});

@@ -17,8 +17,9 @@ Declared as `inbox-list:side-panel` or `inbox-list:full-page`. Every queue of th
 
 ## Rules
 
-- **Saved views** (`InboxSavedViews`) sit above the toolbar, left-aligned. Each is a preset filter set with its own URL, such as "Unresolved", "Assigned to me" or "New in 24h", with an optional count. The view whose filters match the URL is active. Changing a filter by hand leaves none active. The first view is the default.
-- **Filters in a fixed order**, in one row: status, severity, assignee, time range, then search. Facets are `DataTableFacetedFilter`. Every filter lives in the URL.
+- **Saved views** (`InboxSavedViews`) sit above the toolbar, left-aligned. Each is a preset filter set with its own URL, such as "Unresolved", "Assigned to me" or "New in 24h", with an optional count. The view whose filters match the URL is active. Changing a filter by hand leaves none active. The first view is the default. They look like the segmented controls of the toolbar (bordered segments, the active one `bg-accent` with its border), so a page never shows two selected styles.
+- **Filters in a fixed order**, in one toolbar row ([list page toolbar](../list-page.md#toolbar)): search on the left, then status (`trailing`, always visible), then severity, assignee and time range (`collapsibleFilters`, behind **Filters** with the active count when the row does not fit). Facets are `DataTableFacetedFilter`. Every filter lives in the URL.
+- **No lone key number** above the list: the saved views already carry the counts. A queue that needs trends shows a full [key numbers row](../charts.md#key-numbers-row), never a single card.
 - **Bulk actions** come from the core selection bar (`DataTableToolbar` `bulkActions`): assign, resolve, mute, in that order, with destructive ones confirmed ([destructive-actions.md](../destructive-actions.md)). The server authorizes and logs **each** item, never the batch as a whole.
 - **Item layout**, the same in the sheet and on the full page:
     1. the summary: status and severity badges, the title, one description line (type, occurrences, first and last seen), then the actions;
