@@ -34,9 +34,11 @@ export type DataTableToolbarProps = {
 
 /**
  * The toolbar's layouts, widest first: everything in one row; the secondary filters behind
- * the "Filters" button; and that plus the search on its own full-width row (phones).
+ * the "Filters" button; that plus the search on its own full-width row; and, when even the
+ * always-visible filters do not fit beside "Filters", search and "Filters" alone with every
+ * filter in the popover (narrow phones).
  */
-const TOOLBAR_LAYOUTS = ['inline', 'collapsed', 'stacked'] as const;
+const TOOLBAR_LAYOUTS = ['inline', 'collapsed', 'stacked', 'minimal'] as const;
 
 export type DataTableToolbarLayout = (typeof TOOLBAR_LAYOUTS)[number];
 
@@ -117,6 +119,9 @@ export function DataTableToolbar({
     const hasCollapsibleFilters = Boolean(collapsibleFilters);
     const isCollapsed = layout !== 'inline';
     const isStacked = layout === 'stacked';
+    const isMinimal = layout === 'minimal';
+    const hasPopoverFilters =
+        hasCollapsibleFilters || (isMinimal && Boolean(trailing));
 
     // Measured before paint, so a narrower layout never flashes in the wider one.
     useLayoutEffect(() => {
@@ -212,11 +217,11 @@ export function DataTableToolbar({
                     ref={filterGroupRef}
                     className="flex shrink-0 flex-nowrap items-center gap-2"
                 >
-                    {trailing}
+                    {isMinimal ? null : trailing}
                     {hasCollapsibleFilters && !isCollapsed
                         ? collapsibleFilters
                         : null}
-                    {hasCollapsibleFilters && isCollapsed ? (
+                    {hasPopoverFilters && isCollapsed ? (
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button type="button" variant="outline">
@@ -246,6 +251,7 @@ export function DataTableToolbar({
                                 align="end"
                                 className="flex w-auto max-w-[calc(100vw-2rem)] flex-col items-start gap-3"
                             >
+                                {isMinimal ? trailing : null}
                                 {collapsibleFilters}
                             </PopoverContent>
                         </Popover>

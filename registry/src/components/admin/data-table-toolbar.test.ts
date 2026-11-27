@@ -56,3 +56,22 @@ it('steps back only once the wider layout fits, so layouts never flip', () => {
         }),
     ).toBe('stacked');
 });
+
+it('moves every filter into the popover only after stacking the search', () => {
+    expect(
+        nextToolbarLayout({
+            layout: 'stacked',
+            clientWidth: 320,
+            scrollWidth: 360,
+            neededWidths: { inline: 1100, collapsed: 480 },
+        }),
+    ).toBe('minimal');
+    expect(
+        nextToolbarLayout({
+            layout: 'minimal',
+            clientWidth: 320,
+            scrollWidth: 320,
+            neededWidths: { inline: 1100, collapsed: 480, stacked: 360 },
+        }),
+    ).toBe('minimal');
+});
