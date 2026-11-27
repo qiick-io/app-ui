@@ -46,10 +46,17 @@ function DrawerContent({
     children,
     showOverlay = true,
     onOpenAutoFocus,
+    onCloseAutoFocus,
     ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Content> & {
     showOverlay?: boolean;
 }) {
+    // Drawers opened from a plain button (controlled `open`, no DrawerTrigger) have no trigger
+    // for Radix to refocus on close, so remember what had focus and return it (WCAG 2.4.3).
+    // ponytail: a Safari pointer click does not focus the button, so nothing is remembered and
+    // focus still ends on <body> there; upgrade with an `opener` prop if an app needs it.
+    const returnFocusRef = React.useRef<HTMLElement | null>(null);
+
     const inner = (
         <DrawerPrimitive.Content
             data-slot="drawer-content"
@@ -59,6 +66,11 @@ function DrawerContent({
                 className,
             )}
             onOpenAutoFocus={(event) => {
+                // <body> (Safari does not focus clicked buttons) is no opener: Radix's own
+                // DrawerTrigger return stays in charge then.
+                const opener = document.activeElement;
+                returnFocusRef.current =
+                    opener instanceof HTMLElement && opener !== document.body ? opener : null;
                 onOpenAutoFocus?.(event);
 
                 if (event.defaultPrevented) {
@@ -80,6 +92,26 @@ function DrawerContent({
 
                 event.preventDefault();
                 focusTarget.focus();
+            }}
+            onCloseAutoFocus={(event) => {
+                onCloseAutoFocus?.(event);
+                const returnFocusTo = returnFocusRef.current;
+                returnFocusRef.current = null;
+
+                if (event.defaultPrevented || !returnFocusTo?.isConnected) {
+                    return;
+                }
+
+                // Radix refocuses its own DrawerTrigger after this handler; only a drawer without
+                // one leaves focus on <body>, so step in only then.
+                queueMicrotask(() => {
+                    if (
+                        document.activeElement === null ||
+                        document.activeElement === document.body
+                    ) {
+                        returnFocusTo.focus();
+                    }
+                });
             }}
             {...props}
         >
