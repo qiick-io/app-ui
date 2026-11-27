@@ -1,0 +1,77 @@
+name: Generate release SBOM
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  attach:
+    if: github.event_name == 'release' && github.event.action == 'published'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        if: hashFiles('composer.json') != ''
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+          coverage: none
+      - name: Generate Composer SBOM
+        if: hashFiles('composer.json') != ''
+        env:
+          COMPOSER_HOME: ${{ runner.temp }}/cyclonedx-composer
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/release-sbom"
+
+          if [[ ! -f composer.lock ]]; then
+            # Libraries let consumers resolve dependencies, so inventory this resolution at release time.
+            composer update --no-install --no-dev --no-scripts --no-plugins --no-interaction
+          fi
+
+          composer global config --no-plugins allow-plugins.cyclonedx/cyclonedx-php-composer true
+          composer global require --no-scripts --no-interaction cyclonedx/cyclonedx-php-composer:6.2.0
+          composer CycloneDX:make-sbom --omit=dev --output-reproducible --output-format=JSON \
+            --mc-version="$TAG" --output-file="$RUNNER_TEMP/release-sbom/composer.cdx.json"
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        if: hashFiles('package-lock.json', 'npm-shrinkwrap.json') != ''
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Generate npm SBOM
+        if: hashFiles('package-lock.json', 'npm-shrinkwrap.json') != ''
+        run: |
+          mkdir -p "$RUNNER_TEMP/release-sbom"
+          npx --yes --package=@cyclonedx/cyclonedx-npm@7.0.1 cyclonedx-npm \
+            --package-lock-only --omit dev --output-reproducible --output-format JSON \
+            --output-file "$RUNNER_TEMP/release-sbom/npm.cdx.json"
+      - name: Attach inventories to the published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          inventories=("$RUNNER_TEMP/release-sbom"/*.cdx.json)
+
+          if [[ ${#inventories[@]} == 0 ]]; then
+            echo "::error::No Composer manifest or npm lock file found for this release."
+            exit 1
+          fi
+
+          assets=$(gh release view --repo "$REPOSITORY" --json assets --jq '.assets[].name' -- "$TAG")
+
+          for inventory in "${inventories[@]}"; do
+            if ! grep -Fxq -- "${inventory##*/}" <<< "$assets"; then
+              gh release upload --repo "$REPOSITORY" -- "$TAG" "$inventory"
+            fi
+          done

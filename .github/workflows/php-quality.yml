@@ -52,6 +52,10 @@ on:
         description: Lowest accepted PHPStan level (8 for apps, max for packages); empty while an app ratchets up to it
         type: string
         default: '8'
+      phpstan-max-advisory:
+        description: Report findings at max while an app keeps its existing PHPStan gate
+        type: boolean
+        default: false
       coverage-thresholds:
         description: Packages, fixed minimums per path (`src=90 src/Checks=90`); empty for the app floor file
         type: string
@@ -107,6 +111,11 @@ jobs:
 
       - name: PHPStan
         run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+
+      - name: PHPStan max (advisory)
+        if: inputs.phpstan-max-advisory
+        continue-on-error: true
+        run: vendor/bin/phpstan analyse --level=max --memory-limit=1G --no-progress
 
       - name: PHPStan level floor, baseline only shrinks
         env:

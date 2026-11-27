@@ -1,0 +1,36 @@
+name: CodeQL
+
+on:
+  workflow_call:
+    inputs:
+      languages:
+        description: JSON list of supported languages in the caller
+        type: string
+        default: '["actions","javascript-typescript"]'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    if: github.repository_owner == 'qiick-io' && !github.event.repository.private
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ${{ fromJSON(inputs.languages) }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+      - uses: github/codeql-action/analyze@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        with:
+          category: '/language:${{ matrix.language }}'

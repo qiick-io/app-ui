@@ -30,9 +30,9 @@ const standardsRoot = path.join(
     '..',
 );
 
-/** Every convention id the decisions number, automated or not (F19–F24, F26, F29, F30: `rules/operations.md`). */
+/** Every convention id, including the security checks in check-fleet-security.mjs. */
 export const CONVENTION_IDS = Array.from(
-    { length: 30 },
+    { length: 33 },
     (_unused, index) => `F${index + 1}`,
 );
 

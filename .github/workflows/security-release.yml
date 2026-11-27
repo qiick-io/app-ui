@@ -1,0 +1,14 @@
+name: Release SBOM
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  release-sbom:
+    uses: ./.github/workflows/release-sbom.yml
+    permissions:
+      contents: write

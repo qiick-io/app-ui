@@ -1,0 +1,39 @@
+name: Fleet security conformance
+
+on:
+  workflow_call:
+    inputs:
+      security-txt:
+        description: Tracked path served at /.well-known/security.txt, if the repository has a deployment
+        type: string
+        default: ''
+      standards-ref:
+        description: Immutable app-ui commit containing the checker (empty only in app-ui)
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  conventions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        if: inputs.standards-ref != ''
+        with:
+          repository: qiick-io/app-ui
+          ref: ${{ inputs.standards-ref }}
+          path: .fleet-standards
+          persist-credentials: false
+      - name: Check the security conventions
+        env:
+          REPOSITORY: ${{ github.repository }}
+          SECURITY_TXT: ${{ inputs.security-txt }}
+          IS_PUBLIC_FLEET: ${{ github.repository_owner == 'qiick-io' && !github.event.repository.private }}
+          CHECKER_ROOT: ${{ inputs.standards-ref != '' && '.fleet-standards' || '.' }}
+        run: node "$CHECKER_ROOT/standards/scripts/check-fleet-security.mjs" "$REPOSITORY" "$SECURITY_TXT" "$IS_PUBLIC_FLEET"

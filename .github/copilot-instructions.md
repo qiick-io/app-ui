@@ -133,7 +133,7 @@ Every qiick repo is configured the same way, so a check name, a label or a merge
 
 ## Security, data and operations
 
-What every qiick repo does so a vulnerability can be reported, a leaked secret replaced, a schema changed without downtime, the data restored, a release and its dependencies trusted, a running product watched, personal data accounted for, and an incident handled from a page instead of from memory (fleet conventions F19–F24, F26, F29 and F30, maintainer request of 2026-11-25; F25, F27 and F28 are code conventions, in the conventions rules).
+Operations rules F19–F24, F26 and F29–F33 cover vulnerability reporting, secrets, migrations, backups, releases, observability, privacy and incident response. F25, F27 and F28 are in the conventions rules.
 
 - **F19 Security policy:** every repo has a `SECURITY.md` (supported versions, how to report, response time) and GitHub private vulnerability reporting switched on, because the policy sends reporters there.
 - **F20 Secrets runbook:** every product has `docs/runbooks/secrets.md`: each secret of `.env.example` and each key file, where it lives, who rotates it, how, what the rotation breaks, and what to do after a leak.
@@ -144,6 +144,9 @@ What every qiick repo does so a vulnerability can be reported, a leaked secret r
 - **F26 Observability with Excubia:** every product requires `qiick/excubia-core` (not `--dev`), keeps an `excubia.json`, schedules `excubia:check` daily, and serves `/health/live` and `/health/ready`; pushing to an `excubia-app` is the operator's choice, configured only through `EXCUBIA_APP_URL` and `EXCUBIA_APP_TOKEN`.
 - **F29 Privacy:** every product keeps `docs/privacy.md`: the personal data it stores (table and column), why, for how long, which processors and outbound destinations receive any of it, and how a person's data is exported and erased. No telemetry, ever, unless the operator turns it on.
 - **F30 Runbooks:** every product keeps `docs/runbooks/deploy.md` (deploy, upgrade and rollback) and `docs/runbooks/incident.md` (first steps, who to tell, what to write down afterwards), next to the secrets and backup runbooks.
+- **F31 Security discovery:** every deployed product and the three marketing sites serve an RFC 9116 `/.well-known/security.txt` with a private reporting contact, an expiry within a year, `Preferred-Languages: en, it`, and a policy link.
+- **F32 Code scanning:** public `qiick-io` repositories run CodeQL and OpenSSF Scorecard weekly and on pushes to `develop`. They use standard hosted runners, display a Scorecard badge and report to GitHub code scanning. PHP uses PHPStan at max and the existing checks.
+- **F33 Release inventory:** every GitHub release attaches a CycloneDX SBOM. Release artefacts that already carry build provenance also carry an SBOM attestation.
 
 With a `conventions` object in `qiick-standards.json`, the standards drift check runs the static checks of F19, F20, F22–F24, F26, F29 and F30; `migrations-frozen / migrations-frozen` checks F21; `scripts/check-repo-settings.mjs` in app-ui checks that private vulnerability reporting is on. An exception is a `conventions.divergences` entry like any other convention.
 

@@ -20,7 +20,7 @@ One answer per topic for every qiick package and product (decision of 2026-11-24
 - **F25 Strict Laravel:** products boot with strict models, destructive commands prohibited and HTTPS forced in production, immutable dates and the password defaults; every PHP repo's tests stop stray HTTP requests and processes.
 - **F27 Public APIs:** an API is versioned in its path (`/api/v1`), described by a hand-written OpenAPI file that a test compares with the routes, answers errors in the F11 shape, and retires a version only after announcing it with `Deprecation` and `Sunset` headers.
 - **F28 UI quality:** a product with a UI calls the shared `ui-quality` and drift checks, and proves its screens in a browser test in light and dark.
-- **F15–F17** (repository settings, labels and project, agent rules) are in the repository rules, **F19–F24, F26, F29 and F30** (security policy, secrets, expand / contract, backup, signed tags, supply chain, observability, privacy, runbooks) in the security, data and operations rules.
+- **F15–F17** (repository settings, labels and project, agent rules) are in the repository rules. **F19–F24, F26 and F29–F33** (security, supply chain, privacy and operations) are in the security, data and operations rules.
 
 With a `conventions` object in `qiick-standards.json`, `app-ui-drift / standards` runs the static checks of these rules; an exception is a `conventions.divergences` entry with `reason`, `decision` and `review_by`.
 

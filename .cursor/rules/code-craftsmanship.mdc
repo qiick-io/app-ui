@@ -271,7 +271,7 @@ Every qiick repo is configured the same way, so a check name, a label or a merge
 
 ## Security, data and operations
 
-What every qiick repo does so a vulnerability can be reported, a leaked secret replaced, a schema changed without downtime, the data restored, a release and its dependencies trusted, a running product watched, personal data accounted for, and an incident handled from a page instead of from memory (fleet conventions F19–F24, F26, F29 and F30, maintainer request of 2026-11-25; F25, F27 and F28 are code conventions, in the conventions rules).
+Operations rules F19–F24, F26 and F29–F33 cover vulnerability reporting, secrets, migrations, backups, releases, observability, privacy and incident response. F25, F27 and F28 are in the conventions rules.
 
 - **F19 Security policy:** every repo has a `SECURITY.md` (supported versions, how to report, response time) and GitHub private vulnerability reporting switched on, because the policy sends reporters there.
 - **F20 Secrets runbook:** every product has `docs/runbooks/secrets.md`: each secret of `.env.example` and each key file, where it lives, who rotates it, how, what the rotation breaks, and what to do after a leak.
@@ -282,6 +282,9 @@ What every qiick repo does so a vulnerability can be reported, a leaked secret r
 - **F26 Observability with Excubia:** every product requires `qiick/excubia-core` (not `--dev`), keeps an `excubia.json`, schedules `excubia:check` daily, and serves `/health/live` and `/health/ready`; pushing to an `excubia-app` is the operator's choice, configured only through `EXCUBIA_APP_URL` and `EXCUBIA_APP_TOKEN`.
 - **F29 Privacy:** every product keeps `docs/privacy.md`: the personal data it stores (table and column), why, for how long, which processors and outbound destinations receive any of it, and how a person's data is exported and erased. No telemetry, ever, unless the operator turns it on.
 - **F30 Runbooks:** every product keeps `docs/runbooks/deploy.md` (deploy, upgrade and rollback) and `docs/runbooks/incident.md` (first steps, who to tell, what to write down afterwards), next to the secrets and backup runbooks.
+- **F31 Security discovery:** every deployed product and the three marketing sites serve an RFC 9116 `/.well-known/security.txt` with a private reporting contact, an expiry within a year, `Preferred-Languages: en, it`, and a policy link.
+- **F32 Code scanning:** public `qiick-io` repositories run CodeQL and OpenSSF Scorecard weekly and on pushes to `develop`. They use standard hosted runners, display a Scorecard badge and report to GitHub code scanning. PHP uses PHPStan at max and the existing checks.
+- **F33 Release inventory:** every GitHub release attaches a CycloneDX SBOM. Release artefacts that already carry build provenance also carry an SBOM attestation.
 
 With a `conventions` object in `qiick-standards.json`, the standards drift check runs the static checks of F19, F20, F22–F24, F26, F29 and F30; `migrations-frozen / migrations-frozen` checks F21; `scripts/check-repo-settings.mjs` in app-ui checks that private vulnerability reporting is on. An exception is a `conventions.divergences` entry like any other convention.
 
@@ -422,5 +425,27 @@ A runbook step that turned out wrong during a real deploy or incident is correct
 **Why.** On 2026-11-25 no repo had a runbook directory: deploy and upgrade steps were spread over READMEs and `docs/upgrade.md` pages, and no product said how to roll back or what to do first in an incident. Every qiick product is self-hosted, so the operator, not the maintainer, is the one who needs the page.
 
 **Checked by.** F30 (_app_): `docs/runbooks/deploy.md` with a **Rollback** section and `docs/runbooks/incident.md` with **First steps** and **After the incident**. Adopting the conventions writes all four runbooks from `standards/templates/`.
+
+### F31 Security discovery
+
+Serve `/.well-known/security.txt` over HTTPS as UTF-8 `text/plain`. Keep it in the deployment's public files, reachable before authentication, locale redirects and catch-all routes. Public repositories use the repository's `https://github.com/qiick-io/<repo>/security/advisories/new` for `Contact` and an HTTPS link to its `SECURITY.md` for `Policy`. The policy and the contact must be readable or usable by external reporters. Use a UTC RFC 3339 timestamp for `Expires`, at most 365 days out, and renew it as a source change. Set `Preferred-Languages: en, it`. See [RFC 9116](https://www.rfc-editor.org/rfc/rfc9116.html).
+
+**Checked by.** `fleet-security-check.yml` validates the source file and policy, fails on expired or invalid dates, and emits a warning when 30 days or less remain. Run it on pull requests and weekly. Verify the deployed URL by requesting it anonymously and checking for status 200, `text/plain`, and the repository's contact. GitHub's [private reporting form](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/configure-vulnerability-reporting/configure-for-a-repository) needs the maintainer to enable it on the public repository.
+
+### F32 Code scanning
+
+Call the pinned `codeql.yml` and `scorecard.yml` reusable workflows on pushes to `develop` and weekly. CodeQL analyzes `actions` and `javascript-typescript` where there is JavaScript or TypeScript source. CodeQL [does not support PHP](https://docs.github.com/en/code-security/tutorials/customize-code-scanning/prepare-code-for-analysis). Packages gate on PHPStan at `max` and retain their existing checks. Apps keep their existing PHPStan gate and run a separate advisory `max` pass until they can enforce that level.
+
+Upload the Scorecard SARIF to GitHub code scanning. Scorecard publishes badge data from the default branch, so include pushes to `main` when it is the default branch. Add the [official Scorecard badge](https://github.com/ossf/scorecard-action#scorecard-badge) to the README. Keep both scans outside the required checks. Use standard GitHub-hosted Ubuntu runners on public `qiick-io` repositories only. Private repositories and the marketing sites are outside F32.
+
+**Checked by.** `fleet-security-check.yml` verifies the public repository's scanner calls, triggers and README badge. The workflow runs show whether GitHub accepted the SARIF and Scorecard published the badge data.
+
+### F33 CycloneDX release inventory
+
+Call `release-sbom.yml` from the GitHub release workflow on `release: published`. It checks out the release tag and attaches `composer.cdx.json` for the Composer project, `npm.cdx.json` for the npm project, or both. Use [cyclonedx/cyclonedx-php-composer](https://github.com/CycloneDX/cyclonedx-php-composer) and [@cyclonedx/cyclonedx-npm](https://github.com/CycloneDX/cyclonedx-node-npm) with pinned versions. Products use the release locks. Libraries without a Composer lock record a release-time production resolution of their manifest.
+
+For an artefact that already has build provenance, also use [`actions/attest-sbom`](https://github.com/actions/attest-sbom) on the same artefact path or digest and the matching CycloneDX JSON. Keep the attestation step next to the provenance step and grant `id-token: write` and `attestations: write` to that job. The maintainer continues to create the tag and publish the GitHub release.
+
+**Checked by.** `fleet-security-check.yml` checks the caller and looks for an SBOM attestation alongside an existing build provenance action. The release job fails if no production inventory can be generated or uploaded.
 
 **Exceptions.** None.
