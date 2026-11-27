@@ -6,7 +6,7 @@
 #   databases, mutation on every class;
 # - `pr` on pull requests: both PHP / Laravel endpoint cells report. The
 #   lowest runs its steps when composer.json or src/ changes. Server databases
-#   run for database code, erasure, test bootstrap or workflow changes, and
+#   run for every non-docs pull request, and
 #   mutation runs on changed classes. A docs-only PR runs nothing. Jobs skip
 #   their steps so their required checks still report.
 #
@@ -67,7 +67,7 @@ on:
         description: "'true' when a pull request changes only docs: lint, PHPStan and the other non-matrix jobs skip their steps"
         value: ${{ jobs.export.outputs.docs-only }}
       run-databases:
-        description: "'true' when the database jobs run their steps (always on full)"
+        description: "'true' on every non-docs pull request and on full runs"
         value: ${{ jobs.export.outputs.run-databases }}
       mutate-scope:
         description: all (full) or changed (pr)
@@ -112,7 +112,7 @@ jobs:
           variant="$REQUESTED_VARIANT"
 
           if [ "$variant" = auto ]; then
-            if [ "$EVENT_NAME" = pull_request ]; then variant=pr; else variant=full; fi
+            if [ "$EVENT_NAME" = pull_request ]; then variant='pr'; else variant='full'; fi
           fi
 
           case "$variant" in

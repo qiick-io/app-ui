@@ -17,7 +17,7 @@
         "exclude": []
     },
     "pr": {
-        "$comment": "Path patterns are regular expressions on repo-relative paths. Both endpoint cells report on every pull request. On docsOnly changes all steps skip; otherwise the lowest cell runs its steps for code changes, the server databases run theirs for database code, erasure, test bootstrap or workflow changes, and mutation runs on changed src/ classes.",
+        "$comment": "Path patterns are regular expressions on repo-relative paths. Both endpoint cells report on every pull request. On docsOnly changes all steps skip; otherwise the lowest cell runs its steps for code changes, the server databases run theirs on every non-docs PR, and mutation runs on changed src/ classes.",
         "always": {
             "php": "highest",
             "laravel": "highest",
@@ -31,17 +31,6 @@
         "paths": {
             "docsOnly": ["\\.md$", "^docs/", "^LICENSE$"],
             "code": ["^composer\\.json$", "^src/"],
-            "database": [
-                "^database/",
-                "^src/Erasure/",
-                "^tests/Erasure/",
-                "^tests/Pest\\.php$",
-                "(?:^|/)[^/]*TestCase\\.php$",
-                "^phpunit\\.xml$",
-                "^\\.github/workflows/[^/]+\\.ya?ml$",
-                "^src/(?:.*/)?(?:Models?|Migrations?|Database|Eloquent|Stores?|Repositories|Queries|Builders|Schema)/",
-                "^src/.*(?:Model|Migration|Store|Repository|Query|Builder|Schema)\\.php$"
-            ],
             "mutation": ["^src/(?!Testing/).*\\.php$"]
         }
     },
