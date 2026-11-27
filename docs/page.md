@@ -2,7 +2,7 @@
 
 Every admin page renders inside the shell as `AppLayout` → `PageLayout`.
 
-**Registry:** `page-layout`, `page-header`, `header-icon-button`, `tabs`, `toggle-group`.
+**Registry:** `page-layout`, `page-header`, `header-icon-button`, `tabs`, `toggle-group`, `info-hint`.
 
 **Copy from externa-core:** `components/layout/page-layout.tsx`, `components/layout/page-header.tsx`, `components/admin/header-icon-button.tsx`, `layouts/app-layout.tsx`.
 
@@ -19,6 +19,17 @@ AppLayout breadcrumbs headerActions
 - `PageLayout` is `p-4 gap-4`, flat: no card around the page. Lists sit on the panel in a `TablePanel` (no box inside a box).
 - `scrollContent` makes the body the scroll container. Use it for panes that must scroll inside the panel (dashboard, files grid, long forms); lists use `TablePanel`, which scrolls itself with a sticky table head.
 - Filter row: search and filters on the left (`filters`), view/sort/segmented controls on the right (`filtersRight`). In selection mode pass `filtersRight={null}`.
+
+## Page text
+
+The breadcrumb, the view tab, the card titles, the column headers and the empty states say what a page shows. Nothing else does.
+
+- **No intro paragraph** under the header, a tab or a card title ("The alerts of this project: what was sent…", "Packages with known advisories, abandoned or stale…"). `PageLayout`'s `description` is for a short status the page cannot show otherwise ("3 jobs pending"), not for an explanation.
+- **An explanation that is really needed** (a definition, a rule the numbers follow) sits behind an `InfoHint` next to the card or section title: an info icon (`Button variant="ghost" size="icon-sm"`, `aria-label` "About <title>") that opens a short popover. A longer guide is a link to the docs.
+- **Data, not prose.** A subtitle that carries a number or a scope ("8 of 22 open problems", "Last hour, updated every minute") stays; a sentence that restates the title, lists the columns or describes the sort order goes.
+- Empty states explain themselves (`PageEmptyState`: a title and one line, plus an action or a docs link when there is one) and replace the intro text that used to say what would appear.
+
+Source: Excubia `pages/fleet/index.tsx` (the readiness definition behind the Projects card's info icon), `components/reports/alerts-view.tsx`.
 
 ## Header actions
 

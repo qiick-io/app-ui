@@ -28,7 +28,7 @@ A dashboard is read at a glance. A chart earns its place only when it reads fast
 
 The top row of a dashboard. Copy the layout of `playground/src/screens/dashboard.tsx`:
 
-- Grid `grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5` (or `xl:grid-cols-4` for four tiles). One row, at most five tiles.
+- Grid `grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5` (or `xl:grid-cols-4` for four tiles). One row, at most five tiles. With an odd number of tiles add `sm:*:last:odd:col-span-2 xl:*:last:odd:col-span-1`, so the last tile spans the two-column row instead of leaving a hole ([card grids](dashboard.md#card-grids)).
 - `label` is the metric name; `value` the formatted number, large and `tabular-nums`. A ratio keeps its denominator muted (`25<span className="text-lg text-muted-foreground">/41</span>`).
 - `delta` comes from `kpiDeltaOf(value, previous, isIncreaseGood)`: the signed change and an arrow, coloured by what it **means**. `isIncreaseGood` is `false` for findings, exceptions, errors and latency (up is bad), `true` for checks passing and coverage, `null` when the change is neither (traffic). The arrow and the sign carry the direction, so colour never carries it alone. Leave `delta` out when there is no previous period.
 - `secondary` is one short line: a breakdown ("2 failed · 3 warnings"), the comparison period ("vs previous 30 days") or a scope.

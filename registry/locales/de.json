@@ -76,6 +76,7 @@
         "trigger": "Suchen"
     },
     "common": {
+        "aboutTopic": "Über {{topic}}",
         "cancel": "Abbrechen",
         "clearFilters": "Filter zurücksetzen",
         "delete": "Löschen",
