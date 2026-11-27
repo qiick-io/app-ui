@@ -2,7 +2,7 @@
 
 # Security, data and operations
 
-Operations rules F19–F24, F26 and F29–F33 cover vulnerability reporting, secrets, migrations, backups, releases, observability, privacy and incident response. F25, F27 and F28 are in the conventions rules.
+Operations rules F19–F24, F26 and F29–F34 cover vulnerability reporting, secrets, migrations, backups, releases, observability, privacy, incident response and security verification. F25, F27 and F28 are in the conventions rules.
 
 - **F19 Security policy:** every repo has a `SECURITY.md` (supported versions, how to report, response time) and GitHub private vulnerability reporting switched on, because the policy sends reporters there.
 - **F20 Secrets runbook:** every product has `docs/runbooks/secrets.md`: each secret of `.env.example` and each key file, where it lives, who rotates it, how, what the rotation breaks, and what to do after a leak.
@@ -16,8 +16,9 @@ Operations rules F19–F24, F26 and F29–F33 cover vulnerability reporting, sec
 - **F31 Security discovery:** every deployed product and the three marketing sites serve an RFC 9116 `/.well-known/security.txt` with a private reporting contact, an expiry within a year, `Preferred-Languages: en, it`, and a policy link.
 - **F32 Code scanning:** public `qiick-io` repositories run CodeQL and OpenSSF Scorecard weekly and on pushes to `develop`. They use standard hosted runners, display a Scorecard badge and report to GitHub code scanning. PHP uses PHPStan at max and the existing checks.
 - **F33 Release inventory:** every GitHub release attaches a CycloneDX SBOM. Release artefacts that already carry build provenance also carry an SBOM attestation.
+- **F34 ASVS 5.0 L2:** every product uses `docs/asvs.md` as its security checklist. Record a status and evidence for every OWASP ASVS 5.0.0 Level 1 and Level 2 requirement, including why an item does not apply and which qiick package owns any inherited control.
 
-With a `conventions` object in `qiick-standards.json`, the standards drift check runs the static checks of F19, F20, F22–F24, F26, F29 and F30; `migrations-frozen / migrations-frozen` checks F21; `scripts/check-repo-settings.mjs` in app-ui checks that private vulnerability reporting is on. An exception is a `conventions.divergences` entry like any other convention.
+With a `conventions` object in `qiick-standards.json`, the standards drift check runs the static checks of F19, F20, F22–F24, F26, F29, F30 and F34; `migrations-frozen / migrations-frozen` checks F21; `scripts/check-repo-settings.mjs` in app-ui checks that private vulnerability reporting is on. An exception is a `conventions.divergences` entry like any other convention.
 
 ## F19 Security policy and private reporting
 
@@ -186,3 +187,13 @@ For an artefact that already has build provenance, also use [`actions/attest-sbo
 **Checked by.** `fleet-security-check.yml` checks the caller and looks for an SBOM attestation alongside an existing build provenance action. The release job fails if no production inventory can be generated or uploaded.
 
 **Exceptions.** None.
+
+## F34 ASVS 5.0 L2
+
+**Rule.** Use [OWASP ASVS 5.0.0](https://asvs.owasp.org/downloads/) Level 2 as the single product security checklist. Start from the [ASVS register template](https://github.com/qiick-io/app-ui/blob/develop/standards/templates/asvs.md) and keep one row per Level 1 and Level 2 requirement with its versioned OWASP ID. Keep an out-of-scope row with the reason it does not apply. Review affected rows when a surface, runtime setting, dependency or supporting test changes.
+
+Record **Met** when evidence covers the entire requirement, **Partial** when evidence covers part of it, **Not applicable** when the relevant feature or architecture is out of scope, and **Gap** when the requirement lacks a substantiated control. Cite the test name, source file or deployment setting and describe what it proves or what remains to verify. Track each Gap with a GitHub issue titled `[asvs]` and link it in the row. Follow F19 for sensitive details and use a public issue only for safe remediation tracking. A filled register records the current assessment and can contain open gaps.
+
+**Mapping F12.** Map the properties and covering tests in a package's `docs/security-checklist.md` to the corresponding ASVS requirement IDs. Confirm the installed version and that the product's runtime configuration and call sites use the tested path. Name the Composer package in the **Owner package** column and link to its versioned F12 row or named test, along with any product evidence. A package entry can support several ASVS rows, and a row can inherit evidence from multiple packages. Keep **Partial** if the inherited evidence covers only part of the product requirement.
+
+**Checked by.** F34 (_app_) in standards drift checks for `docs/asvs.md`, complete and unique Level 1 and Level 2 IDs, a supported status and non-empty evidence in every row, and an issue reference in every Gap row. Use a GitHub issue URL or a local `#123` reference. Review verifies the issue prefix and whether the evidence and scope justify the status.

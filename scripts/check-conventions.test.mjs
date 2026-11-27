@@ -95,6 +95,89 @@ Schema::create('demo_tokens', function (Blueprint $table) {
 };
 
 const adopted = { package: true, conventions: {} };
+const asvsRegisterTemplate = fs.readFileSync(
+    new URL('../standards/templates/asvs.md', import.meta.url),
+    'utf8',
+);
+const evidencedAsvsRegister = asvsRegisterTemplate.replaceAll(
+    /^\| (v5\.0\.0-\d+\.\d+\.\d+) +\| *\| *\| *\|$/gm,
+    '| $1 | Partial | `SecurityTest.php` covers this path. | |',
+);
+
+test('F34 requires a complete, evidenced ASVS Level 2 register for products', () => {
+    const config = { app: true, conventions: {} };
+    const root = makeRepo({});
+    const registerPath = path.join(root, 'docs/asvs.md');
+    const errors = () =>
+        findConventionViolations(root, config).filter((error) =>
+            error.startsWith('conventions F34 '),
+        );
+    assert.match(errors()[0], /docs\/asvs\.md is missing/);
+
+    fs.mkdirSync(path.dirname(registerPath));
+    fs.writeFileSync(registerPath, asvsRegisterTemplate);
+    assert.ok(
+        errors().some((error) =>
+            /v5\.0\.0-1\.1\.1 needs a valid status and evidence/.test(error),
+        ),
+    );
+
+    fs.writeFileSync(registerPath, evidencedAsvsRegister);
+    assert.deepEqual(errors(), []);
+
+    const gapRegister = (evidence) =>
+        evidencedAsvsRegister.replace(
+            '| v5.0.0-1.1.1 | Partial | `SecurityTest.php` covers this path. |',
+            `| v5.0.0-1.1.1 | Gap | ${evidence} |`,
+        );
+    fs.writeFileSync(registerPath, gapRegister('Missing test coverage.'));
+    assert.match(errors()[0], /v5\.0\.0-1\.1\.1 must link its \[asvs\] issue/);
+
+    for (const reference of [
+        '#123',
+        '[Follow-up](https://github.com/qiick-io/demo-app/issues/123)',
+    ]) {
+        fs.writeFileSync(
+            registerPath,
+            gapRegister(`Missing test coverage. ${reference}`),
+        );
+        assert.deepEqual(errors(), []);
+    }
+
+    fs.writeFileSync(
+        registerPath,
+        evidencedAsvsRegister
+            .replace(/^\| v5\.0\.0-1\.1\.1 .*\n/m, '')
+            .replace('| v5.0.0-1.1.2 | Partial |', '| v5.0.0-1.1.2 | Covered |')
+            .replace(
+                '| v5.0.0-1.2.1 | Partial | `SecurityTest.php` covers this path. |',
+                '| v5.0.0-1.2.1 | Gap | — |',
+            )
+            .replace('| v5.0.0-1.2.2 |', '| v5.0.0-1.2.1 |'),
+    );
+
+    assert.match(
+        errors().join('\n'),
+        /is missing 2 requirements: v5\.0\.0-1\.1\.1, v5\.0\.0-1\.2\.2/,
+    );
+    assert.match(
+        errors().join('\n'),
+        /v5\.0\.0-1\.1\.2 needs a valid status and evidence/,
+    );
+    assert.match(
+        errors().join('\n'),
+        /v5\.0\.0-1\.2\.1 needs a valid status and evidence/,
+    );
+    assert.match(
+        errors().join('\n'),
+        /v5\.0\.0-1\.2\.1 is listed more than once/,
+    );
+    assert.ok(
+        !findConventionViolations(root, adopted).some((error) =>
+            error.startsWith('conventions F34 '),
+        ),
+    );
+});
 
 /**
  * The convention ids a repo breaks.
@@ -319,6 +402,7 @@ final class AppServiceProvider {
             'docs/runbooks/deploy.md': '# Deploy\n\n## Rollback\n',
             'docs/runbooks/incident.md':
                 '# Incident\n\n## First steps\n\n## After the incident\n',
+            'docs/asvs.md': evidencedAsvsRegister,
         },
         'qiick/excubia-app',
     );

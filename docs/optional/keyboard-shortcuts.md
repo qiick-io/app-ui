@@ -19,7 +19,7 @@ People who spend long sessions in an app (triaging issues, reviewing records) mo
 
 ## Keyboard and accessibility
 
-- Single-key shortcuts never fire while the person types in a field, a select or a rich-text editor. The user can turn them off entirely in Appearance settings (WCAG 2.1.4, Character Key Shortcuts). The help dialog says when they are off.
+- Single-key shortcuts never fire while the person types in a field, a select or a rich-text editor. The user can turn them off entirely in Appearance settings (WCAG 2.2 SC 2.1.4, Character Key Shortcuts). The help dialog says when they are off.
 - ⌘ / Ctrl shortcuts fire in plain fields, but not inside a rich-text editor. A key press another handler already took (`preventDefault`, for example ⌘K inserting a link in the editor) is left alone.
 - `?` opens a dialog listing the active shortcuts by group, with platform key caps. It is a standard `Dialog` (focus trap, Escape closes).
 - Every action a shortcut runs is also reachable with a visible control. Shortcuts are an accelerator, never the only way.

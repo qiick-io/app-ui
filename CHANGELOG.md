@@ -10,6 +10,8 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 
 ### Added
 
+- Standards F34 adds the OWASP ASVS 5.0 Level 2 register and checks all 253 requirements, including a linked issue for every Gap. The shared UI workflow adds WCAG 2.2 AA target-size and focus checks with a manual review template (#295).
+
 - Page text and card grid rules ([`docs/page.md`](docs/page.md#page-text), [`docs/dashboard.md`](docs/dashboard.md#card-grids)): no intro paragraphs under page and card titles, an explanation sits behind the new registry `info-hint` (info icon and popover); cards in a row share its height, and a card's table scrolls inside the new `card-table-scroll` (sticky header) with a fixed maximum height or filling the row. From the Excubia production review (#285).
 - Chart and KPI pattern ([`docs/charts.md`](docs/charts.md), core): registry `kpi-tile` (delta coloured by what the change means, `kpiDeltaOf()`, 30-day `sparkline`), `segmented-bar` for compositions instead of pie or donut charts, `time-series-chart` (metric switch, series toggles with totals, loading and empty states), `entity-bar-chart` and `chart-data-table`; theme tokens `--chart-critical` … `--chart-skipped`, a fixed semantic palette checked by `a11y:contrast`. The playground's `#/dashboard` rebuilds the Excubia project overview. Apps re-pull `@qiick/theme` for the tokens; the `standards/rules/ui.md` pattern table gained the page, so every repo re-syncs (#282).
 - Registry `role-picker` and the role model of `docs/roles-and-permissions.md` (decision 2026-11-26): super-admin is exclusive (the picker clears and disables the other roles; laravel-access `ExclusiveSuperAdminRoleRule` on the server), permissions add up across the other roles, human labels instead of slugs, and a super-admin's API keys reach every permission of `PermissionEnum` within their scopes (`isWithinOwnerCeiling()`).
@@ -25,6 +27,11 @@ One version covers the theme package and the registry: a release tag `vX.Y.Z` pi
 - `grouped-view-tabs`: a sub-menu trigger that names the open view ("Issues: Findings") shows that view's count and severity, not the group's sum (from excubia-app#426).
 - `secret-once-dialog` drops its own copies of the secret (the acknowledged and copied state) as soon as the app clears it, so the same value shown again starts unconfirmed; without the Clipboard API, Copy selects and copies from the secret field itself. `clipboard`: `copyTextToClipboard()` takes an optional source field for the `execCommand` fallback, needed inside a focus trap where a textarea appended to the body cannot take focus (#256).
 - `api-key-scope-picker` uses a labelled native select for No access, Read and Write, and explains when access is unavailable. Re-add the picker to pull its `@qiick/native-select` dependency and merge the new `apiKeys.scopes` locale keys (#266).
+
+### Upgrade notes
+
+- **Products with conventions enabled.** Before bumping the standards pin, fill `docs/asvs.md` or record an approved F34 divergence with `reason`, `decision` and `review_by` under `conventions.divergences`. The sync creates an empty register when the file is absent, and standards drift fails on its unassessed rows. Re-sync the standards pack after the bump.
+- **Products with a UI.** Re-sync the UI standards. Use the optional `wcag22-test` input to run the product's browser scenarios and record results for the shared checks. Follow the [WCAG 2.2 browser checks and manual review template](docs/accessibility.md).
 
 ## [0.15.0] - 2026-11-26
 

@@ -733,6 +733,11 @@ test('every repo gets the repository rules; adopting the conventions writes thei
         /^## After the incident$/m,
     );
     assert.match(read(appRepo, 'docs/privacy.md'), /^## Telemetry$/m);
+    assert.match(
+        read(appRepo, 'docs/asvs.md'),
+        /^# OWASP ASVS 5\.0 Level 2 assessment$/m,
+    );
+    assert.ok(!fs.existsSync(path.join(packageRepo, 'docs/asvs.md')));
     assert.ok(!fs.existsSync(path.join(packageRepo, 'docs/runbooks')));
     assert.match(
         read(packageRepo, 'tests/Feature/ForeignKeyIndexTest.php'),

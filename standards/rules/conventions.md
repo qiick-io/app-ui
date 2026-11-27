@@ -193,6 +193,8 @@ A divergence skips its check. It fails when it lacks a field, when `review_by` h
 
 `README.md`, `SECURITY.md`, `CONTRIBUTING.md` and `LICENSE` are there already in every package. When a repo adopts the conventions, the sync writes `docs/public-api.md` and `docs/security-checklist.md` from `standards/templates/` once, as starting points.
 
+Products use the F12 properties and named tests as evidence for inherited controls in the [F34 ASVS register](operations.md#f34-asvs-50-l2). The product verifies the package version and configuration it actually uses.
+
 **Why.** On 2026-11-24 the public API list existed in three of seven packages under two names (`public-api.md`, `PUBLIC-API.md`), the deprecation policy lived in a README, an UPGRADING file or nowhere (analysis X-g), a security checklist mapped to tests existed only in http-basics, and laravel-oidc and laravel-outbound had no upgrade section for some released versions. A reviewer or a product could not find the same thing in the same place twice.
 
 **Checked by.** _package_ F12: the files and their shape (exact file names, case included); the register's contents by the dependency register check.
