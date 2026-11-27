@@ -19,6 +19,7 @@ A dashboard or overview never shows a ragged gap: no card beside an empty space,
     - a **fixed maximum height**: `<CardTableScroll className="max-h-80">` (`max-h-48` for a short list next to key numbers, `max-h-96` for a long one); or
     - **fills the row** that its siblings set: the card gets `xl:h-0 xl:min-h-full` (it takes the row height without adding to it), `CardContent className="flex min-h-0 flex-1 flex-col"`, and `<CardTableScroll className="max-h-96 xl:max-h-none xl:flex-1">`, so below `xl`, where the cards stack, it falls back to a fixed maximum height.
 - **Short cards stack next to a tall one.** Several short cards (infrastructure, dependencies, runtimes) go in one column (`flex flex-col gap-4`) beside the tall card, which fills the row as above. Key number tiles go in the key numbers row or under each other, never stretched beside a list.
+- **An odd last tile spans the row** at the two-column width, so five key numbers read 2-2-1 without a hole: add `sm:*:last:odd:col-span-2 xl:*:last:odd:col-span-1` to the key numbers grid (`xl:*:last:odd:col-span-1` only when the `xl` row holds them all).
 - Check every grid at phone, tablet and desktop width, in light and dark.
 
 Source: Excubia `components/projects/overview/overview-view.tsx` (short cards beside the checks card that fills the row), `pages/fleet/index.tsx` (a full key numbers row).
