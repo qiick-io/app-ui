@@ -32,7 +32,7 @@ const standardsRoot = path.join(
 
 /** Every convention id, including the security checks in check-fleet-security.mjs. */
 export const CONVENTION_IDS = Array.from(
-    { length: 33 },
+    { length: 34 },
     (_unused, index) => `F${index + 1}`,
 );
 
@@ -779,6 +779,12 @@ export const CONVENTION_CHECKS = [
             ),
         ],
     },
+    {
+        id: 'F34',
+        title: 'ASVS 5.0 L2',
+        appliesTo: ['app'],
+        run: (repo) => findAsvsRegisterViolations(repo.root),
+    },
 ];
 
 /**
@@ -795,6 +801,97 @@ function readText(root, relativePath) {
         fs.readdirSync(directory).includes(path.basename(absolutePath))
         ? fs.readFileSync(absolutePath, 'utf8')
         : null;
+}
+
+/** Checks the L2 register's shape and coverage; evidence and applicability are reviewed by people. */
+function findAsvsRegisterViolations(root) {
+    const relativePath = 'docs/asvs.md';
+    const register = readText(root, relativePath);
+    if (register === null) {
+        return [
+            `${relativePath} is missing; start from standards/templates/asvs.md.`,
+        ];
+    }
+
+    const header = ['Requirement', 'Status', 'Evidence', 'Owner package'];
+    const statuses = ['Met', 'Partial', 'Not applicable', 'Gap'];
+    const idPattern = /^v5\.0\.0-\d+\.\d+\.\d+$/;
+    const template = fs.readFileSync(
+        path.join(standardsRoot, 'templates/asvs.md'),
+        'utf8',
+    );
+    const expectedIds = new Set(
+        Array.from(
+            template.matchAll(/^\| (v5\.0\.0-\d+\.\d+\.\d+) /gm),
+            ([, id]) => id,
+        ),
+    );
+    const seenIds = new Set();
+    const errors = [];
+    let isRegisterTable = false;
+
+    for (const [index, line] of register.split(/\r?\n/).entries()) {
+        const row = line.trim();
+        if (!row.startsWith('|')) {
+            isRegisterTable = false;
+            continue;
+        }
+
+        const cells = row
+            .slice(1)
+            .replace(/\|$/, '')
+            .split(/(?<!\\)\|/)
+            .map((cell) => cell.trim());
+        if (cells.join('|') === header.join('|')) {
+            isRegisterTable = true;
+            continue;
+        }
+
+        const [id, status, evidence] = cells;
+        if (
+            (!isRegisterTable && !idPattern.test(id)) ||
+            cells.every((cell) => /^:?-{3,}:?$/.test(cell))
+        ) {
+            continue;
+        }
+
+        const location = `${relativePath}:${index + 1}`;
+        if (
+            !isRegisterTable ||
+            cells.length !== header.length ||
+            !expectedIds.has(id)
+        ) {
+            errors.push(
+                `${location} needs a valid ASVS 5.0 L1 or L2 ID and the four register columns.`,
+            );
+            continue;
+        }
+
+        if (seenIds.has(id)) {
+            errors.push(`${location}: ${id} is listed more than once.`);
+        }
+        seenIds.add(id);
+
+        if (
+            !statuses.includes(status) ||
+            !evidence ||
+            /^(?:[-–—]+|todo|tbd|n\/a)$/i.test(evidence)
+        ) {
+            errors.push(
+                `${location}: ${id} needs a valid status and evidence.`,
+            );
+        }
+    }
+
+    const missingIds = [...expectedIds].filter((id) => !seenIds.has(id));
+    if (missingIds.length > 0) {
+        const sample = missingIds.slice(0, 8).join(', ');
+        errors.push(
+            `${relativePath} is missing ${missingIds.length} requirements: ${sample}${missingIds.length > 8 ? ', …' : ''}.`,
+        );
+    }
+
+    return errors;
 }
 
 /**

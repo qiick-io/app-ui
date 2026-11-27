@@ -21,7 +21,7 @@ Patterns come in two tiers. **Core** patterns bind every qiick app. **Optional**
     - AI surfaces use the violet `ai` token set (`bg-ai`, `text-ai-text`, `border-ai-border`, …), never the brand primary.
     - Status colours (`success`, `warning`, `destructive`, `info`) carry status only; never use one as a brand or primary colour.
 5. **Control scale.** `sm` 24px, default 32px, `lg` 40px. The default (32px) everywhere: headers, toolbars, forms, settings. `sm` only for compact inline actions (table row icons, chips); `lg` for rare large CTAs.
-6. **Accessibility.** WCAG 2.2 AA in light, dark and high contrast: visible focus, keyboard reachability, labels / `aria-label` on icon-only controls, contrast. Check every UI change in light and dark.
+6. **Accessibility.** [WCAG 2.2 AA](https://www.w3.org/TR/WCAG22/) in light, dark and high contrast. Keep keyboard focus visible and unobscured, label icon-only controls, and use targets at least 24 × 24 CSS pixels or meet a documented WCAG exception. Check every UI change in light and dark. Use the [shared browser checks](https://github.com/qiick-io/app-ui/blob/develop/docs/accessibility.md) for the new criteria and verify the product flows they cover.
 7. **Positions are part of the pattern.** Where a control sits (primary action far right, filters left, pagination counter left / pages centre / rows per page right, …) is copied like the code.
 8. **Presence.** shadcn `AvatarBadge` inside the `Avatar`, bottom-right. Users: green online, solid grey offline (never transparent). The realtime badge on the signed-in user: green connected, amber connecting, grey disabled, red only when the connection is lost. Member lists show avatars without presence, then `AvatarGroupCount` "+N".
 

@@ -48,6 +48,11 @@ via the reusable [`.github/workflows/conformance.yml`](../.github/workflows/conf
 An expired `review_by`, an unknown check id, or a divergence whose check now
 passes all fail the suite (C37).
 
+The [F34 ASVS register](rules/operations.md#f34-asvs-50-l2) is validated by
+standards drift. UI conformance targets [WCAG 2.2 AA](https://www.w3.org/TR/WCAG22/)
+and uses [the shared browser workflow](../docs/accessibility.md) for the
+checks that need a rendered page and product interaction.
+
 ## Proofs in app-ui
 
 `standards/php/conformance-harness/` is a Testbench project. Every check has been

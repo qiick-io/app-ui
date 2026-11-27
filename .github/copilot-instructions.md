@@ -133,7 +133,7 @@ Every qiick repo is configured the same way, so a check name, a label or a merge
 
 ## Security, data and operations
 
-Operations rules F19–F24, F26 and F29–F33 cover vulnerability reporting, secrets, migrations, backups, releases, observability, privacy and incident response. F25, F27 and F28 are in the conventions rules.
+Operations rules F19–F24, F26 and F29–F34 cover vulnerability reporting, secrets, migrations, backups, releases, observability, privacy, incident response and security verification. F25, F27 and F28 are in the conventions rules.
 
 - **F19 Security policy:** every repo has a `SECURITY.md` (supported versions, how to report, response time) and GitHub private vulnerability reporting switched on, because the policy sends reporters there.
 - **F20 Secrets runbook:** every product has `docs/runbooks/secrets.md`: each secret of `.env.example` and each key file, where it lives, who rotates it, how, what the rotation breaks, and what to do after a leak.
@@ -147,10 +147,11 @@ Operations rules F19–F24, F26 and F29–F33 cover vulnerability reporting, sec
 - **F31 Security discovery:** every deployed product and the three marketing sites serve an RFC 9116 `/.well-known/security.txt` with a private reporting contact, an expiry within a year, `Preferred-Languages: en, it`, and a policy link.
 - **F32 Code scanning:** public `qiick-io` repositories run CodeQL and OpenSSF Scorecard weekly and on pushes to `develop`. They use standard hosted runners, display a Scorecard badge and report to GitHub code scanning. PHP uses PHPStan at max and the existing checks.
 - **F33 Release inventory:** every GitHub release attaches a CycloneDX SBOM. Release artefacts that already carry build provenance also carry an SBOM attestation.
+- **F34 ASVS 5.0 L2:** every product uses `docs/asvs.md` as its security checklist. Record a status and evidence for every OWASP ASVS 5.0.0 Level 1 and Level 2 requirement, including why an item does not apply and which qiick package owns any inherited control.
 
-With a `conventions` object in `qiick-standards.json`, the standards drift check runs the static checks of F19, F20, F22–F24, F26, F29 and F30; `migrations-frozen / migrations-frozen` checks F21; `scripts/check-repo-settings.mjs` in app-ui checks that private vulnerability reporting is on. An exception is a `conventions.divergences` entry like any other convention.
+With a `conventions` object in `qiick-standards.json`, the standards drift check runs the static checks of F19, F20, F22–F24, F26, F29, F30 and F34; `migrations-frozen / migrations-frozen` checks F21; `scripts/check-repo-settings.mjs` in app-ui checks that private vulnerability reporting is on. An exception is a `conventions.divergences` entry like any other convention.
 
-**Details:** `.qiick/standards/operations.md`. Read it before writing or changing SECURITY.md, a secret, a runbook, a migration that drops, renames or changes a column or table, a backup, a release tag or release workflow, a dependency or an audit exception, monitoring or health endpoints, or anything that stores or sends personal data.
+**Details:** `.qiick/standards/operations.md`. Read it before writing or changing SECURITY.md, an ASVS assessment, a secret, a runbook, a migration that drops, renames or changes a column or table, a backup, a release tag or release workflow, a dependency or an audit exception, monitoring or health endpoints, or anything that stores or sends personal data.
 
 ## Releases: never without the maintainer
 
@@ -205,7 +206,7 @@ Patterns come in two tiers. **Core** patterns bind every qiick app. **Optional**
     - AI surfaces use the violet `ai` token set (`bg-ai`, `text-ai-text`, `border-ai-border`, …), never the brand primary.
     - Status colours (`success`, `warning`, `destructive`, `info`) carry status only; never use one as a brand or primary colour.
 5. **Control scale.** `sm` 24px, default 32px, `lg` 40px. The default (32px) everywhere: headers, toolbars, forms, settings. `sm` only for compact inline actions (table row icons, chips); `lg` for rare large CTAs.
-6. **Accessibility.** WCAG 2.2 AA in light, dark and high contrast: visible focus, keyboard reachability, labels / `aria-label` on icon-only controls, contrast. Check every UI change in light and dark.
+6. **Accessibility.** [WCAG 2.2 AA](https://www.w3.org/TR/WCAG22/) in light, dark and high contrast. Keep keyboard focus visible and unobscured, label icon-only controls, and use targets at least 24 × 24 CSS pixels or meet a documented WCAG exception. Check every UI change in light and dark. Use the [shared browser checks](https://github.com/qiick-io/app-ui/blob/develop/docs/accessibility.md) for the new criteria and verify the product flows they cover.
 7. **Positions are part of the pattern.** Where a control sits (primary action far right, filters left, pagination counter left / pages centre / rows per page right, …) is copied like the code.
 8. **Presence.** shadcn `AvatarBadge` inside the `Avatar`, bottom-right. Users: green online, solid grey offline (never transparent). The realtime badge on the signed-in user: green connected, amber connecting, grey disabled, red only when the connection is lost. Member lists show avatars without presence, then `AvatarGroupCount` "+N".
 

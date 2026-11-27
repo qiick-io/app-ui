@@ -57,7 +57,7 @@ export function parseShortcut(definition: string): ParsedShortcut {
 
 /**
  * A single-key shortcut fires without ⌘ / Ctrl / Alt (Shift alone still
- * counts). Users can turn these off (WCAG 2.1.4), and they never fire while
+ * counts). Users can turn these off (WCAG 2.2 SC 2.1.4), and they never fire while
  * the person types in a field.
  */
 export function isSingleKeyShortcut(definition: string): boolean {
