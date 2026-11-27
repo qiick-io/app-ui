@@ -459,7 +459,7 @@ For an artefact that already has build provenance, also use [`actions/attest-sbo
 
 ### F34 ASVS 5.0 L2
 
-**Rule.** Use [OWASP ASVS 5.0.0](https://asvs.owasp.org/downloads/) Level 2 as the single product security checklist. Start from [`standards/templates/asvs.md`](../templates/asvs.md) and keep one row per Level 1 and Level 2 requirement with its versioned OWASP ID. Keep an out-of-scope row with the reason it does not apply. Review affected rows when a surface, runtime setting, dependency or supporting test changes.
+**Rule.** Use [OWASP ASVS 5.0.0](https://asvs.owasp.org/downloads/) Level 2 as the single product security checklist. Start from the [ASVS register template](https://github.com/qiick-io/app-ui/blob/develop/standards/templates/asvs.md) and keep one row per Level 1 and Level 2 requirement with its versioned OWASP ID. Keep an out-of-scope row with the reason it does not apply. Review affected rows when a surface, runtime setting, dependency or supporting test changes.
 
 Record **Met** when evidence covers the entire requirement, **Partial** when evidence covers part of it, **Not applicable** when the relevant feature or architecture is out of scope, and **Gap** when the requirement lacks a substantiated control. Cite the test name, source file or deployment setting and describe what it proves or what remains to verify. Track each Gap with a GitHub issue titled `[asvs]` and link it in the row. Follow F19 for sensitive details and use a public issue only for safe remediation tracking. A filled register records the current assessment and can contain open gaps.
 
