@@ -881,6 +881,16 @@ function findAsvsRegisterViolations(root) {
                 `${location}: ${id} needs a valid status and evidence.`,
             );
         }
+
+        // Drift runs offline. Review verifies that the linked issue carries the ASVS prefix.
+        if (
+            status === 'Gap' &&
+            !/(?:https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/issues\/[1-9]\d*\b|(?<![\w/#])#[1-9]\d*\b)/.test(
+                evidence,
+            )
+        ) {
+            errors.push(`${location}: ${id} must link its [asvs] issue.`);
+        }
     }
 
     const missingIds = [...expectedIds].filter((id) => !seenIds.has(id));

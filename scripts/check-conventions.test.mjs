@@ -125,6 +125,25 @@ test('F34 requires a complete, evidenced ASVS Level 2 register for products', ()
     fs.writeFileSync(registerPath, evidencedAsvsRegister);
     assert.deepEqual(errors(), []);
 
+    const gapRegister = (evidence) =>
+        evidencedAsvsRegister.replace(
+            '| v5.0.0-1.1.1 | Partial | `SecurityTest.php` covers this path. |',
+            `| v5.0.0-1.1.1 | Gap | ${evidence} |`,
+        );
+    fs.writeFileSync(registerPath, gapRegister('Missing test coverage.'));
+    assert.match(errors()[0], /v5\.0\.0-1\.1\.1 must link its \[asvs\] issue/);
+
+    for (const reference of [
+        '#123',
+        '[Follow-up](https://github.com/qiick-io/demo-app/issues/123)',
+    ]) {
+        fs.writeFileSync(
+            registerPath,
+            gapRegister(`Missing test coverage. ${reference}`),
+        );
+        assert.deepEqual(errors(), []);
+    }
+
     fs.writeFileSync(
         registerPath,
         evidencedAsvsRegister

@@ -46,7 +46,11 @@ on:
         type: string
         default: ''
       wcag22-test:
-        description: Pest browser suite for the WCAG 2.2 AA checks (empty until the app adopts the suite)
+        description: Pest browser paths for WCAG 2.2 AA, one per line (empty to skip)
+        type: string
+        default: ''
+      standards-ref:
+        description: Full app-ui commit SHA used by this workflow (defaults to qiick-standards.json ref)
         type: string
         default: ''
       php-version:
@@ -68,8 +72,14 @@ jobs:
       - name: Read the pinned standards ref
         id: pin
         working-directory: ${{ inputs.working-directory }}
+        env:
+          QIICK_STANDARDS_REF: ${{ inputs.standards-ref }}
         run: |
-          ref=$(node -e "process.stdout.write(require('./qiick-standards.json').ref ?? '')")
+          if [[ -n "$QIICK_STANDARDS_REF" && ! "$QIICK_STANDARDS_REF" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::standards-ref must be a full app-ui commit SHA."
+            exit 1
+          fi
+          ref=${QIICK_STANDARDS_REF:-$(node -e "process.stdout.write(require('./qiick-standards.json').ref ?? '')")}
           if [ -z "$ref" ]; then
             echo "::error::qiick-standards.json needs \"ref\": \"<app-ui tag or branch>\""
             exit 1
@@ -120,12 +130,15 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        if: inputs.wcag22-test != ''
+        if: inputs.wcag22-test != '' && needs.ui-quality.outputs.standards-ref != ''
         with:
           repository: qiick-io/app-ui
           ref: ${{ needs.ui-quality.outputs.standards-ref }}
           path: .app-ui
-          sparse-checkout: scripts/wcag22-axe.js
+          sparse-checkout: |
+            scripts/wcag22-axe.js
+            scripts/wcag22-focus.js
+            scripts/check-wcag22-report.mjs
           sparse-checkout-cone-mode: false
 
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
@@ -163,6 +176,19 @@ jobs:
         env:
           QIICK_WCAG22_TEST: ${{ inputs.wcag22-test }}
           QIICK_WCAG22_AXE_SCRIPT: ${{ github.workspace }}/.app-ui/scripts/wcag22-axe.js
+          QIICK_WCAG22_FOCUS_SCRIPT: ${{ github.workspace }}/.app-ui/scripts/wcag22-focus.js
         run: |
-          test -s "$QIICK_WCAG22_AXE_SCRIPT"
-          vendor/bin/pest "$QIICK_WCAG22_TEST"
+          if [ ! -s "$QIICK_WCAG22_AXE_SCRIPT" ] || [ ! -s "$QIICK_WCAG22_FOCUS_SCRIPT" ]; then
+            echo "::error::The shared WCAG 2.2 assertions are missing. Check the app-ui standards ref."
+            exit 1
+          fi
+          QIICK_WCAG22_REPORT=$(mktemp)
+          export QIICK_WCAG22_REPORT
+          trap 'rm -f "$QIICK_WCAG22_REPORT"' EXIT
+
+          mapfile -t browser_paths < <(printf '%s\n' "$QIICK_WCAG22_TEST" | sed '/^[[:space:]]*$/d')
+          test "${#browser_paths[@]}" -gt 0
+          status=0
+          vendor/bin/pest "${browser_paths[@]}" || status=$?
+          node "$GITHUB_WORKSPACE/.app-ui/scripts/check-wcag22-report.mjs" "$QIICK_WCAG22_REPORT"
+          exit "$status"

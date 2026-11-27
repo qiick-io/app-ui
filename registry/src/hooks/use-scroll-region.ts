@@ -8,7 +8,7 @@ function canScroll(overflow: string): boolean {
 /**
  * Keyboard access and a visible cue for a scroll container.
  *
- * - WCAG 2.2 SC 2.1.1, axe `scrollable-region-focusable`: while its content
+ * - WCAG 2.1.1, axe `scrollable-region-focusable`: while its content
  *   overflows, the container has `tabindex="0"` so arrow keys and Page Up /
  *   Down scroll it; with `accessibleName` it is also a named
  *   `role="region"`. When nothing overflows it stays out of the tab order and

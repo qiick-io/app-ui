@@ -39,7 +39,7 @@ import {
  * - a key press another handler already took (`defaultPrevented`, e.g. ⌘K
  *   inside a rich-text editor that inserts a link) is left alone;
  * - single-key shortcuts never fire while the person types, and not at all
- *   when the user turned them off (WCAG 2.2 SC 2.1.4);
+ *   when the user turned them off (WCAG 2.1.4);
  * - modifier shortcuts fire in plain fields, but not inside a rich-text editor.
  *
  * `?` opens the help dialog listing every active shortcut.
