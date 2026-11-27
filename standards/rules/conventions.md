@@ -99,7 +99,7 @@ A divergence skips its check. It fails when it lacks a field, when `review_by` h
 
 ## F6 Commands: `<package>:<verb>`, `--dry-run` when deleting
 
-**Rule.** Every Artisan command is `<package>:<verb>` or `<package>:<verb>-<object>`, kebab-case, one colon: `outbound:prune-payloads`, `instituta:create-key`, `externa:sync-permissions`. Apps use their short name (`externa`, `excubia`). A command that deletes or erases data has `--dry-run`, which reports what it would delete and changes nothing.
+**Rule.** Every Artisan command is `<package>:<verb>` or `<package>:<verb>-<object>`, kebab-case, one colon: `outbound:prune-deliveries`, `instituta:create-key`, `externa:sync-permissions`. Apps use their short name (`externa`, `excubia`). A command that deletes or erases data has `--dry-run`, which reports what it would delete and changes nothing.
 
 **Why.** `outbound:webhooks:prune` and `instituta:key:create` nest a second namespace; externa-core spreads its commands over `files:`, `ai:`, `users:`, `permissions:` and others, so `php artisan list <app>` does not show what the app owns. `oidc:prune-logout-revocations` and several product prune commands could not be previewed before a first run in production.
 
