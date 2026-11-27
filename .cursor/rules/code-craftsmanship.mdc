@@ -428,9 +428,13 @@ A runbook step that turned out wrong during a real deploy or incident is correct
 
 ### F31 Security discovery
 
-Serve `/.well-known/security.txt` over HTTPS as UTF-8 `text/plain`. Keep it in the deployment's public files, reachable before authentication, locale redirects and catch-all routes. Public repositories use the repository's `https://github.com/qiick-io/<repo>/security/advisories/new` for `Contact` and an HTTPS link to its `SECURITY.md` for `Policy`. The policy and the contact must be readable or usable by external reporters. Use a UTC RFC 3339 timestamp for `Expires`, at most 365 days out, and renew it as a source change. Set `Preferred-Languages: en, it`. See [RFC 9116](https://www.rfc-editor.org/rfc/rfc9116.html).
+Serve `/.well-known/security.txt` over HTTPS with `Content-Type: text/plain; charset=utf-8`. Keep it in the deployment's public files, reachable before authentication, locale redirects and catch-all routes. Public repositories use the repository's `https://github.com/qiick-io/<repo>/security/advisories/new` for `Contact` and an HTTPS link to its `SECURITY.md` for `Policy`. Use a UTC RFC 3339 timestamp for `Expires`, at most 365 days out, and renew it as a source change. Set `Preferred-Languages: en, it`. See [RFC 9116](https://www.rfc-editor.org/rfc/rfc9116.html).
 
-**Checked by.** `fleet-security-check.yml` validates the source file and policy, fails on expired or invalid dates, and emits a warning when 30 days or less remain. Run it on pull requests and weekly. Verify the deployed URL by requesting it anonymously and checking for status 200, `text/plain`, and the repository's contact. GitHub's [private reporting form](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/configure-vulnerability-reporting/configure-for-a-repository) needs the maintainer to enable it on the public repository.
+The three sites with private source repositories, `qiick-website`, `qiick-docs`, and `lucagiardi-website`, use the public app-ui repository's private reporting form and the Websites section of its `SECURITY.md`.
+
+TODO: Add a `security@` mailbox as a second `Contact` once the maintainer sets it up.
+
+**Checked by.** `fleet-security-check.yml` validates the source file and policy, fails on expired or invalid dates, and emits a warning when 30 days or less remain. Run it on pull requests and weekly. Verify the deployed URL by requesting it anonymously and checking for status 200, the UTF-8 content type and the reporting contact. GitHub's [private reporting form](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/configure-vulnerability-reporting/configure-for-a-repository) needs the maintainer to enable it on the public repository.
 
 ### F32 Code scanning
 
@@ -442,7 +446,7 @@ Upload the Scorecard SARIF to GitHub code scanning. Scorecard publishes badge da
 
 ### F33 CycloneDX release inventory
 
-Call `release-sbom.yml` from the GitHub release workflow on `release: published`. It checks out the release tag and attaches `composer.cdx.json` for the Composer project, `npm.cdx.json` for the npm project, or both. Use [cyclonedx/cyclonedx-php-composer](https://github.com/CycloneDX/cyclonedx-php-composer) and [@cyclonedx/cyclonedx-npm](https://github.com/CycloneDX/cyclonedx-node-npm) with pinned versions. Products use the release locks. Libraries without a Composer lock record a release-time production resolution of their manifest.
+Call `release-sbom.yml` from the GitHub release workflow on `release: published`. It verifies the release tag (F23), checks out the tagged source and attaches `composer.cdx.json` for the Composer project, `npm.cdx.json` for the npm project, or both. Use [cyclonedx/cyclonedx-php-composer](https://github.com/CycloneDX/cyclonedx-php-composer) and [@cyclonedx/cyclonedx-npm](https://github.com/CycloneDX/cyclonedx-node-npm) with pinned versions. Products use the release locks. Libraries without a Composer lock record a release-time production resolution of their manifest.
 
 For an artefact that already has build provenance, also use [`actions/attest-sbom`](https://github.com/actions/attest-sbom) on the same artefact path or digest and the matching CycloneDX JSON. Keep the attestation step next to the provenance step and grant `id-token: write` and `attestations: write` to that job. The maintainer continues to create the tag and publish the GitHub release.
 

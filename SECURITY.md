@@ -13,6 +13,10 @@ Please do not open a public issue. Use GitHub's private vulnerability reporting:
 
 A fix ships as a patch release with a `Security` entry in the CHANGELOG and a GitHub security advisory. A finding that spans several qiick repositories is coordinated in each one's advisory.
 
+## Websites
+
+The same [private reporting form](https://github.com/qiick-io/app-ui/security/advisories/new) accepts reports for qiick.io, docs.qiick.io, and lucagiardi.com. Include the affected hostname and URL so the maintainer can route your report.
+
 ## What we treat as critical
 
 app-ui is copied into every qiick app and runs in every qiick repo's CI, so a flaw here spreads to the whole fleet. Treated as critical: script injection or unsafe HTML in a registry component, a reusable workflow that leaks a token, runs code from a pull request with write permissions or calls an unpinned action, and a standards script that executes code from the repo it checks.

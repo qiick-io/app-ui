@@ -10,12 +10,23 @@ import { listWorkflowFiles } from './check-package-matrix.mjs';
 
 const dayInMilliseconds = 24 * 60 * 60 * 1000;
 const utcTimestamp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
+const websitesUsingSharedPolicy = new Set([
+    'lucagiardi20/qiick-website',
+    'lucagiardi20/qiick-docs',
+    'lucagiardi20/lucagiardi-website',
+]);
 
 /**
  * Validates the fleet's RFC 9116 fields and returns expiry warnings separately
  * so upcoming renewals stay visible without blocking a change.
  */
-export function checkSecurityTxt(contents, repository, policyPath, now) {
+export function checkSecurityTxt(
+    contents,
+    repository,
+    policyPath,
+    now,
+    policyReference = `HEAD/${policyPath}`,
+) {
     const errors = [];
     const warnings = [];
     const fields = (name) =>
@@ -45,7 +56,7 @@ export function checkSecurityTxt(contents, repository, policyPath, now) {
     if (
         policies.length !== 1 ||
         policies[0] !==
-            `https://github.com/${repository}/blob/HEAD/${policyPath}`
+            `https://github.com/${repository}/blob/${policyReference}`
     ) {
         errors.push(`F31: Policy must link to the repository’s ${policyPath}.`);
     }
@@ -78,6 +89,18 @@ export function checkSecurityTxt(contents, repository, policyPath, now) {
     return { errors, warnings };
 }
 
+/** Read an event's list from inline or block-style workflow YAML. */
+function hasWorkflowEventValue(workflow, event, key, value) {
+    const mapping = workflow.match(
+        new RegExp(`^  ${event}: *\\n((?:^ {4,}[^\\n]*\\n?)*)`, 'm'),
+    )?.[1];
+    const values = mapping?.match(
+        new RegExp(`^    ${key}: *(\\[[^\\n]*\\]|(?:\\n {6,}- [^\\n]*)+)`, 'm'),
+    )?.[1];
+
+    return values?.match(/[\w-]+/g)?.includes(value) ?? false;
+}
+
 /**
  * Checks the tracked public endpoint, scanner configuration and release job.
  * The release workflow verifies inventory generation and upload at release time.
@@ -91,9 +114,18 @@ export function findFleetSecurityViolations(
     const warnings = [];
 
     if (securityTxt) {
+        const usesSharedPolicy = websitesUsingSharedPolicy.has(
+            repository.toLowerCase(),
+        );
+        const reportingRepository = usesSharedPolicy
+            ? 'qiick-io/app-ui'
+            : repository;
+        const policyRoot = usesSharedPolicy
+            ? fileURLToPath(new URL('../../', import.meta.url))
+            : root;
         const policyPath =
             ['SECURITY.md', '.github/SECURITY.md'].find((candidate) =>
-                fs.existsSync(path.join(root, candidate)),
+                fs.existsSync(path.join(policyRoot, candidate)),
             ) ?? 'SECURITY.md';
         const textPath = path.join(root, securityTxt);
 
@@ -105,15 +137,16 @@ export function findFleetSecurityViolations(
                 'F31: track security.txt under the deployment’s public .well-known directory.',
             );
         } else {
-            if (!fs.existsSync(path.join(root, policyPath))) {
+            if (!fs.existsSync(path.join(policyRoot, policyPath))) {
                 errors.push('F31: SECURITY.md is missing.');
             }
 
             const result = checkSecurityTxt(
                 fs.readFileSync(textPath, 'utf8'),
-                repository,
+                reportingRepository,
                 policyPath,
                 now,
+                usesSharedPolicy ? 'develop/SECURITY.md#websites' : undefined,
             );
             errors.push(...result.errors);
             warnings.push(...result.warnings);
@@ -143,8 +176,11 @@ export function findFleetSecurityViolations(
                 /^  schedule:\n    - cron: ['"]?\d+ \d+ \* \* [0-7]['"]?(?: *#.*)?$/m.test(
                     workflow,
                 ) &&
-                /^  push:\n    branches: \[[^\n\]]*\bdevelop\b/m.test(
+                hasWorkflowEventValue(
                     workflow,
+                    'push',
+                    'branches',
+                    'develop',
                 ) &&
                 callsWorkflow(workflow, 'codeql') &&
                 callsWorkflow(workflow, 'scorecard'),
@@ -177,8 +213,12 @@ export function findFleetSecurityViolations(
     if (
         !workflowTexts.some(
             (workflow) =>
-                /^  release:\s*\n    types: \[published\]/m.test(workflow) &&
-                callsWorkflow(workflow, 'release-sbom'),
+                hasWorkflowEventValue(
+                    workflow,
+                    'release',
+                    'types',
+                    'published',
+                ) && callsWorkflow(workflow, 'release-sbom'),
         )
     ) {
         errors.push(

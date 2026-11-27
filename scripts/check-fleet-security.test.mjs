@@ -53,6 +53,31 @@ test('F31 rejects missing or duplicate fields, impossible dates and expiry outsi
     }
 });
 
+test('F31 checks private marketing sites against the shared public policy', (context) => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'qiick-site-security-'));
+    context.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const securityTxt = 'public/.well-known/security.txt';
+    fs.mkdirSync(path.join(root, 'public/.well-known'), { recursive: true });
+    fs.writeFileSync(
+        path.join(root, securityTxt),
+        validText
+            .replaceAll(repository, 'qiick-io/app-ui')
+            .replace('HEAD/SECURITY.md', 'develop/SECURITY.md#websites'),
+    );
+
+    assert.deepEqual(
+        findFleetSecurityViolations(
+            root,
+            {
+                repository: 'LucaGiardi20/qiick-website',
+                securityTxt,
+            },
+            now,
+        ),
+        { errors: [], warnings: [] },
+    );
+});
+
 test('F32 and F33 apply only to public fleet callers and check release attestations together', (context) => {
     const root = fs.mkdtempSync(
         path.join(os.tmpdir(), 'qiick-fleet-security-'),
@@ -110,6 +135,21 @@ jobs:
     fs.writeFileSync(
         releaseWorkflow,
         release + `      - uses: actions/attest-sbom@${'a'.repeat(40)}\n`,
+    );
+    assert.deepEqual(checkPublicFleet(), []);
+
+    const scannerPath = path.join(workflows, 'security.yml');
+    fs.writeFileSync(
+        scannerPath,
+        fs
+            .readFileSync(scannerPath, 'utf8')
+            .replace('branches: [develop]', "branches:\n      - 'develop'"),
+    );
+    fs.writeFileSync(
+        releaseWorkflow,
+        fs
+            .readFileSync(releaseWorkflow, 'utf8')
+            .replace('types: [published]', 'types:\n      - published'),
     );
     assert.deepEqual(checkPublicFleet(), []);
 });

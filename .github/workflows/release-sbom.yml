@@ -7,8 +7,12 @@ permissions:
   contents: read
 
 jobs:
-  attach:
+  signed-tag:
     if: github.event_name == 'release' && github.event.action == 'published'
+    uses: ./.github/workflows/signed-tag.yml
+
+  attach:
+    needs: signed-tag
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -37,6 +41,7 @@ jobs:
             composer update --no-install --no-dev --no-scripts --no-plugins --no-interaction
           fi
 
+          # ponytail: the CLI version is pinned. Lock its tool dependencies if this becomes a build toolchain.
           composer global config --no-plugins allow-plugins.cyclonedx/cyclonedx-php-composer true
           composer global require --no-scripts --no-interaction cyclonedx/cyclonedx-php-composer:6.2.0
           composer CycloneDX:make-sbom --omit=dev --output-reproducible --output-format=JSON \
