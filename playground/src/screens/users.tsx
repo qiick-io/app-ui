@@ -159,6 +159,7 @@ const COLUMNS: ColumnDef<DemoUser>[] = [
     },
     {
         id: 'actions',
+        size: 72,
         header: 'Actions',
         meta: {
             headerClassName: 'w-[1%] text-right',

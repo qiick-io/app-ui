@@ -113,6 +113,8 @@ const COLUMNS: ColumnDef<Job>[] = [
     },
     {
         id: 'actions',
+        // Two icon-sm buttons + padding; used as rightPinnedWidth for the primary max-width.
+        size: 72,
         header: 'Actions',
         meta: {
             headerClassName: 'w-[1%] text-right',

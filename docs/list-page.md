@@ -53,10 +53,10 @@ Actions spill into a ⋯ menu **only when space runs out**, measured with `Resiz
 A table wider than its card keeps its identity and its actions in view, like the fixed columns of antd or Element:
 
 - `DataTable columnPinning={{ left: ['select', '<primary column>'], right: ['actions'] }}`: the selection checkbox and the column that names the record on the left, the row actions on the right. Pin nothing else.
-- Native CSS only: the pinned cells are `position: sticky` with the offset TanStack computes from the column `size`, so every left-pinned column but the last needs a fixed width equal to its `size` (`dataTableSelectColumn` and `dataTableExpandColumn` set both). No scroll listeners: the theme reads the scroll cue attributes `useScrollRegion` already sets.
+- Native CSS only: the pinned cells are `position: sticky` with the offset TanStack computes from the column `size`. `DataTable` paints every left-pinned column but the last at exactly its `size` (width / min / max), so the next column's sticky `left` matches the painted width — never leave an 8px gap where scrolled text shows through (`dataTableSelectColumn` is 40px; `dataTableExpandColumn` is 32px). Right-pinned columns that are not the outermost edge do the same. No scroll listeners: the theme reads the scroll cue attributes `useScrollRegion` already sets.
 - The theme gives pinned cells the panel background with the row's hover and selected tint on top, and a border with a soft shadow on the inner edge **only while columns are hidden under it** (left after scrolling, right while more columns wait). The pinned side drops the scroll-cue fade; the shadow is the cue there.
 - Cells keep their DOM order, so reading order, row and cell semantics and the tab order do not change. Works in light, dark and high contrast.
-- On a phone the pinned primary column must leave room to scroll: cap it at about half the screen (`max-w-[50vw] sm:max-w-[32rem]` on its cell, the text truncated).
+- On a phone the pinned primary column (last on the left) must leave room for the right-pinned actions: `DataTable` sets `max-width: min(32rem, 50vw - <rightPinnedWidth>)` from the right-pinned columns' `size` (declare `size` on the actions column, e.g. 72 for two `icon-sm` buttons; truncate the text). Do not add a bare `max-w-[50vw]` on the cell — that ignores the actions width and overlaps them.
 - The playground `data-table` demo and `#/users` screen have it.
 
 ### Wide tables on small screens

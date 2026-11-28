@@ -104,7 +104,7 @@ it('pins columns with sticky offsets and keeps the cell order', () => {
         { id: 'select', size: 40, header: 'Select', cell: () => null },
         { accessorKey: 'name', header: 'Name' },
         { id: 'owner', header: 'Owner', cell: () => 'Ada' },
-        { id: 'actions', header: 'Actions', cell: () => null },
+        { id: 'actions', size: 72, header: 'Actions', cell: () => null },
     ];
 
     render(
@@ -125,12 +125,23 @@ it('pins columns with sticky offsets and keeps the cell order', () => {
     ]);
     expect(headers[0].dataset.pinned).toBe('left');
     expect(headers[0].dataset.pinnedEdge).toBeUndefined();
+    // Non-edge left pins render at exactly `size`, so the next sticky offset has no gap.
+    expect(headers[0].style.width).toBe('40px');
+    expect(headers[0].style.minWidth).toBe('40px');
+    expect(headers[0].style.maxWidth).toBe('40px');
     expect(headers[1].style.left).toBe('40px');
     expect(headers[1].dataset.pinnedEdge).toBe('');
+    // jsdom may rewrite `calc(50vw - 72px)` to `-72px + 50vw`; both keep the right pin out.
+    expect(headers[1].style.maxWidth).toMatch(/50vw/);
+    expect(headers[1].style.maxWidth).toMatch(/72px/);
+    expect(headers[1].style.maxWidth).toMatch(/32rem/);
     expect(headers[2].dataset.pinned).toBeUndefined();
     expect(headers[3].dataset.pinned).toBe('right');
     expect(headers[3].style.right).toBe('0px');
     expect(screen.getByRole('cell', { name: record.name }).dataset.pinned).toBe(
         'left',
+    );
+    expect(screen.getByRole('cell', { name: record.name }).style.width).toBe(
+        '',
     );
 });
