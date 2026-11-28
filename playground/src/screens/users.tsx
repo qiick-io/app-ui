@@ -4,6 +4,7 @@ import { ArrowDownAZ, Pencil, Trash2, UserPlus, Users } from 'lucide-react';
 import { useState } from 'react';
 import {
     DataTable,
+    DataTableRowActions,
     dataTableSelectColumn,
 } from '@/components/admin/data-table';
 import type { DataTableSort } from '@/components/admin/data-table';
@@ -15,7 +16,6 @@ import { UserAvatar } from '@/components/admin/user-avatar';
 import { PageLayout } from '@/components/layout/page-layout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ButtonGroup } from '@/components/ui/button-group';
 import {
     Select,
     SelectContent,
@@ -159,31 +159,30 @@ const COLUMNS: ColumnDef<DemoUser>[] = [
     },
     {
         id: 'actions',
+        size: 72,
         header: 'Actions',
         meta: {
             headerClassName: 'w-[1%] text-right',
             cellClassName: 'text-right',
             isRowClickIgnored: true,
         },
-        // Row actions: outline icon buttons in a ButtonGroup, delete last in the destructive colour.
+        // Row actions: ghost icon buttons shown on row hover or focus, delete last in the destructive colour.
         cell: ({ row }) => (
-            <ButtonGroup aria-label="Actions" className="ml-auto">
+            <DataTableRowActions label="Actions">
                 <HeaderIconButton
-                    variant="outline"
                     size="icon-sm"
                     label={`Edit ${row.original.name}`}
                 >
                     <Pencil className="size-3.5" />
                 </HeaderIconButton>
                 <HeaderIconButton
-                    variant="outline"
                     size="icon-sm"
                     className="text-destructive hover:text-destructive"
                     label={`Delete ${row.original.name}`}
                 >
                     <Trash2 className="size-3.5" />
                 </HeaderIconButton>
-            </ButtonGroup>
+            </DataTableRowActions>
         ),
     },
 ];
@@ -306,6 +305,10 @@ export function UsersScreen() {
                     onRowSelectionChange={setRowSelection}
                     pagination={PAGINATION}
                     onRowClick={() => undefined}
+                    columnPinning={{
+                        left: ['select', 'name'],
+                        right: ['actions'],
+                    }}
                 />
             </PageLayout>
         </DemoShell>

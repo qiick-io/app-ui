@@ -2,7 +2,7 @@
 
 Admin lists: Users, Groups, Roles, API keys, Activity log.
 
-**Registry:** `data-table` (`DataTable`, `DataTableColumnHeader`, `DataTableFacetedFilter`), `page-layout` (`TablePanel`, `TablePaginationFooter`), `data-table-toolbar`, `actions-overflow`, `user-avatar`, `table`, `checkbox`, `badge`, `select`, `toggle-group`, `page-empty-state`.
+**Registry:** `data-table` (`DataTable`, `DataTableRowActions`, `DataTableColumnHeader`, `DataTableFacetedFilter`), `page-layout` (`TablePanel`, `TablePaginationFooter`), `data-table-toolbar`, `actions-overflow`, `user-avatar`, `table`, `checkbox`, `badge`, `select`, `toggle-group`, `page-empty-state`.
 
 **Copy from externa-core:** `pages/admin/users/index.tsx` (reference list), `components/admin/data-table.tsx`, `components/admin/data-table-toolbar.tsx`, `components/layout/page-layout.tsx`, `components/admin/files/files-selection-toolbar.tsx`, `lib/pagination.ts`.
 
@@ -12,9 +12,17 @@ A cell that holds several items (the largest tables, the packages blocking an up
 
 ## Toolbar
 
-- `filters={<DataTableToolbar …/>}`: search (and filters) on the **left**.
-- `filtersRight`: sort `Select` (`w-[7.5rem]`), direction icon button, segmented view toggle (e.g. active / trash), on the **right**.
+One row on desktop: **search on the left, filters grouped on the right**. Never let the controls wrap at random.
+
+- `filters={<DataTableToolbar …/>}` holds the search and the filters:
+    - `trailing`: the filters that always stay in the row (the status segmented control);
+    - `collapsibleFilters`: the secondary ones (assignee, facets, "Assigned to me", time range), inline while the whole row fits;
+    - `collapsibleFilterCount`: how many of those are set.
+- When the row does not fit, `DataTableToolbar` moves `collapsibleFilters` into a **Filters** popover (outline button, `ListFilter` icon, a badge with the active count, stacked controls inside). The fit is measured with `ResizeObserver` on the real labels, never by counting items or by a fixed breakpoint, and it only expands again once the inline row fits, so the layout never flickers. When even that row does not fit (phones, narrow cards), the search takes its own full-width row and the filters sit under it. On the narrowest screens, when the always-visible filters do not fit beside **Filters** either, they move into the popover too and the row is search plus **Filters**.
+- `filtersRight`: sort `Select` (`w-[7.5rem]`), direction icon button, segmented view toggle (e.g. active / trash), on the **right**, for lists without collapsible filters.
 - All controls at the default 32px size.
+- **Segmented controls** are `ToggleGroup type="single" variant="outline"`: every segment bordered, the selected one `bg-accent` with its border. Links that act as segments (the [inbox list](optional/inbox-list.md) saved views) take the same look from `toggleVariants({ variant: 'outline' })` with `data-state="on"`, so a selected segment looks the same everywhere. Never mark the selected segment with a different button variant (`secondary`), which drops its border.
+- The playground `data-table-toolbar` demo shows the full row and the same toolbar in a narrow card.
 
 ## Selection bar
 
@@ -38,7 +46,18 @@ Actions spill into a ⋯ menu **only when space runs out**, measured with `Resiz
 - **One row height: 41px** in every admin table (24px content + `p-2` cells + the border), text-only tables included (the DataTable sets the minimum). Nothing in a cell may be taller than 24px: avatars in cells are `size="sm"` (`UserAvatar size="sm"`, group and member avatars too), row actions are `icon-sm`, long text stays on one line, truncated, with the full text in a `Tooltip`.
 - Numbers right-aligned with `tabular-nums`.
 - Status as `Badge` (`success` / `muted` / `warning` / `destructive`).
-- Row actions in the **last column** (`meta: { headerClassName: 'w-[1%] text-right', cellClassName: 'text-right', isRowClickIgnored: true }`): a `ButtonGroup` (`aria-label` = the column name, `className="ml-auto"`) of outline `size="icon-sm"` `HeaderIconButton`s (24px, the only place `sm` is the norm), delete last with `className="text-destructive hover:text-destructive"`. Text actions (Restore, Delete forever) are outline `size="sm"` buttons in the same group. The playground `#/users` screen has it.
+- Row actions in the **last column** (`meta: { headerClassName: 'w-[1%] text-right', cellClassName: 'text-right', isRowClickIgnored: true }`), the shadcn data-table look: `DataTableRowActions` (`label` = the column name) around **ghost icon-only** `HeaderIconButton`s at `size="icon-sm"` (24px hit area, WCAG 2.5.8; the only place `sm` is the norm), each with its tooltip and an `aria-label` naming the record ("Edit Ada Lovelace"); delete last with `className="text-destructive hover:text-destructive"`. They appear on row hover, while anything in the row has keyboard focus or an open menu, in selected rows, and **always on touch screens** (`pointer: coarse`). They are hidden by opacity only, so Tab and screen readers reach them as before. A hand-built table adds `group/row` to its `TableRow`. The playground `#/users` screen has it.
+
+### Pinned columns
+
+A table wider than its card keeps its identity and its actions in view, like the fixed columns of antd or Element:
+
+- `DataTable columnPinning={{ left: ['select', '<primary column>'], right: ['actions'] }}`: the selection checkbox and the column that names the record on the left, the row actions on the right. Pin nothing else.
+- Native CSS only: the pinned cells are `position: sticky` with the offset TanStack computes from the column `size`. `DataTable` paints every left-pinned column but the last at exactly its `size` (width / min / max), so the next column's sticky `left` matches the painted width — never leave an 8px gap where scrolled text shows through (`dataTableSelectColumn` is 40px; `dataTableExpandColumn` is 32px). Right-pinned columns that are not the outermost edge do the same. No scroll listeners: the theme reads the scroll cue attributes `useScrollRegion` already sets.
+- The theme gives pinned cells the panel background with the row's hover and selected tint on top, and a border with a soft shadow on the inner edge **only while columns are hidden under it** (left after scrolling, right while more columns wait). The pinned side drops the scroll-cue fade; the shadow is the cue there.
+- Cells keep their DOM order, so reading order, row and cell semantics and the tab order do not change. Works in light, dark and high contrast.
+- On a phone the pinned primary column (last on the left) must leave room for the right-pinned actions: `DataTable` sets `max-width: min(32rem, 50vw - <rightPinnedWidth>)` from the right-pinned columns' `size` (declare `size` on the actions column, e.g. 72 for two `icon-sm` buttons; truncate the text). Do not add a bare `max-w-[50vw]` on the cell — that ignores the actions width and overlaps them.
+- The playground `data-table` demo and `#/users` screen have it.
 
 ### Wide tables on small screens
 
@@ -47,7 +66,7 @@ On a phone most tables are wider than their card. They keep every column and scr
 - The content fades out over the last 2rem on each side that hides columns (right at rest, both sides mid-scroll, left at the end). A table that fits shows nothing, so desktop tables are unchanged.
 - Built in: the `table` container and the `TablePanel` scroller both use `useScrollRegion`, which sets `data-scroll-cue-left` / `data-scroll-cue-right` on scroll, resize and content changes; the `theme` draws the fade as a mask (no colour, so it is right in light, dark and high contrast) and animates it only without reduced motion.
 - While it scrolls, the scroller is a focusable region named "Scrollable table" (`a11y.scrollableTable`): Tab reaches it and the arrow keys scroll it. On keyboard focus the fade gives way to the focus ring.
-- Nothing to add per page: no wrapper, no extra classes. Do not stack rows below `sm` or hide columns to avoid the scroll; keep the 41px row and put the row actions last as usual. The playground `table` demo has a wide table in a phone-width card.
+- Nothing to add per page: no wrapper, no extra classes. Do not stack rows below `sm` or hide columns to avoid the scroll; keep the 41px row and put the row actions last as usual, [pinned](#pinned-columns) when the table scrolls. The playground `table` demo has a wide table in a phone-width card.
 
 ## Pagination
 

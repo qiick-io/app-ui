@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { InboxDetailSheet, InboxSavedViews } from '@/components/inbox-list';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 const VIEWS = [
     { id: 'unresolved', label: 'Unresolved', href: '#', count: 14 },
@@ -10,13 +11,27 @@ const VIEWS = [
     { id: 'new', label: 'New in 24h', href: '#', count: 5 },
 ];
 
-/** Saved views, and one item opened in the detail sheet. */
+/**
+ * Saved views above a status segmented control (one selected style for both), and one item
+ * opened in the detail sheet.
+ */
 export default function InboxListDemo() {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
         <div className="grid gap-3 text-sm">
             <InboxSavedViews views={VIEWS} activeViewId="unresolved" />
+            <ToggleGroup
+                type="single"
+                variant="outline"
+                defaultValue="open"
+                aria-label="Status"
+            >
+                <ToggleGroupItem value="open">Open</ToggleGroupItem>
+                <ToggleGroupItem value="resolved">Resolved</ToggleGroupItem>
+                <ToggleGroupItem value="ignored">Ignored</ToggleGroupItem>
+                <ToggleGroupItem value="all">All</ToggleGroupItem>
+            </ToggleGroup>
             <Button
                 variant="outline"
                 className="w-fit"

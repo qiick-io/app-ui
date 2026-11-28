@@ -644,11 +644,13 @@
             "name": "data-table-toolbar",
             "type": "registry:component",
             "title": "Data table toolbar",
-            "description": "Search and bulk-selection toolbar for data tables.",
+            "description": "Search, filters that collapse into a Filters popover when the row does not fit, and the bulk-selection bar for data tables.",
             "dependencies": ["lucide-react", "react-i18next"],
             "registryDependencies": [
+                "@qiick/badge",
                 "@qiick/button",
                 "@qiick/input",
+                "@qiick/popover",
                 "@qiick/utils"
             ],
             "files": [
@@ -2035,7 +2037,8 @@
                 "@qiick/button-group",
                 "@qiick/collapsible",
                 "@qiick/sheet",
-                "@qiick/skeleton"
+                "@qiick/skeleton",
+                "@qiick/toggle"
             ],
             "files": [
                 {
@@ -2221,7 +2224,6 @@
             "registryDependencies": [
                 "@qiick/api-key-scopes",
                 "@qiick/badge",
-                "@qiick/button-group",
                 "@qiick/confirm-destructive-dialog",
                 "@qiick/data-table",
                 "@qiick/header-icon-button",
